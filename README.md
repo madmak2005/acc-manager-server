@@ -1,4 +1,4 @@
-# acc-manager
+# acc-manager (work in progress)
 ## Java Spring REST Server for Assetto Corsa Competizione ##
 **Using Named Shared Memory - only Windows Version**
 
