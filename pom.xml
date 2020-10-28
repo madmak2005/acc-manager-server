@@ -12,8 +12,8 @@
 	<groupId>acc_manager</groupId>
 	<artifactId>VirtualKeyboard</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>VirtualKeyboard</name>
-	<description>Demo project for Spring Boot</description>
+	<name>ACCMAnager</name>
+	<description>Rest ACC Manager</description>
 
 	<properties>
 		<java.version>11</java.version>

@@ -1,27 +1,17 @@
 package virtualKeyboard;
 
-import java.io.IOException;
 import java.util.Map;
 
-import org.msgpack.MessagePack;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import ACC.ACCSharedMemory;
 import virtualKeyboard.model.KeyboardKey;
 
 @RestController
 public class RestVirtualKeyboardController {
 	final int DOWN = 0;
 	final int UP = 2;
-	ACCSharedMemory sh = new ACCSharedMemory();
-	MessagePack msgpack = new MessagePack();
-	
-	@GetMapping("/SPageFileStatic")
-	public String getJson() {
-		return sh.getSPageFileStatic().toJSON();
-	}
 	
 	@GetMapping("/send")
 	public String key(@RequestParam Map<String, String> allParams) {
