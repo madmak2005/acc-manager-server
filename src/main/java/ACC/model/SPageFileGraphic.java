@@ -3,7 +3,9 @@ package ACC.model;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import virtualKeyboard.VirtualKeyboardApplication;
+import app.Application;
+
+
 
 public class SPageFileGraphic {
 
@@ -124,7 +126,7 @@ public class SPageFileGraphic {
 		try {
 			response = mapper.writeValueAsString(this);
 		} catch (JsonProcessingException e) {
-			VirtualKeyboardApplication.LOGGER.debug(e.toString());
+			Application.LOGGER.debug(e.toString());
 		}
 		return response;
 	}

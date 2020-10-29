@@ -8,7 +8,12 @@ public class RestACCControler {
 	ACCSharedMemory sh = new ACCSharedMemory();
 	
 	@GetMapping("/SPageFileStatic")
-	public String getJson() {
-		return sh.getSPageFileStatic().toJSON();
+	public String getStaticJson() {
+		return sh.getPageFileStatic().toJSON();
+	}
+	
+	@GetMapping("/SPageFilePhysics")
+	public String getPhysicsJson() {
+		return sh.getPageFilePhysics().toJSON();
 	}
 }

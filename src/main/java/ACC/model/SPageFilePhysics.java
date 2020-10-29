@@ -1,11 +1,95 @@
 package ACC.model;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Arrays;
+import java.util.List;
 
-import virtualKeyboard.VirtualKeyboardApplication;
+import com.sun.jna.Pointer;
+import com.sun.jna.Structure;
 
-public class SPageFilePhysics {
+
+public class SPageFilePhysics extends Structure {
+	
+	public SPageFilePhysics(Pointer p) {
+		super(p);
+		read();
+	}
+	
+	@Override
+	protected List<String> getFieldOrder() {
+		return Arrays.asList(
+				"packetId"
+				,"gas"
+				,"brake"
+				,"fuel"
+				,"gear"
+				,"rpms"
+				,"steerAngle"
+				,"speedKmh"
+				,"velocity"
+				,"accG"
+				,"wheelSlip"
+				,"wheelLoad"
+				,"wheelsPressure"
+				,"wheelAngularSpeed"
+				,"tyreWear"
+				,"tyreDirtyLevel"
+				,"tyreCoreTemperature"
+				,"camberRAD"
+				,"suspensionTravel"
+				,"drs"
+				,"tc"
+				,"heading"
+				,"pitch"
+				,"roll"
+				,"cgHeight"
+				,"carDamage"
+				,"numberOfTyresOut"
+				,"pitLimiterOn"
+				,"abs"
+				,"kersCharge"
+				,"kersInput"
+				,"autoShifterOn"
+				,"rideHeight"
+				,"turboBoost"
+				,"ballast"
+				,"airDensity"
+				,"airTemp"
+				,"roadTemp"
+				,"localAngularVel"
+				,"finalFF"
+				,"performanceMeter"
+				,"engineBrake"
+				,"ersRecoveryLevel"
+				,"ersPowerLevel"
+				,"ersHeatCharging"
+				,"ersIsCharging"
+				,"kersCurrentKJ"
+				,"drsAvailable"
+				,"drsEnabled"
+				,"brakeTemp"
+				,"clutch"
+				,"tyreTempI"
+				,"tyreTempM"
+				,"tyreTempO"
+				,"isAIControlled"
+				,"tyreContactPoint"
+				,"tyreContactNormal"
+				,"tyreContactHeading"
+				,"brakeBias"
+				,"localVelocity"
+				,"P2PActivations"
+				,"P2PStatus"
+				,"currentMaxRpm"
+				,"mz"
+				,"fx"
+				,"fy"
+				,"slipRatio"
+				,"slipAngle"
+				,"tcinAction"
+				,"absInAction"
+				,"suspensionDamage"
+				,"tyreTemp");
+	}
 	
    public int packetId = 0;
    public float gas = 0;
@@ -66,11 +150,11 @@ public class SPageFilePhysics {
    public float[] tyreTempM = new float[4];
    public float[] tyreTempO = new float[4];
 
-   public int isAIControlled;
+   public int isAIControlled = 0;
 
-   public float[][] tyreContactPoint = new float[4][3];
-   public float[][] tyreContactNormal = new float[4][3];
-   public float[][] tyreContactHeading = new float[4][3];
+   public float[] tyreContactPoint = new float[12];
+   public float[] tyreContactNormal = new float[12];
+   public float[] tyreContactHeading = new float[12];
 
    public float brakeBias = 0;
 
@@ -92,14 +176,4 @@ public class SPageFilePhysics {
    public float[] suspensionDamage = new float[4];
    public float[] tyreTemp = new float[4];
    
-	public String toJSON() {
-		ObjectMapper mapper = new ObjectMapper();
-		String response = "";
-		try {
-			response = mapper.writeValueAsString(this);
-		} catch (JsonProcessingException e) {
-			VirtualKeyboardApplication.LOGGER.debug(e.toString());
-		}
-		return response;
-	}
 }

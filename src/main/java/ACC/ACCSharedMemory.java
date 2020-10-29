@@ -1,17 +1,22 @@
 package ACC;
 
+import java.nio.charset.Charset;
+
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.WinNT.HANDLE;
 import com.sun.jna.win32.W32APIOptions;
+
+import ACC.model.PageFilePhysics;
+import ACC.model.PageFileStatic;
+import ACC.model.SPageFilePhysics;
 import ACC.model.SPageFileStatic;
 
 public class ACCSharedMemory{
 	private final MyKernel32 myKernel32;
-	private HANDLE h;
-	private Pointer view;
-	SPageFileStatic sPageFileStatic = new SPageFileStatic();
+	private HANDLE hStatic,hPhysics;
+	private Pointer dStatic,dPhysics;
 	
 	public interface MyKernel32 extends Kernel32 {
 	    MyKernel32 INSTANCE = (MyKernel32)Native.load("kernel32", MyKernel32.class, W32APIOptions.DEFAULT_OPTIONS);
@@ -20,26 +25,33 @@ public class ACCSharedMemory{
 	
 	public ACCSharedMemory() {
 		myKernel32 = MyKernel32.INSTANCE;
-		h = myKernel32.OpenFileMapping(0x4, true, "Local\\acpmf_static");
-		view = Kernel32.INSTANCE.MapViewOfFile (h, 0x4, 0, 0, 688);
+		hStatic = myKernel32.OpenFileMapping(0x4, true, "Local\\acpmf_static");
+		dStatic = Kernel32.INSTANCE.MapViewOfFile (hStatic, 0x4, 0, 0, 688);
+		
+		hPhysics = myKernel32.OpenFileMapping(0x4, true, "Local\\acpmf_physics");
+		dPhysics = Kernel32.INSTANCE.MapViewOfFile (hPhysics, 0x4, 0, 0, 712);
 	}
 
-	public SPageFileStatic getSPageFileStatic() {
-
-		sPageFileStatic.smVersion = view.getWideString(0);
-		sPageFileStatic.acVersion = view.getWideString(30);
-		sPageFileStatic.numberOfSessions = view.getInt(60);
-		sPageFileStatic.carModel = view.getWideString(68);
-		sPageFileStatic.track = view.getWideString(134);
-		sPageFileStatic.isOnline = view.getInt(684);
-
-		return sPageFileStatic;
+	public PageFileStatic getPageFileStatic() {
+		System.setProperty("jna.encoding", Charset.defaultCharset().name());
+		SPageFileStatic sPageFileStatic = new SPageFileStatic(dStatic);
+		PageFileStatic staticPage = new PageFileStatic(sPageFileStatic);
+		return staticPage;
+	}
+	
+	public PageFilePhysics getPageFilePhysics() {
+		System.setProperty("jna.encoding", Charset.defaultCharset().name());
+		SPageFilePhysics sPageFilePhysics = new SPageFilePhysics(dPhysics);
+		PageFilePhysics physicsPage = new PageFilePhysics(sPageFilePhysics);
+		return physicsPage;
 	}
 	
 	@Override
 	protected void finalize() throws Throwable {
-		Kernel32.INSTANCE.UnmapViewOfFile(h.getPointer());
-		myKernel32.CloseHandle(h);
+		Kernel32.INSTANCE.UnmapViewOfFile(hStatic.getPointer());
+		myKernel32.CloseHandle(hStatic);
+		Kernel32.INSTANCE.UnmapViewOfFile(hPhysics.getPointer());
+		myKernel32.CloseHandle(hPhysics);
 	}
 	
 }
