@@ -1,6 +1,6 @@
 # acc-manager (work in progress)
-## Java Spring REST Server for Assetto Corsa Competizione ##
-**Using Named Shared Memory - only Windows Version**
+## Getting data from Assetto Corsa Competizione using Java Spring REST Server##
+**ACC Named Shared Memory - only Windows Version**
 
 It is used to download the data described in the "ACC Shared Memory" documentation. At the moment, only the part related to SPageFileStatic is partly implemented. The rest is work in progress.
 http://x.x.x.x:8080/SPageFilePhysics [real data]
