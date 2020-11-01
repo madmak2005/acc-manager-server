@@ -1,5 +1,5 @@
 # acc-manager (work in progress)
-## Easy way to try##
+## Easy way to try
 1. Use Spring Tool Suite
 2. Clone repository
 3. Open project in STS
