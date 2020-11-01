@@ -1,4 +1,15 @@
 # acc-manager (work in progress)
+## Easy way to try##
+1. Use Spring Tool Suite
+2. Clone repository
+3. Open project in STS
+4. Let maven to dowload all dependencies
+5. Lunch Assetto Corsa Competizione (the same computer)
+6. Lunch project as Spring Boot
+7. Open http://x.x.x.x:8080 or http://x.x.x.x:8080/SPageFilePhysics in the web browser
+
+**Right now you need to first start ACC and enter the track then lunch the app**
+
 ## Getting data from Assetto Corsa Competizione using Java Spring REST Server##
 **ACC Named Shared Memory - only Windows Version**
 
