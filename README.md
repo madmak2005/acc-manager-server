@@ -2,7 +2,9 @@
 ## Getting data from Assetto Corsa Competizione using Java Spring REST Server##
 **ACC Named Shared Memory - only Windows Version**
 
-It is used to download the data described in the "ACC Shared Memory" documentation. At the moment, only the part related to SPageFileStatic is partly implemented. The rest is work in progress.
+It is used to download the data described in the "ACC Shared Memory" documentation. At the moment SPageFileStatic and SPageFilePhysics is fully implemented. The rest is work in progress. 
+There is a built-in small html client using webockets to tranfer data every 500 ms of physics data. You can access it by lunching project and tring http://x.x.x.x:8080 in a web browser.
+
 http://x.x.x.x:8080/SPageFilePhysics [real data]
 Response:
 ```json
