@@ -19,7 +19,7 @@ function connect() {
         setConnected(true);
         console.log('Connected: ' + frame);
         stompClient.subscribe('/acc/messages', function (greeting) {
-            showGreeting(JSON.parse(greeting.body).content);
+            showGreeting(JSON.parse(greeting.body));
         });
     });
 }
@@ -37,7 +37,9 @@ function sendPage() {
 }
 
 function showGreeting(message) {
-    $("#greetings").replaceWith("<tr><td>" + message + "</td></tr>");
+    var c = JSON.parse(message.content);
+    console.log('packetId: ' + c.packetId);
+    $("#greetings").replaceWith('<tbody id="greetings"><tr><td>' + JSON.stringify(c) + '</td></tr></tbody>');
 }
 
 $(function () {
