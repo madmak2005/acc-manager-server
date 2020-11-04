@@ -24,13 +24,33 @@ public class WebsocketControler {
     private SimpMessagingTemplate template;
 	
     @Scheduled(fixedRate = 500)
-	@MessageMapping("/page")
-	@SendTo("/acc/messages")
-	public void send() throws Exception {
+	@MessageMapping("/physics")
+	@SendTo("/acc/physics")
+	public void sendPhysics() throws Exception {
 		ACCSharedMemory sh = new ACCSharedMemory();
 	    String time = new SimpleDateFormat("HH:mm").format(new Date());
 	    OutputMessage om = new OutputMessage(sh.getPageFilePhysics(), time);
-	    this.template.convertAndSend("/acc/messages", om);
+	    this.template.convertAndSend("/acc/physics", om);
+	}
+    
+    @Scheduled(fixedRate = 10000)
+	@MessageMapping("/static")
+	@SendTo("/acc/static")
+	public void sendStatic() throws Exception {
+		ACCSharedMemory sh = new ACCSharedMemory();
+	    String time = new SimpleDateFormat("HH:mm").format(new Date());
+	    OutputMessage om = new OutputMessage(sh.getPageFileStatic(), time);
+	    this.template.convertAndSend("/acc/static", om);
+	}
+    
+    @Scheduled(fixedRate = 500)
+	@MessageMapping("/graphics")
+	@SendTo("/acc/graphics")
+	public void sendGraphics() throws Exception {
+		ACCSharedMemory sh = new ACCSharedMemory();
+	    String time = new SimpleDateFormat("HH:mm").format(new Date());
+	    OutputMessage om = new OutputMessage(sh.getPageFileGraphics(), time);
+	    this.template.convertAndSend("/acc/graphics", om);
 	}
     
 }

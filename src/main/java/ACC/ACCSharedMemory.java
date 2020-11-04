@@ -8,15 +8,17 @@ import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.WinNT.HANDLE;
 import com.sun.jna.win32.W32APIOptions;
 
+import ACC.model.PageFileGraphics;
 import ACC.model.PageFilePhysics;
 import ACC.model.PageFileStatic;
+import ACC.model.SPageFileGraphics;
 import ACC.model.SPageFilePhysics;
 import ACC.model.SPageFileStatic;
 
 public class ACCSharedMemory{
 	private final MyKernel32 myKernel32;
-	private HANDLE hStatic,hPhysics;
-	private Pointer dStatic,dPhysics;
+	private HANDLE hStatic, hPhysics, hGraphics;
+	private Pointer dStatic, dPhysics, dGraphics;
 	
 	public interface MyKernel32 extends Kernel32 {
 	    MyKernel32 INSTANCE = (MyKernel32)Native.load("kernel32", MyKernel32.class, W32APIOptions.DEFAULT_OPTIONS);
@@ -30,6 +32,9 @@ public class ACCSharedMemory{
 		
 		hPhysics = myKernel32.OpenFileMapping(0x4, true, "Local\\acpmf_physics");
 		dPhysics = Kernel32.INSTANCE.MapViewOfFile (hPhysics, 0x4, 0, 0, 712);
+		
+		hGraphics = myKernel32.OpenFileMapping(0x4, true, "Local\\acpmf_graphics");
+		dGraphics = Kernel32.INSTANCE.MapViewOfFile (hGraphics, 0x4, 0, 0, 712);
 	}
 
 	public PageFileStatic getPageFileStatic() {
@@ -44,6 +49,13 @@ public class ACCSharedMemory{
 		SPageFilePhysics sPageFilePhysics = new SPageFilePhysics(dPhysics);
 		PageFilePhysics physicsPage = new PageFilePhysics(sPageFilePhysics);
 		return physicsPage;
+	}
+	
+	public PageFileGraphics getPageFileGraphics() {
+		System.setProperty("jna.encoding", Charset.defaultCharset().name());
+		SPageFileGraphics sPageFileGraphics = new SPageFileGraphics(dGraphics);
+		PageFileGraphics graphicsPage = new PageFileGraphics(sPageFileGraphics);
+		return graphicsPage;
 	}
 	
 	@Override

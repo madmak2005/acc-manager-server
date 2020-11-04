@@ -11,7 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import app.Application;
 
-public class PageFileStatic {
+public class PageFileStatic implements Page{
 	@JsonIgnore
 	private Object o;
 
@@ -112,11 +112,10 @@ public class PageFileStatic {
 			} catch (IllegalArgumentException | IllegalAccessException | NoSuchFieldException | SecurityException e) {
 				e.printStackTrace();
 			}
-			
 		});
-		
 	}
 	
+	@Override
 	public String toJSON() {
 		ObjectMapper mapper = new ObjectMapper();
 		String response = "";

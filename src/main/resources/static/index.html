@@ -18,31 +18,48 @@
         <div class="col-md-6">
             <form class="form-inline">
                 <div class="form-group">
-                    <label for="connect">WebSocket connection:</label>
-                    <button id="connect" class="btn btn-default" type="submit">Connect</button>
-                    <button id="disconnect" class="btn btn-default" type="submit" disabled="disabled">Disconnect
-                    </button>
+                    <label for="connect">WebSocket Physics connection:</label>
+                    <button id="connectPhysics" class="btn btn-default" type="submit">Connect</button>
+                    <button id="disconnectPhysics" class="btn btn-default" type="submit" disabled="disabled">Disconnect</button>
                 </div>
-            </form>
-        </div>
-        <div class="col-md-6">
-            <form class="form-inline">
                 <div class="form-group">
-                    <label for="name">Physics Data</label>
+                    <label for="connect">WebSocket Graphics connection:</label>
+                    <button id="connectGraphics" class="btn btn-default" type="submit">Connect</button>
+                    <button id="disconnectGraphics" class="btn btn-default" type="submit" disabled="disabled">Disconnect</button>
                 </div>
-                <button id="send" class="btn btn-default" type="submit">Send</button>
+                <div class="form-group">
+                    <label for="connect">WebSocket Static connection:</label>
+                    <button id="connectStatic" class="btn btn-default" type="submit">Connect</button>
+                    <button id="disconnectStatic" class="btn btn-default" type="submit" disabled="disabled">Disconnect</button>
+                </div>                
             </form>
         </div>
     </div>
     <div class="row">
         <div class="col-md-12">
-            <table id="conversation" class="table table-striped">
+            <table id="conversationPhysics" class="table table-striped">
                 <thead>
                 <tr>
-                    <th>ACC data</th>
+                    <th>ACC physics</th>
                 </tr>
                 </thead>
-                <tbody id="greetings"></tbody>
+                <tbody id="physics"></tbody>
+            </table>
+            <table id="conversationGraphics" class="table table-striped">
+                <thead>
+                <tr>
+                    <th>ACC graphics</th>
+                </tr>
+                </thead>
+                <tbody id="graphics"></tbody>
+            </table>
+            <table id="conversationStatic" class="table table-striped">
+                <thead>
+                <tr>
+                    <th>ACC static</th>
+                </tr>
+                </thead>
+                <tbody id="static"></tbody>
             </table>
         </div>
     </div>

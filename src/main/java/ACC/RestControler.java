@@ -16,4 +16,9 @@ public class RestControler {
 	public String getPhysicsJson() {
 		return sh.getPageFilePhysics().toJSON();
 	}
+	
+	@GetMapping("/SPageFileGraphics")
+	public String getGraphicsJson() {
+		return sh.getPageFilePhysics().toJSON();
+	}
 }

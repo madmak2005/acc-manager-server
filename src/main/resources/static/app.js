@@ -1,53 +1,130 @@
 var stompClient = null;
 
-function setConnected(connected) {
-    $("#connect").prop("disabled", connected);
-    $("#disconnect").prop("disabled", !connected);
+function setConnectedPhysics(connected) {
+    $("#connectPhysics").prop("disabled", connected);
+    $("#disconnectPhysics").prop("disabled", !connected);
     if (connected) {
-        $("#conversation").show();
+        $("#conversationPhysics").show();
     }
     else {
-        $("#conversation").hide();
+        $("#conversationPhysics").hide();
     }
-    $("#greetings").html("");
+    $("#physics").html("");
 }
 
-function connect() {
+function setConnectedGraphics(connected) {
+    $("#connectGraphics").prop("disabled", connected);
+    $("#disconnectGraphics").prop("disabled", !connected);
+    if (connected) {
+        $("#conversationGraphics").show();
+    }
+    else {
+        $("#conversationGraphics").hide();
+    }
+    $("#graphics").html("");
+}
+
+function setConnectedStatic(connected) {
+    $("#connectStatic").prop("disabled", connected);
+    $("#disconnectStatic").prop("disabled", !connected);
+    if (connected) {
+        $("#conversationStatic").show();
+    }
+    else {
+        $("#conversationStatic").hide();
+    }
+    $("#static").html("");
+}
+
+function connectPhysics() {
     var socket = new SockJS('/gs-websocket');
     stompClient = Stomp.over(socket);
     stompClient.connect({}, function (frame) {
-        setConnected(true);
+        setConnectedPhysics(true);
         console.log('Connected: ' + frame);
-        stompClient.subscribe('/acc/messages', function (greeting) {
-            showGreeting(JSON.parse(greeting.body));
+        stompClient.subscribe('/acc/physics', function (physics) {
+            showPhysics(JSON.parse(physics.body));
         });
     });
 }
 
-function disconnect() {
+function connectGraphics() {
+    var socket = new SockJS('/gs-websocket');
+    stompClient = Stomp.over(socket);
+    stompClient.connect({}, function (frame) {
+        setConnectedGraphics(true);
+        console.log('Connected: ' + frame);
+        stompClient.subscribe('/acc/graphics', function (graphics) {
+            showGraphics(JSON.parse(graphics.body));
+        });
+    });
+}
+
+function connectStatic() {
+    var socket = new SockJS('/gs-websocket');
+    stompClient = Stomp.over(socket);
+    stompClient.connect({}, function (frame) {
+        setConnectedStatic(true);
+        console.log('Connected: ' + frame);
+        stompClient.subscribe('/acc/static', function (static) {
+            showStatic(JSON.parse(static.body));
+        });
+    });
+}
+
+function disconnectPhysics() {
     if (stompClient !== null) {
         stompClient.disconnect();
     }
-    setConnected(false);
+    setConnectedPhysics(false);
     console.log("Disconnected");
 }
 
-function sendPage() {
-    stompClient.send("/app/page", {}, JSON.stringify({'page': $("#page").val()}));
+function disconnectGraphics() {
+    if (stompClient !== null) {
+        stompClient.disconnect();
+    }
+    setConnectedGraphics(false);
+    console.log("Disconnected");
 }
 
-function showGreeting(message) {
+function disconnectStatic() {
+    if (stompClient !== null) {
+        stompClient.disconnect();
+    }
+    setConnectedStatic(false);
+    console.log("Disconnected");
+}
+
+function showPhysics(message) {
     var c = JSON.parse(message.content);
     console.log('packetId: ' + c.packetId);
-    $("#greetings").replaceWith('<tbody id="greetings"><tr><td>' + JSON.stringify(c) + '</td></tr></tbody>');
+    $("#physics").replaceWith('<tbody id="physics"><tr><td>' + JSON.stringify(c, null, 2) + '</td></tr></tbody>');
 }
+
+function showGraphics(message) {
+    var c = JSON.parse(message.content);
+    console.log('packetId: ' + c.packetId);
+    $("#graphics").replaceWith('<tbody id="graphics"><tr><td>' + JSON.stringify(c, null, 2) + '</td></tr></tbody>');
+}
+
+function showStatic(message) {
+    var c = JSON.parse(message.content);
+    console.log('packetId: ' + c.packetId);
+    $("#static").replaceWith('<tbody id="static"><tr><td>' + JSON.stringify(c, null, 2) + '</td></tr></tbody>');
+}
+
 
 $(function () {
     $("form").on('submit', function (e) {
         e.preventDefault();
     });
-    $( "#connect" ).click(function() { connect(); });
-    $( "#disconnect" ).click(function() { disconnect(); });
-    $( "#send" ).click(function() { sendPage(); });
+    $( "#connectPhysics" ).click(function() { connectPhysics(); });
+    $( "#disconnectPhysics" ).click(function() { disconnectPhysics(); });
+    $( "#connectGraphics" ).click(function() { connectGraphics(); });
+    $( "#disconnectGraphics" ).click(function() { disconnectGraphics(); });    
+    $( "#connectStatic" ).click(function() { connectStatic(); });
+    $( "#disconnectStatic" ).click(function() { disconnectStatic(); });
+
 });
 

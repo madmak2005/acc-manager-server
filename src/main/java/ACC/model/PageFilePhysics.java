@@ -1,7 +1,6 @@
 package ACC.model;
 
 import java.lang.reflect.Field;
-import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
 
@@ -11,7 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import app.Application;
 
-public class PageFilePhysics {
+public class PageFilePhysics implements Page {
 	
 	public	PageFilePhysics(SPageFilePhysics o){
 		this.o = o;
@@ -188,6 +187,7 @@ public class PageFilePhysics {
 			
 		}
 		
+		@Override
 		public String toJSON() {
 			ObjectMapper mapper = new ObjectMapper();
 			String response = "";

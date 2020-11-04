@@ -1,5 +1,6 @@
 package ACC;
 
+import ACC.model.Page;
 import ACC.model.PageFilePhysics;
 
 public class OutputMessage{
@@ -10,14 +11,14 @@ public class OutputMessage{
 	private void setContent(String content) {
 		this.content = content;
 	}
-	public OutputMessage(PageFilePhysics physics, String time) {
+	public OutputMessage(Page page, String time) {
 		super();
-		this.physics = physics;
-		this.content = physics.toJSON();
+		this.page = page;
+		this.content = page.toJSON();
 		this.time = time;
 	}
 	public String content;
-	public PageFilePhysics physics;
+	public Page page;
 	public String time;
 	
 }
