@@ -14,7 +14,7 @@
 **ACC Named Shared Memory - only Windows Version**
 
 It is used to download the data described in the "ACC Shared Memory" documentation. At the moment SPageFileStatic and SPageFilePhysics is fully implemented. The rest is work in progress. 
-There is a built-in small html client using webockets to tranfer physics data every 500 ms. You can access it by lunching project and tring http://x.x.x.x:8080 in a web browser.
+There is a built-in small html client using webockets to tranfer physics and graphics data every 500 ms. Static every 10 s. You can access it by lunching project and tring http://x.x.x.x:8080 in a web browser.
 
 http://x.x.x.x:8080/SPageFilePhysics [real data]
 Response:
