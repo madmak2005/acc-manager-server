@@ -21,7 +21,7 @@ Just open in any websocket client. You can use online site http://www.websocket.
 3. ws://x.x.x.x:8080/acc/static (refresh rate 2000 ms)
 
 ## STOMP WebSockets
-There is a built-in small html client using STOMP webockets to tranfer physics and graphics data every 500 ms. Static every 10 s. You can access it by lunching project and tring http://x.x.x.x:8080 in a web browser.
+There is a built-in small html client using STOMP webockets to tranfer physics and graphics data every 500 ms. Static every 10 s. You can access it by lunching project and opening http://x.x.x.x:8080 in a web browser.
 If you want to use STOMP in your client here you have some important information:
 1. url: 'ws://x.x.x.x:8080/gs-websocket/websocket'
 2. subscribe to: '/acc/graphics', '/acc/physics' or '/acc/static'
