@@ -33,13 +33,13 @@ public class VirtualKeyboardAPI {
     }
 
 
-    public void sendText(KeyboardKey key, int downOrUp){
+    public void sendText(KeyboardKey key, int downOrUp, int time){
 
         WinUser.INPUT input = new WinUser.INPUT();
         input.type = new WinUser.DWORD(WinUser.INPUT.INPUT_KEYBOARD);
         input.input.setType(WinUser.KEYBDINPUT.class); // Because setting INPUT_INPUT_KEYBOARD is not enough: https://groups.google.com/d/msg/jna-users/NDBGwC1VZbU/cjYCQ1CjBwAJ
         input.input.ki.wScan = new WinDef.WORD( 0 );
-        input.input.ki.time = new WinDef.DWORD( 0 );
+        input.input.ki.time = new WinDef.DWORD( time );
         input.input.ki.dwExtraInfo = new BaseTSD.ULONG_PTR( 0 );
 
         input.input.ki.wVk = key.getVirtualKeyCode(); 

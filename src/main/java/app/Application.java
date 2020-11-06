@@ -9,10 +9,12 @@ import java.net.UnknownHostException;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @SpringBootApplication
+@EnableWebSocket
 @ComponentScan(basePackages = { "ACC", "virtualKeyboard" })
 public class Application {
 	public static final String ANSI_RESET = "\u001B[0m";
@@ -33,6 +35,8 @@ public class Application {
 		SpringApplication.run(Application.class, args);
 		showIP();
 	}
+	
+
 	
 	private static void showIP() {
 		try(final DatagramSocket socket = new DatagramSocket()){

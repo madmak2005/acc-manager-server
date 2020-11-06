@@ -1,14 +1,9 @@
 package ACC.model;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
 import java.util.Arrays;
 import java.util.List;
-import app.Application;
-
-
 
 public class SPageFileGraphics extends Structure {
 

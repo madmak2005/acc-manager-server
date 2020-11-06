@@ -1,13 +1,14 @@
 package ACC;
 
 import ACC.model.Page;
-import ACC.model.PageFilePhysics;
 
 public class OutputMessage{
 	
+	@SuppressWarnings("unused")
 	private String getContent() {
 		return content;
 	}
+	@SuppressWarnings("unused")
 	private void setContent(String content) {
 		this.content = content;
 	}
