@@ -70,10 +70,10 @@ public class SPageFileGraphics extends Structure {
 	public int packetId = 0;
 	public int status = 0;
 	public int session = 0;
-	public String currentTime;
-	public String lastTime;
-	public String bestTime;
-	public String split;
+	public byte[] currentTime = new byte[30];
+	public byte[] lastTime = new byte[30];
+	public byte[] bestTime = new byte[30];
+	public byte[] split = new byte[30];
 	public int completedLaps = 0;
 	public int position = 0;
 	public int iCurrentTime = 0;
@@ -85,7 +85,7 @@ public class SPageFileGraphics extends Structure {
 	public int currentSectorIndex = 0;
 	public int lastSectorTime = 0;
 	public int numberOfLaps = 0;
-	public String tyreCompound;
+	public byte[] tyreCompound = new byte[66];;
 	public float replayTimeMultiplier = 0;
 	public float normalizedCarPosition = 0;
 

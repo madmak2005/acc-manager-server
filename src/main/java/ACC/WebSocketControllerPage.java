@@ -115,6 +115,7 @@ public class WebSocketControllerPage {
 	private void sendText(Session session, String message) {
 		RemoteEndpoint.Basic basic = session.getBasicRemote();
 		try {
+			System.out.println(message);
 			basic.sendText(message);
 		} catch (IOException e) {
 			e.printStackTrace();
