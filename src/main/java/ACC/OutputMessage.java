@@ -1,5 +1,8 @@
 package ACC;
 
+import java.util.List;
+
+
 import ACC.model.Page;
 
 public class OutputMessage{
@@ -12,14 +15,14 @@ public class OutputMessage{
 	private void setContent(String content) {
 		this.content = content;
 	}
-	public OutputMessage(Page page, String time) {
+	public OutputMessage(Page page, List<String> fields) {
 		super();
 		this.page = page;
+		this.fields = fields;
 		this.content = page.toJSON();
-		this.time = time;
 	}
 	public String content;
 	public Page page;
-	public String time;
+	public List<String> fields;
 	
 }

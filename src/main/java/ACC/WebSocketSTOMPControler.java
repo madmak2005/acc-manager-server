@@ -1,7 +1,9 @@
 package ACC;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -21,8 +23,8 @@ public class WebSocketSTOMPControler {
 	@SendTo("/acc/physics")
 	public void sendPhysics() throws Exception {
 		ACCSharedMemory sh = new ACCSharedMemory();
-	    String time = new SimpleDateFormat("HH:mm").format(new Date());
-	    OutputMessage om = new OutputMessage(sh.getPageFilePhysics(), time);
+		List<String> fieldsPhysics = new ArrayList<String>();
+	    OutputMessage om = new OutputMessage(sh.getPageFilePhysics(), fieldsPhysics);
 	    this.template.convertAndSend("/acc/physics", om);
 	}
     
@@ -31,8 +33,8 @@ public class WebSocketSTOMPControler {
 	@SendTo("/acc/static")
 	public void sendStatic() throws Exception {
 		ACCSharedMemory sh = new ACCSharedMemory();
-	    String time = new SimpleDateFormat("HH:mm").format(new Date());
-	    OutputMessage om = new OutputMessage(sh.getPageFileStatic(), time);
+		List<String> fieldsStatic = new ArrayList<String>();
+	    OutputMessage om = new OutputMessage(sh.getPageFileStatic(), fieldsStatic);
 	    this.template.convertAndSend("/acc/static", om);
 	}
     
@@ -41,8 +43,8 @@ public class WebSocketSTOMPControler {
 	@SendTo("/acc/graphics")
 	public void sendGraphics() throws Exception {
 		ACCSharedMemory sh = new ACCSharedMemory();
-	    String time = new SimpleDateFormat("HH:mm").format(new Date());
-	    OutputMessage om = new OutputMessage(sh.getPageFileGraphics(), time);
+		List<String> fieldsGraphics = new ArrayList<String>();
+	    OutputMessage om = new OutputMessage(sh.getPageFileGraphics(), fieldsGraphics);
 	    this.template.convertAndSend("/acc/graphics", om);
 	}
     
