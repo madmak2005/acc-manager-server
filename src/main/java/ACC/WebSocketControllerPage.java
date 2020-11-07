@@ -13,7 +13,9 @@ import ACC.model.PageFileStatic;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -71,6 +73,7 @@ public class WebSocketControllerPage {
 	 */
 	@OnMessage
 	public void onMessage(@PathParam("page") String page, Session session, String message) {
+		
 		System.out.println("onMessage");
 
 	}
@@ -84,7 +87,8 @@ public class WebSocketControllerPage {
 		//for debugging only,  if you don't have ACC but want to see some data changes 
 		p.rainLights = p.packetId == 0 ? (Math.random() < 0.1 ? 0 : 1) : p.rainLights;
 		p.packetId = p.packetId == 0 ? now.getMillisOfDay() : p.packetId;
-		OutputMessage om = new OutputMessage(p, time);
+		List<String> fields = new ArrayList<String>();
+		OutputMessage om = new OutputMessage(p, fields);
 		if (sessionGraphics != null && om != null)
 			sendText(sessionGraphics, om.content);
 	}
@@ -96,7 +100,8 @@ public class WebSocketControllerPage {
 		PageFilePhysics p = sh.getPageFilePhysics();
 		LocalDateTime now = new LocalDateTime();
 		p.packetId = p.packetId == 0 ? now.getMillisOfDay() : p.packetId;
-		OutputMessage om = new OutputMessage(p, time);
+		List<String> fields = new ArrayList<String>();
+		OutputMessage om = new OutputMessage(p, fields);
 		//System.out.println(p.toJSON());
 		if (sessionPhysics != null && om != null)
 			sendText(sessionPhysics, om.content);
@@ -107,7 +112,8 @@ public class WebSocketControllerPage {
 		ACCSharedMemory sh = new ACCSharedMemory();
 		String time = new SimpleDateFormat("HH:mm").format(new Date());
 		PageFileStatic p = sh.getPageFileStatic();
-		OutputMessage om = new OutputMessage(p, time);
+		List<String> fields = new ArrayList<String>();
+		OutputMessage om = new OutputMessage(p, fields);
 		if (sessionStatic != null && om != null)
 			sendText(sessionStatic, om.content);
 	}
