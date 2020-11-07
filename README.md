@@ -9,8 +9,8 @@ Java 14 just because of new 'Switch' format usage
 2. Clone repository
 3. Open project in Spring Tool Suite
 4. Let maven download all dependencies
-5. Lunch Assetto Corsa Competizione (the same computer)
-6. Lunch project as Spring Boot in Spring Tool Suite
+5. Launch Assetto Corsa Competizione (the same computer)
+6. Launch project as Spring Boot in Spring Tool Suite
 
 **Right now you need to first start ACC and enter the track then lunch the app**
 
