@@ -20,8 +20,8 @@ public class WebSocketConfig implements WebSocketConfigurer {
     }
 	
     @Bean
-    public WebSocketController webSocketController() {
-        return new WebSocketController();
+    public WebSocketControllerPage webSocketController() {
+        return new WebSocketControllerPage();
     }
 
 	@Override

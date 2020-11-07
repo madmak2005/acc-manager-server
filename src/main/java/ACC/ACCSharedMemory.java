@@ -64,6 +64,8 @@ public class ACCSharedMemory{
 		myKernel32.CloseHandle(hStatic);
 		Kernel32.INSTANCE.UnmapViewOfFile(hPhysics.getPointer());
 		myKernel32.CloseHandle(hPhysics);
+		Kernel32.INSTANCE.UnmapViewOfFile(hGraphics.getPointer());
+		myKernel32.CloseHandle(hGraphics);
 	}
 	
 }

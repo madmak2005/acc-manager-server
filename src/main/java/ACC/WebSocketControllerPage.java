@@ -17,18 +17,35 @@ import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-@ServerEndpoint("/acc/{page}")
-public class WebSocketController {
 
+
+/**
+ * This class allows to open websocket session to receive data of
+ * Assetto Corsa Competizione pages of type: SPageFilePhysics, SPageFileGraphic, SPageFileStatic
+ *
+ */
+
+/**
+ * @author tomasz.makowski
+ *
+ */
+@ServerEndpoint("/acc/{page}")
+public class WebSocketControllerPage {
 	private static Map<String, Session> livingSessions = new ConcurrentHashMap<String, Session>();
 	private static Session sessionGraphics, sessionPhysics, sessionStatic;
 
+	
+	/**
+	 * @param pageName one of 'graphics', 'physics', 'static' values
+	 * @param session
+	 * 
+	 */
 	@OnOpen
-	public void openSession(@PathParam("page") String page, Session session) {
-		System.out.println("openSession " + page);
+	public void openSession(@PathParam("page") String pageName, Session session) {
+		System.out.println("openSession " + pageName);
 		String sessionId = session.getId();
 		livingSessions.put(sessionId, session);
-		switch (page) {
+		switch (pageName) {
 		case "graphics" -> {
 			sessionGraphics = session;
 			sendTextGraphics();
@@ -42,9 +59,16 @@ public class WebSocketController {
 			sendTextStatic();
 		}
 		}
-
 	}
+	
 
+	/**
+	 * @param page
+	 * @param session
+	 * @param message
+	 * 
+	 * Not used
+	 */
 	@OnMessage
 	public void onMessage(@PathParam("page") String page, Session session, String message) {
 		System.out.println("onMessage");
@@ -57,7 +81,7 @@ public class WebSocketController {
 		String time = new SimpleDateFormat("HH:mm").format(new Date());
 		PageFileGraphics p = sh.getPageFileGraphics();
 		LocalDateTime now = new LocalDateTime();
-		//for debugging if you don't have ACC but want to see some data changes 
+		//for debugging only,  if you don't have ACC but want to see some data changes 
 		p.rainLights = p.packetId == 0 ? (Math.random() < 0.1 ? 0 : 1) : p.rainLights;
 		p.packetId = p.packetId == 0 ? now.getMillisOfDay() : p.packetId;
 		OutputMessage om = new OutputMessage(p, time);
