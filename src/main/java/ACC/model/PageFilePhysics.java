@@ -2,14 +2,22 @@ package ACC.model;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.ser.FilterProvider;
+import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
+import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 
 import app.Application;
 
+@JsonFilter("filter1")
 public class PageFilePhysics implements Page {
 	
 	public	PageFilePhysics(SPageFilePhysics o){
@@ -189,15 +197,35 @@ public class PageFilePhysics implements Page {
 		
 		@Override
 		public String toJSON() {
-			ObjectMapper mapper = new ObjectMapper();
+			
 			String response = "";
+			Page page = this;
 			try {
-				response = mapper.writeValueAsString(this);
+				FilterProvider filters = new SimpleFilterProvider()  
+					      .addFilter("filter1",   
+					          SimpleBeanPropertyFilter.serializeAllExcept(""));
+				ObjectMapper mapper = new ObjectMapper().setFilterProvider(filters);
+				response = mapper.writeValueAsString(page);
 			} catch (JsonProcessingException e) {
-				e.printStackTrace();
 				Application.LOGGER.debug(e.toString());
 			}
-			//System.out.println(response);
-			return new String(response);
+			return response;
+		}
+		
+		@Override
+		public String toJSON(List<String> fields) {
+			String response = "";
+			Page page = this;
+			try {
+				Set<String> fieldsFilter = new HashSet<String>(fields);
+				 FilterProvider filters = new SimpleFilterProvider()  
+					      .addFilter("filter1",   
+					          SimpleBeanPropertyFilter.filterOutAllExcept(fieldsFilter));
+				ObjectMapper mapper = new ObjectMapper().setFilterProvider(filters);
+				response = mapper.writeValueAsString(page);
+			} catch (JsonProcessingException e) {
+				Application.LOGGER.debug(e.toString());
+			}
+			return response;
 		}
 }

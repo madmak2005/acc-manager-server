@@ -48,31 +48,9 @@ public class RestVirtualKeyboardController {
 			}
 		} else {
 			String string = allParams.get("string");
-			if (string != null) {
-				if (string.equals("MEDIA_NEXT_TRACK")) {
-					api.sendText(KeyboardKey.MEDIA_NEXT_TRACK, DOWN, 0);
-					api.sendText(KeyboardKey.MEDIA_NEXT_TRACK, UP, 0);
-				}
-				if (string.equals("MEDIA_PREV_TRACK")) {
-					api.sendText(KeyboardKey.MEDIA_PREV_TRACK, DOWN, 0);
-					api.sendText(KeyboardKey.MEDIA_PREV_TRACK, UP, 0);
-				}
-				if (string.equals("MEDIA_STOP")) {
-					api.sendText(KeyboardKey.MEDIA_STOP, DOWN, 0);
-					api.sendText(KeyboardKey.MEDIA_STOP, UP, 0);
-				}
-				if (string.equals("MEDIA_PLAY_PAUSE")) {
-					api.sendText(KeyboardKey.MEDIA_PLAY_PAUSE, DOWN, 0);
-					api.sendText(KeyboardKey.MEDIA_PLAY_PAUSE, UP, 0);
-				}
-				if (string.equals("VOLUME_UP")) {
-					api.sendText(KeyboardKey.VOLUME_UP, DOWN, 0);
-					api.sendText(KeyboardKey.VOLUME_UP, UP, 0);
-				}
-				if (string.equals("VOLUME_DOWN")) {
-					api.sendText(KeyboardKey.VOLUME_DOWN, DOWN, 0);
-					api.sendText(KeyboardKey.VOLUME_DOWN, UP, 0);
-				}
+			if (string != null && KeyboardKey.getByCodename(string) != null) {
+				api.sendText(KeyboardKey.getByCodename(string),DOWN,0);
+				api.sendText(KeyboardKey.getByCodename(string),UP,0);	
 			}
 		}
 		return "OK";		

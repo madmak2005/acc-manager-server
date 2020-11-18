@@ -19,8 +19,17 @@ public class OutputMessage{
 		super();
 		this.page = page;
 		this.fields = fields;
-		this.content = page.toJSON();
+		if (fields == null || fields.size() == 0)
+			this.content = page.toJSON();
+		else
+			this.content = page.toJSON(fields);
 	}
+	
+	public OutputMessage(String content) {
+		super();
+		this.content = content;
+	}
+	
 	public String content;
 	public Page page;
 	public List<String> fields;

@@ -13,6 +13,7 @@
 	<artifactId>ACCManager</artifactId>
 	<version>1.0.0</version>
 	<name>ACCMAnager</name>
+	<packaging>jar</packaging>
 	<description>Rest and WebSocket ACC Manager</description>
 
 	<properties>

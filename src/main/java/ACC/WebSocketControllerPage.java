@@ -35,7 +35,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public class WebSocketControllerPage {
 	private static Map<String, Session> livingSessions = new ConcurrentHashMap<String, Session>();
 	private static Session sessionGraphics, sessionPhysics, sessionStatic;
-
+	private static List<String> fieldsGraphics;
+	private static List<String> fieldsPhysics;
+	private static List<String> fieldsStatic;
 	
 	/**
 	 * @param pageName one of 'graphics', 'physics', 'static' values
@@ -73,36 +75,40 @@ public class WebSocketControllerPage {
 	 */
 	@OnMessage
 	public void onMessage(@PathParam("page") String page, Session session, String message) {
-		
+		Message msg = new Message(message);
+		if (sessionGraphics != null && sessionGraphics.getId() == session.getId()) {
+			fieldsGraphics = msg.getFildsToFilter();
+		}
+		if (sessionPhysics != null && sessionPhysics.getId() == session.getId()) {
+			fieldsPhysics = msg.getFildsToFilter();
+		}
+		if (sessionStatic != null && sessionStatic.getId() == session.getId()) {
+			fieldsStatic = msg.getFildsToFilter();
+		}
 		System.out.println("onMessage");
 
 	}
 
-	@Scheduled(fixedRate = 333)
+	@Scheduled(fixedRate = 200)
 	private void sendTextGraphics() {
 		ACCSharedMemory sh = new ACCSharedMemory();
-		String time = new SimpleDateFormat("HH:mm").format(new Date());
 		PageFileGraphics p = sh.getPageFileGraphics();
 		LocalDateTime now = new LocalDateTime();
 		//for debugging only,  if you don't have ACC but want to see some data changes 
-		p.rainLights = p.packetId == 0 ? (Math.random() < 0.1 ? 0 : 1) : p.rainLights;
+		p.lightsStage = p.packetId == 0 ? (Math.random() < 0.5 ? (Math.random() < 0.5 ? 0 : 1) : 2) : p.rainLights;
 		p.packetId = p.packetId == 0 ? now.getMillisOfDay() : p.packetId;
-		List<String> fields = new ArrayList<String>();
-		OutputMessage om = new OutputMessage(p, fields);
+		OutputMessage om = new OutputMessage(p, fieldsGraphics);
 		if (sessionGraphics != null && om != null)
 			sendText(sessionGraphics, om.content);
 	}
 
-	@Scheduled(fixedRate = 333)
+	@Scheduled(fixedRate = 200)
 	private void sendTextPhysics() {
 		ACCSharedMemory sh = new ACCSharedMemory();
-		String time = new SimpleDateFormat("HH:mm").format(new Date());
 		PageFilePhysics p = sh.getPageFilePhysics();
 		LocalDateTime now = new LocalDateTime();
 		p.packetId = p.packetId == 0 ? now.getMillisOfDay() : p.packetId;
-		List<String> fields = new ArrayList<String>();
-		OutputMessage om = new OutputMessage(p, fields);
-		//System.out.println(p.toJSON());
+		OutputMessage om = new OutputMessage(p, fieldsPhysics);
 		if (sessionPhysics != null && om != null)
 			sendText(sessionPhysics, om.content);
 	}
@@ -110,10 +116,8 @@ public class WebSocketControllerPage {
 	@Scheduled(fixedRate = 2000)
 	private void sendTextStatic() {
 		ACCSharedMemory sh = new ACCSharedMemory();
-		String time = new SimpleDateFormat("HH:mm").format(new Date());
 		PageFileStatic p = sh.getPageFileStatic();
-		List<String> fields = new ArrayList<String>();
-		OutputMessage om = new OutputMessage(p, fields);
+		OutputMessage om = new OutputMessage(p, fieldsStatic);
 		if (sessionStatic != null && om != null)
 			sendText(sessionStatic, om.content);
 	}
@@ -121,7 +125,7 @@ public class WebSocketControllerPage {
 	private void sendText(Session session, String message) {
 		RemoteEndpoint.Basic basic = session.getBasicRemote();
 		try {
-			System.out.println(message);
+			//System.out.println(message);
 			basic.sendText(message);
 		} catch (IOException e) {
 			e.printStackTrace();
