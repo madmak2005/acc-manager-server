@@ -22,7 +22,7 @@ Just open in any websocket client. You can use online site http://www.websocket.
 
 It is possible to filter JSON fields by sending message to the serwer through WebSocket session. For instance sending: 
 ```
-packetId,isInPitLane,TC,TCCut,EngineMap,ABS,fuelXLap,rainLights,flashingLights,lightsStage,wiperLV,normalizedCarPosition,lastSectorTime
+packetId,isInPit,isInPitLane,TC,TCCut,EngineMap,ABS,fuelXLap,rainLights,flashingLights,lightsStage,wiperLV,normalizedCarPosition,lastSectorTime
 ```
 message will filter JSON result to only selected fields:
 ```JSON
