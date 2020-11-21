@@ -20,6 +20,16 @@ Just open in any websocket client. You can use online site http://www.websocket.
 2. ws://x.x.x.x:8080/acc/physics (refresh rate 333 ms)
 3. ws://x.x.x.x:8080/acc/static (refresh rate 2000 ms)
 
+It is possible to filter JSON fields by sending message to the serwer through WebSocket session. For instance sending: 
+```
+packetId,isInPitLane,TC,TCCut,EngineMap,ABS,fuelXLap,rainLights,flashingLights,lightsStage,wiperLV,normalizedCarPosition,lastSectorTime
+```
+message will filter JSON result to only selected fields:
+```JSON
+{"packetId":41723291,"isInPit":1,"lastSectorTime":0,"normalizedCarPosition":0.56743,"isInPitLane":0,"TC":1,"TCCut":0,"EngineMap":1,"ABS":4,"fuelXLap":4.453,"rainLights":0,"flashingLights":0,"lightsStage":2,"wiperLV":0}
+```
+It can be done for each data type (graphics, physics, static).
+
 ## STOMP WebSockets
 There is a built-in small html client using STOMP webockets to tranfer physics and graphics data every 500 ms. Static every 10 s. You can access it by launching project and opening http://x.x.x.x:8080 in a web browser.
 If you want to use STOMP in your client here you have some important information:
