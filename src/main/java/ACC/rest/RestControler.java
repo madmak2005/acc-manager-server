@@ -1,24 +1,29 @@
-package ACC;
+package ACC.rest;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import ACC.sharedmemory.ACCSharedMemoryService;
+
 @RestController
 public class RestControler {
-	ACCSharedMemory sh = new ACCSharedMemory();
+	
+	@Autowired
+	ACCSharedMemoryService accSharedMemoryService; 
 	
 	@GetMapping("/SPageFileStatic")
 	public String getStaticJson() {
-		return sh.getPageFileStatic().toJSON();
+		return accSharedMemoryService.getPageFile("static").toJSON();
 	}
 	
 	@GetMapping("/SPageFilePhysics")
 	public String getPhysicsJson() {
-		return sh.getPageFilePhysics().toJSON();
+		return accSharedMemoryService.getPageFile("physics").toJSON();
 	}
 	
 	@GetMapping("/SPageFileGraphics")
 	public String getGraphicsJson() {
-		return sh.getPageFilePhysics().toJSON();
+		return accSharedMemoryService.getPageFile("graphics").toJSON();
 	}
 }

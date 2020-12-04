@@ -1,9 +1,6 @@
-package ACC;
+package ACC.model;
 
 import java.util.List;
-
-
-import ACC.model.Page;
 
 public class OutputMessage{
 	

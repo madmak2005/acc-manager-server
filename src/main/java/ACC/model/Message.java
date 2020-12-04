@@ -1,11 +1,11 @@
-package ACC;
+package ACC.model;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class Message {
-	Message(String message) {
+	public Message(String message) {
 		this.message = message;
 	}
 

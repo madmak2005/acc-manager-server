@@ -11,7 +11,6 @@ import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.ser.FilterProvider;
 import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
 import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
@@ -84,7 +83,20 @@ public class PageFileGraphics implements Page {
 	public int DriverStintTotalTimeLeft = 0;
 	public int DriverStintTimeLeft = 0;
 	public int rainTyres = 0;
-	
+	public float usedFuel = 0;
+    public String deltaLapTime = "";
+    public int iDeltaLapTime = 0;
+    public String estimatedLapTime = "";
+    public int iEstimatedLapTime = 0;
+    public int isDeltaPositive = 0;
+    public int iSplit = 0;
+    public int isValidLap = 0;
+    public float fuelEstimatedLaps = 0;
+    public String trackStatus = "";
+    public int missingMandatoryPits = 0;
+    public int directionLightsLeft = 0;
+    public int directionLightsRight = 0;
+    
 	@Override
 	public String toJSON() {
 		

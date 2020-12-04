@@ -10,7 +10,6 @@ import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.ser.FilterProvider;
 import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
 import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
@@ -139,7 +138,19 @@ public class PageFilePhysics implements Page {
 	   public float[] suspensionDamage = new float[4];
 	   @JsonIgnore
 	   public float[] tyreTemp = new float[4];
-	
+	   public float waterTemp = 0;
+		public float[] brakePressure = new float[4];
+		public int frontBrakeCompound = 0;
+		public int rearBrakeCompound = 0;
+		public float[] padLife = new float[4];
+		public float[] discLife = new float[4];
+		public int ignitionOn = 0;
+		public int starterEngineOn = 0;
+		public int isEngineRunning = 0;
+		public float kerbVibration = 0;
+		public float slipVibrations = 0;
+		public float gVibrations = 0;
+		public float absVibrations = 0;
 	   
 		public void fillFieldsHelper(Object source) {
 			List<Field> sourceFields = Arrays.asList(source.getClass().getDeclaredFields());

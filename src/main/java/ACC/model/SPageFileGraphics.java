@@ -64,7 +64,20 @@ public class SPageFileGraphics extends Structure {
                ,"wiperLV"
                ,"DriverStintTotalTimeLeft"
                ,"DriverStintTimeLeft"
-               ,"rainTyres");
+               ,"rainTyres",
+"usedFuel",
+"deltaLapTime",
+"iDeltaLapTime",
+"estimatedLapTime", 
+"iEstimatedLapTime",
+"isDeltaPositive",
+"iSplit",
+"isValidLap",
+"fuelEstimatedLaps", 
+"trackStatus",
+"missingMandatoryPits",
+"directionLightsLeft", 
+"directionLightsRight");
 	}
 
 	public int packetId = 0;
@@ -85,7 +98,7 @@ public class SPageFileGraphics extends Structure {
 	public int currentSectorIndex = 0;
 	public int lastSectorTime = 0;
 	public int numberOfLaps = 0;
-	public byte[] tyreCompound = new byte[66];;
+	public byte[] tyreCompound = new byte[66];
 	public float replayTimeMultiplier = 0;
 	public float normalizedCarPosition = 0;
 
@@ -122,5 +135,20 @@ public class SPageFileGraphics extends Structure {
 	public int DriverStintTotalTimeLeft = 0;
 	public int DriverStintTimeLeft = 0;
 	public int rainTyres = 0;
+	
+	public float usedFuel = 0;
+    public byte[] deltaLapTime = new byte[30];
+    public int iDeltaLapTime = 0;
+    public byte[] estimatedLapTime = new byte[30];
+    public int iEstimatedLapTime = 0;
+    public int isDeltaPositive = 0;
+    public int iSplit = 0;
+    public int isValidLap = 0;
+    public float fuelEstimatedLaps = 0;
+    public byte[] trackStatus = new byte[66];
+    public int missingMandatoryPits = 0;
+    public int directionLightsLeft = 0;
+    public int directionLightsRight = 0;
+    
 	
 }

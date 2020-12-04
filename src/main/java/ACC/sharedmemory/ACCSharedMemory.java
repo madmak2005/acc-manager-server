@@ -1,4 +1,4 @@
-package ACC;
+package ACC.sharedmemory;
 
 import java.nio.charset.Charset;
 
@@ -21,7 +21,7 @@ public class ACCSharedMemory{
 	private Pointer dStatic, dPhysics, dGraphics;
 	
 	public interface MyKernel32 extends Kernel32 {
-	    MyKernel32 INSTANCE = (MyKernel32)Native.load("kernel32", MyKernel32.class, W32APIOptions.DEFAULT_OPTIONS);
+	    MyKernel32 INSTANCE = Native.load("kernel32", MyKernel32.class, W32APIOptions.DEFAULT_OPTIONS);
 	    HANDLE OpenFileMapping(int dwDesiredAccess, boolean bInheritHandle, String lpName);
 	}
 	
@@ -31,10 +31,10 @@ public class ACCSharedMemory{
 		dStatic = Kernel32.INSTANCE.MapViewOfFile (hStatic, 0x4, 0, 0, 688);
 		
 		hPhysics = myKernel32.OpenFileMapping(0x4, true, "Local\\acpmf_physics");
-		dPhysics = Kernel32.INSTANCE.MapViewOfFile (hPhysics, 0x4, 0, 0, 712);
+		dPhysics = Kernel32.INSTANCE.MapViewOfFile (hPhysics, 0x4, 0, 0, 800);
 		
 		hGraphics = myKernel32.OpenFileMapping(0x4, true, "Local\\acpmf_graphics");
-		dGraphics = Kernel32.INSTANCE.MapViewOfFile (hGraphics, 0x4, 0, 0, 712);
+		dGraphics = Kernel32.INSTANCE.MapViewOfFile (hGraphics, 0x4, 0, 0, 1492);
 	}
 
 	public PageFileStatic getPageFileStatic() {
