@@ -138,7 +138,7 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
             		<source>15</source>
-            		<target>15</target>
+            		<target>14</target>
 					<forceJavacCompilerUse>true</forceJavacCompilerUse>
 					<parameters>true</parameters>
 				</configuration>
