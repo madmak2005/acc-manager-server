@@ -2,7 +2,7 @@
 This REST/ WebSocket server is used to download the data described in the "ACC Shared Memory" documentation. You need to have Assetto Corsa Competizione game to see the real data. 
 
 ## Java Version
-Java 14 just because of new 'Switch' format usage
+Java 15 just because of new 'Switch' format usage. BTW I like living on the edge :)
 
 ## How to start
 1. Use Spring Tool Suite
