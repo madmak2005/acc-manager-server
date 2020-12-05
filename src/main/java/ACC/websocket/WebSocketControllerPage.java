@@ -144,7 +144,7 @@ public class WebSocketControllerPage {
 
 	}
 
-	@Scheduled(fixedRate = 200)
+	@Scheduled(fixedRate = 50)
 	private void sendTextGraphics() {
 		OutputMessage om = accSharedMemoryService.getPageFileMessage("graphics", fieldsGraphics);
 		if (sessionGraphics != null && om != null) {
