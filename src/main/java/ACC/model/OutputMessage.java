@@ -91,20 +91,14 @@ public class OutputMessage {
 
 		public void run() {
 			File debugFolder = new File("debug");
+			if (!debugFolder.exists())
+				debugFolder.mkdir();
 			
 			try (SevenZOutputFile sevenZOutput = new SevenZOutputFile(new File(debugFolder.getAbsolutePath()+ "\\" +filename + ".7z"))) {
-
-				
-				if (!debugFolder.exists())
-					debugFolder.mkdir();
-				
 				File file = new File(filename);
-				File fileTmp = new File(debugFolder.getAbsolutePath()+ "\\" + "_" + filename);
+				File fileTmp = new File("_" + filename);
 				file.renameTo(fileTmp);
-				// Directory is not streamed, but its files are streamed into 7z file with
-				// folder in it's path
 				if (!file.isDirectory()) {
-					//System.out.println("Seven Zipping file - " + fileTmp);
 					try (FileInputStream fis = new FileInputStream(fileTmp)) {
 						SevenZArchiveEntry entry_1 = sevenZOutput.createArchiveEntry(fileTmp, fileTmp.toString());
 						sevenZOutput.putArchiveEntry(entry_1);
@@ -114,8 +108,6 @@ public class OutputMessage {
 						e.printStackTrace();
 					}
 				}
-
-				// Complete archive entry addition.
 				sevenZOutput.finish();
 				fileTmp.delete();
 			} catch (IOException e) {
