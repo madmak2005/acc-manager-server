@@ -26,6 +26,7 @@ import ACC.acm.MacroAction;
 import ACC.acm.MacroManagement;
 import ACC.model.Message;
 import ACC.model.OutputMessage;
+import ACC.model.PageFileStatistics;
 import ACC.sharedmemory.ACCSharedMemoryService;
 
 /**
@@ -48,10 +49,12 @@ public class WebSocketControllerPage {
 			.getApplicationContext().getBean("accSharedMemoryService");
 
 	private static Map<String, Session> livingSessions = new ConcurrentHashMap<String, Session>();
-	private static Session sessionGraphics, sessionPhysics, sessionStatic, sessionMacro;
+	private static Session sessionGraphics, sessionPhysics, sessionStatic, sessionMacro, sessionStatistics;
 	private static List<String> fieldsGraphics;
 	private static List<String> fieldsPhysics;
 	private static List<String> fieldsStatic;
+	private static List<String> fieldsStatistics;
+	private PageFileStatistics statistics = new PageFileStatistics();
 
 	/**
 	 * @param pageName one of 'graphics', 'physics', 'static' values
@@ -81,8 +84,13 @@ public class WebSocketControllerPage {
 			sessionMacro = session;
 			sendTextMacro();
 		}
+		case "statistics" -> {
+			sessionStatistics = session;
+			sendTextStatistics();
+		}
 		}
 	}
+
 
 	/**
 	 * @param page
@@ -144,7 +152,7 @@ public class WebSocketControllerPage {
 
 	}
 
-	@Scheduled(fixedRate = 50)
+	@Scheduled(fixedRate = 100)
 	private void sendTextGraphics() {
 		OutputMessage om = accSharedMemoryService.getPageFileMessage("graphics", fieldsGraphics);
 		if (sessionGraphics != null && om != null) {
@@ -152,14 +160,14 @@ public class WebSocketControllerPage {
 		}
 	}
 
-	@Scheduled(fixedRate = 200)
+	@Scheduled(fixedRate = 100)
 	private void sendTextPhysics() {
 		OutputMessage om = accSharedMemoryService.getPageFileMessage("physics", fieldsPhysics);
 		if (sessionPhysics != null && om != null)
 			sendText(sessionPhysics, om.content);
 	}
 
-	@Scheduled(fixedRate = 2000)
+	@Scheduled(fixedRate = 10000)
 	private void sendTextStatic() {
 		OutputMessage om = accSharedMemoryService.getPageFileMessage("static", fieldsStatic);
 		if (sessionStatic != null && om != null)
@@ -171,6 +179,17 @@ public class WebSocketControllerPage {
 		if (sessionMacro != null)
 			automaticCarManagementService.executeMacro();
 	}
+	
+	@Scheduled(fixedRate = 100)
+	private void sendTextStatistics() {
+		OutputMessage om = accSharedMemoryService.getPageFileMessage("statistics", fieldsStatistics);
+		if (sessionStatistics != null && om != null)
+			sendText(sessionStatistics, om.content);
+	}
+	
+	private void saveStatistics() {
+		statistics.saveToXLSX();
+	}
 
 	private void sendText(Session session, String message) {
 		RemoteEndpoint.Basic basic = session.getBasicRemote();
@@ -181,6 +200,8 @@ public class WebSocketControllerPage {
 			e.printStackTrace();
 		}
 	}
+	
+
 
 	@OnClose
 	public void onClose(@PathParam("page") String page, Session session) {

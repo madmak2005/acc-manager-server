@@ -96,6 +96,7 @@ public class PageFileStatic implements Page{
 	
 	public PageFileStatic(SPageFileStatic o) {
 		this.o = o;
+		setPageName("static");
 		fillFieldsHelper(o);
 	}
 
@@ -154,6 +155,21 @@ public class PageFileStatic implements Page{
 			Application.LOGGER.debug(e.toString());
 		}
 		return response;
+	}
+	
+	
+
+	@JsonIgnore
+	private String pageName;
+	
+	@Override
+	public String getPageName() {
+		return pageName;
+	}
+
+	@Override
+	public void setPageName(String pageName) {
+		this.pageName = pageName;
 	}
 	
 }

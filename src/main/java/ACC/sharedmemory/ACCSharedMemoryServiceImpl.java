@@ -9,6 +9,9 @@ import org.springframework.stereotype.Service;
 import ACC.model.PageFileGraphics;
 import ACC.model.PageFilePhysics;
 import ACC.model.PageFileStatic;
+import ACC.model.PageFileStatistics;
+import ACC.model.StatCar;
+import ACC.model.StatPoint;
 import ACC.model.OutputMessage;
 import ACC.model.Page;
 
@@ -31,7 +34,8 @@ public class ACCSharedMemoryServiceImpl implements ACCSharedMemoryService {
 		
 		Page page = switch(pageTyp) {
 		case "physics" : {
-			PageFilePhysics  p = sh.getPageFilePhysics();	
+			PageFilePhysics  p = sh.getPageFilePhysics();
+			p.brakeBias = p.packetId == 0 ? 56.90f : p.brakeBias;
 			p.packetId = p.packetId == 0 ? now.getMillisOfDay() : p.packetId;
 			yield p;
 		}
@@ -50,11 +54,81 @@ public class ACCSharedMemoryServiceImpl implements ACCSharedMemoryService {
 			PageFileStatic   s = sh.getPageFileStatic();
 			yield s;
 		}
+		case "statistics" : {
+			PageFileStatistics   s = getPageFileStatistics();
+			yield s;
+		}
 		default : yield null;
 		};
 		return page;
 		
 	}
+
+	private PageFileStatistics getPageFileStatistics() {
+		PageFileStatistics statistics = new PageFileStatistics();
+		StatPoint statPoint = getStatPoint();
+		if (statPoint != null) {
+			statPoint.car = getStatCar();
+			statistics.addStatPoint(statPoint);
+			statistics.sessions.forEach( (i,action) -> {
+			});
+				
+		}
+		
+		return statistics;
+	}
+
+	@Override
+	public StatPoint getStatPoint() {
+		StatPoint statPoint = new StatPoint();
+		
+		
+		PageFilePhysics  p = sh.getPageFilePhysics();
+		PageFileGraphics g = sh.getPageFileGraphics();
+		
+		
+		statPoint.normalizedCarPosition = g.normalizedCarPosition;
+		statPoint.currentSectorIndex = g.currentSectorIndex;
+		statPoint.iCurrentTime = g.iCurrentTime;
+		statPoint.isInPit = g.isInPit;
+		statPoint.isInPitLane = g.isInPitLane;
+		statPoint.lapNo = g.completedLaps;
+		statPoint.isValidLap = g.isValidLap;
+		statPoint.usedFuel = g.usedFuel;
+		statPoint.sessionIndex = g.session; 
+		statPoint.distanceTraveled = g.distanceTraveled;
+		statPoint.sessionTimeLeft = g.sessionTimeLeft;
+		
+		statPoint.currentMap = g.EngineMap;
+		
+		statPoint.airTemp = p.airTemp;
+		statPoint.brakeTemp = p.brakeTemp;
+		statPoint.carDamage = p.carDamage;
+		statPoint.discLife = p.discLife;
+		statPoint.fuel = p.fuel;
+		statPoint.padLife = p.padLife;
+		statPoint.roadTemp = p.roadTemp;
+		statPoint.speedKmh = p.speedKmh;
+		statPoint.tyreCoreTemperature = p.tyreCoreTemperature;
+		statPoint.tyreTempI = p.tyreTempI;
+		statPoint.tyreTempM = p.tyreTempM;
+		statPoint.tyreTempO = p.tyreTempO;
+		statPoint.wheelsPressure = p.wheelsPressure;
+		
+		return statPoint;
+	}
+
+	@Override
+	public StatCar getStatCar() {
+		PageFileStatic s = sh.getPageFileStatic();
+		StatCar car = new StatCar();
+		car.carModel = s.carModel;
+		car.maxFuel = s.maxFuel;
+		car.playerName = s.playerName;
+		car.track = s.track;
+		return car;
+	}
+	
 	
 	
 

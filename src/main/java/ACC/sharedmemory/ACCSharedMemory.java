@@ -11,9 +11,11 @@ import com.sun.jna.win32.W32APIOptions;
 import ACC.model.PageFileGraphics;
 import ACC.model.PageFilePhysics;
 import ACC.model.PageFileStatic;
+import ACC.model.PageFileStatistics;
 import ACC.model.SPageFileGraphics;
 import ACC.model.SPageFilePhysics;
 import ACC.model.SPageFileStatic;
+import ACC.model.StatPoint;
 
 public class ACCSharedMemory{
 	private final MyKernel32 myKernel32;
@@ -67,5 +69,6 @@ public class ACCSharedMemory{
 		Kernel32.INSTANCE.UnmapViewOfFile(hGraphics.getPointer());
 		myKernel32.CloseHandle(hGraphics);
 	}
+
 	
 }

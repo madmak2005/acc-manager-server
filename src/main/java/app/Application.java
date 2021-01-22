@@ -30,11 +30,18 @@ public class Application {
 
 	public static final Logger LOGGER=LoggerFactory.getLogger(Application.class);
 	
-
+	public static boolean debug = false;
 	
 		
 	public static void main(String[] args) {
 		SpringApplication.run(Application.class, args);
+        
+		for (String s: args) {
+            if (s.toUpperCase().equals("DEBUG")) {
+            	debug = true;
+            }
+        }
+        
 		showIP();
 	}
 	

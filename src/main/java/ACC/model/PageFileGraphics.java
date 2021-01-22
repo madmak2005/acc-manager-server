@@ -22,11 +22,13 @@ public class PageFileGraphics implements Page {
 	
 	public	PageFileGraphics(SPageFileGraphics o){
 		this.o = o;
+		setPageName("graphics");
 		fillFieldsHelper(o);
 	}
 	
 	@JsonIgnore
 	private Object o;
+
 
 	public int packetId = 0;
 	public int status = 0;
@@ -168,5 +170,20 @@ public class PageFileGraphics implements Page {
 		});
 		
 	}
+
+	@JsonIgnore
+	private String pageName;
+	
+	@Override
+	public String getPageName() {
+		return pageName;
+	}
+
+	@Override
+	public void setPageName(String pageName) {
+		this.pageName = pageName;
+	}
+
+
 }
 
