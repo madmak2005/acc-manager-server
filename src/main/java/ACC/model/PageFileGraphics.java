@@ -76,7 +76,7 @@ public class PageFileGraphics implements Page {
 	public int TCCut = 0;
 	public int EngineMap = 0;
 	public int ABS = 0;
-	public int fuelXLap = 0;
+	public float fuelXLap = 0;
 	public int rainLights = 0;
 	public int flashingLights = 0;
 	public int lightsStage = 0;
