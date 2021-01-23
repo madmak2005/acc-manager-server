@@ -122,7 +122,7 @@ public class PageFilePhysics implements Page {
 	   @JsonIgnore
 	   public int P2PStatus = 0;
 	   @JsonIgnore
-	   public int currentMaxRpm = 0;
+	   public float currentMaxRpm = 0;
 
 	   public float[] mz = new float[4];
 	   public float[] fx = new float[4];
