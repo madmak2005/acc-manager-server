@@ -85,7 +85,8 @@ public class PageFileGraphics implements Page {
 	public int DriverStintTotalTimeLeft = 0;
 	public int DriverStintTimeLeft = 0;
 	public int rainTyres = 0;
-	public float usedFuel = 0;
+	public int sessionIndex = 0;
+	public float usedFuel = 0.0f;
     public String deltaLapTime = "";
     public int iDeltaLapTime = 0;
     public String estimatedLapTime = "";
@@ -93,7 +94,7 @@ public class PageFileGraphics implements Page {
     public int isDeltaPositive = 0;
     public int iSplit = 0;
     public int isValidLap = 0;
-    public float fuelEstimatedLaps = 0;
+    public float fuelEstimatedLaps = 0.0f;
     public String trackStatus = "";
     public int missingMandatoryPits = 0;
     public int directionLightsLeft = 0;

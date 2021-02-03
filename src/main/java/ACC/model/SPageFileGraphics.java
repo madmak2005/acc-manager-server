@@ -65,19 +65,20 @@ public class SPageFileGraphics extends Structure {
                ,"DriverStintTotalTimeLeft"
                ,"DriverStintTimeLeft"
                ,"rainTyres",
-"usedFuel",
-"deltaLapTime",
-"iDeltaLapTime",
-"estimatedLapTime", 
-"iEstimatedLapTime",
-"isDeltaPositive",
-"iSplit",
-"isValidLap",
-"fuelEstimatedLaps", 
-"trackStatus",
-"missingMandatoryPits",
-"directionLightsLeft", 
-"directionLightsRight");
+                "sessionIndex",
+				"usedFuel",
+				"deltaLapTime",
+				"iDeltaLapTime",
+				"estimatedLapTime", 
+				"iEstimatedLapTime",
+				"isDeltaPositive",
+				"iSplit",
+				"isValidLap",
+				"fuelEstimatedLaps", 
+				"trackStatus",
+				"missingMandatoryPits",
+				"directionLightsLeft", 
+				"directionLightsRight");
 	}
 
 	public int packetId = 0;
@@ -135,7 +136,7 @@ public class SPageFileGraphics extends Structure {
 	public int DriverStintTotalTimeLeft = 0;
 	public int DriverStintTimeLeft = 0;
 	public int rainTyres = 0;
-	
+	public int sessionIndex = 0;
 	public float usedFuel = 0;
     public byte[] deltaLapTime = new byte[30];
     public int iDeltaLapTime = 0;
