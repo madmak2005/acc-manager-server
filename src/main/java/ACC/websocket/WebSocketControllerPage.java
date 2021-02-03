@@ -41,6 +41,7 @@ import ACC.sharedmemory.ACCSharedMemoryService;
  */
 @Controller
 @ServerEndpoint("/acc/{page}")
+
 public class WebSocketControllerPage {
 
 	private AutomaticCarManagementService automaticCarManagementService = (AutomaticCarManagementService) ApplicationContextAwareImpl
@@ -68,26 +69,26 @@ public class WebSocketControllerPage {
 		String sessionId = session.getId();
 		livingSessions.put(sessionId, session);
 		switch (pageName) {
-		case "graphics" -> {
+		case "graphics":
 			sessionGraphics = session;
 			sendTextGraphics();
-		}
-		case "physics" -> {
+			break;
+		case "physics":
 			sessionPhysics = session;
 			sendTextPhysics();
-		}
-		case "static" -> {
+			break;
+		case "static":
 			sessionStatic = session;
 			sendTextStatic();
-		}
-		case "macro" -> {
+			break;
+		case "macro":
 			sessionMacro = session;
 			sendTextMacro();
-		}
-		case "statistics" -> {
+			break;
+		case "statistics":
 			sessionStatistics = session;
 			sendTextStatistics();
-		}
+			break;
 		}
 	}
 

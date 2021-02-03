@@ -32,14 +32,16 @@ public class ACCSharedMemoryServiceImpl implements ACCSharedMemoryService {
 	public Page getPageFile(String pageTyp) {
 		LocalDateTime now = new LocalDateTime();
 		
-		Page page = switch(pageTyp) {
-		case "physics" : {
+		Page page = null;
+		switch(pageTyp) {
+		case "physics" : 
 			PageFilePhysics  p = sh.getPageFilePhysics();
 			p.brakeBias = p.packetId == 0 ? 56.90f : p.brakeBias;
 			p.packetId = p.packetId == 0 ? now.getMillisOfDay() : p.packetId;
-			yield p;
-		}
-		case "graphics" : {
+			page = p;
+			break;
+		
+		case "graphics" : 
 			PageFileGraphics g = sh.getPageFileGraphics();
 			Double sec = (double) now.getSecondOfMinute()/60;
 			Double mili = (double) now.getMillisOfSecond()/100000;
@@ -48,17 +50,18 @@ public class ACCSharedMemoryServiceImpl implements ACCSharedMemoryService {
 			g.lightsStage = g.packetId == 0 ? (Math.random() < 0.5 ? (Math.random() < 0.5 ? 0 : 1) : 2) : g.rainLights;
 			g.isInPit     = g.packetId == 0 ? now.getMinuteOfHour() % 2 : g.isInPit;
 			g.packetId    = g.packetId == 0 ? now.getMillisOfDay() : g.packetId;
-			yield g;
-		}
-		case "static" : {
+			page = g;
+			break;
+		
+		case "static" : 
 			PageFileStatic   s = sh.getPageFileStatic();
-			yield s;
-		}
-		case "statistics" : {
-			PageFileStatistics   s = getPageFileStatistics();
-			yield s;
-		}
-		default : yield null;
+			page = s;
+			break;
+		
+		case "statistics" : 
+			PageFileStatistics   ss = getPageFileStatistics();
+			page = ss;
+			break;
 		};
 		return page;
 		
