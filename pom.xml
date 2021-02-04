@@ -169,8 +169,7 @@
 				<configuration>
             		<source>8</source>
             		<target>8</target>
-            		<release>8</release>
-					<forceJavacCompilerUse>true</forceJavacCompilerUse>
+					<forceJavacCompilerUse>false</forceJavacCompilerUse>
 					<parameters>true</parameters>
 				</configuration>
 			</plugin>
