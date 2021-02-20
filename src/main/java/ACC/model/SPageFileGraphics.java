@@ -78,7 +78,21 @@ public class SPageFileGraphics extends Structure {
 				"trackStatus",
 				"missingMandatoryPits",
 				"directionLightsLeft", 
-				"directionLightsRight");
+				"directionLightsRight",
+				"GlobalYellow",
+                "GlobalYellow1",
+                "GlobalYellow2",
+                "GlobalYellow3",
+                "GlobalWhite",
+                "GlobalGreen",
+                "GlobalChequered",
+                "GlobalRed",
+                "mfdTyreSet",
+                "mfdFuelToAdd",
+                "mfdTyrePressureLF",
+                "mfdTyrePressureRF",
+                "mfdTyrePressureLR",
+                "mfdTyrePressureRR");
 	}
 
 	public int packetId = 0;
@@ -150,6 +164,19 @@ public class SPageFileGraphics extends Structure {
     public int missingMandatoryPits = 0;
     public int directionLightsLeft = 0;
     public int directionLightsRight = 0;
-    
+    public int GlobalYellow = 0;
+    public int GlobalYellow1 = 0;
+    public int GlobalYellow2 = 0;
+    public int GlobalYellow3 = 0;
+    public int GlobalWhite = 0;
+    public int GlobalGreen = 0;
+    public int GlobalChequered = 0;
+    public int GlobalRed = 0;
+    public int mfdTyreSet = 0;
+    public float mfdFuelToAdd = 0;
+    public float mfdTyrePressureLF = 0;
+    public float mfdTyrePressureRF = 0;
+    public float mfdTyrePressureLR = 0;
+    public float mfdTyrePressureRR = 0;
 	
 }

@@ -21,6 +21,11 @@ public class ACCSharedMemoryServiceImpl implements ACCSharedMemoryService {
 
 	
 	final ACCSharedMemory sh = new ACCSharedMemory();
+	PageFileStatistics statistics = new PageFileStatistics();
+	
+	PageFilePhysics  lastpp;
+	PageFileGraphics lastpg;
+
 	
 	@Override
 	public OutputMessage getPageFileMessage(String pageTyp, List<String> fieldsFilter) {
@@ -38,6 +43,8 @@ public class ACCSharedMemoryServiceImpl implements ACCSharedMemoryService {
 			PageFilePhysics  p = sh.getPageFilePhysics();
 			p.brakeBias = p.packetId == 0 ? 56.90f : p.brakeBias;
 			p.packetId = p.packetId == 0 ? now.getMillisOfDay() : p.packetId;
+
+			lastpp = p;
 			page = p;
 			break;
 		
@@ -50,6 +57,8 @@ public class ACCSharedMemoryServiceImpl implements ACCSharedMemoryService {
 			g.lightsStage = g.packetId == 0 ? (Math.random() < 0.5 ? (Math.random() < 0.5 ? 0 : 1) : 2) : g.rainLights;
 			g.isInPit     = g.packetId == 0 ? now.getMinuteOfHour() % 2 : g.isInPit;
 			g.packetId    = g.packetId == 0 ? now.getMillisOfDay() : g.packetId;
+
+			lastpg = g;
 			page = g;
 			break;
 		
@@ -68,7 +77,6 @@ public class ACCSharedMemoryServiceImpl implements ACCSharedMemoryService {
 	}
 
 	private PageFileStatistics getPageFileStatistics() {
-		PageFileStatistics statistics = new PageFileStatistics();
 		StatPoint statPoint = getStatPoint();
 		if (statPoint != null) {
 			statPoint.car = getStatCar();
@@ -77,7 +85,6 @@ public class ACCSharedMemoryServiceImpl implements ACCSharedMemoryService {
 			});
 				
 		}
-		
 		return statistics;
 	}
 
@@ -85,20 +92,22 @@ public class ACCSharedMemoryServiceImpl implements ACCSharedMemoryService {
 	public StatPoint getStatPoint() {
 		StatPoint statPoint = new StatPoint();
 		
+		if (lastpg != null && lastpp != null) {
 		
-		PageFilePhysics  p = sh.getPageFilePhysics();
-		PageFileGraphics g = sh.getPageFileGraphics();
-		
+		PageFilePhysics  p = lastpp;
+		PageFileGraphics g = lastpg;
 		
 		statPoint.normalizedCarPosition = g.normalizedCarPosition;
 		statPoint.currentSectorIndex = g.currentSectorIndex;
 		statPoint.iCurrentTime = g.iCurrentTime;
+		statPoint.iLastTime = g.iLastTime;
 		statPoint.isInPit = g.isInPit;
 		statPoint.isInPitLane = g.isInPitLane;
 		statPoint.lapNo = g.completedLaps;
 		statPoint.isValidLap = g.isValidLap;
 		statPoint.usedFuel = g.usedFuel;
-		statPoint.sessionIndex = g.session; 
+		statPoint.sessionIndex = g.sessionIndex;
+		statPoint.session = g.session;
 		statPoint.distanceTraveled = g.distanceTraveled;
 		statPoint.sessionTimeLeft = g.sessionTimeLeft;
 		
@@ -117,7 +126,7 @@ public class ACCSharedMemoryServiceImpl implements ACCSharedMemoryService {
 		statPoint.tyreTempM = p.tyreTempM;
 		statPoint.tyreTempO = p.tyreTempO;
 		statPoint.wheelsPressure = p.wheelsPressure;
-		
+		}
 		return statPoint;
 	}
 

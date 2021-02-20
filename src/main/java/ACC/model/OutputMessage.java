@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
@@ -14,10 +15,20 @@ import java.util.List;
 import org.apache.commons.compress.archivers.sevenz.SevenZArchiveEntry;
 import org.apache.commons.compress.archivers.sevenz.SevenZOutputFile;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
 import app.Application;
 
 public class OutputMessage {
-
+	public String content;
+	public Page page;
+	public List<String> fields;
+	protected long timestamp;
+	protected String pageName;
+	
 	@SuppressWarnings("unused")
 	private String getContent() {
 		return content;
@@ -30,9 +41,13 @@ public class OutputMessage {
 
 	public OutputMessage(Page page, List<String> fields) {
 		super();
-		saveText(page.getPageName(), page.toJSON());
 		this.page = page;
 		this.fields = fields;
+		this.timestamp = ZonedDateTime.now().toInstant().toEpochMilli();
+		this.pageName = page.getPageName();
+		if (Application.debug) 
+			savePage();
+		
 		if (fields == null || fields.size() == 0)
 			this.content = page.toJSON();
 		else
@@ -44,16 +59,12 @@ public class OutputMessage {
 		this.content = content;
 	}
 
-	public String content;
-	public Page page;
-	public List<String> fields;
 
-	private void saveText(String pageName, String message) {
-		if (Application.debug) {
+
+	private void saveText(String message) {
 			try {
 				String pattern = "yyyy_MM_dd_HH_mm";
 				DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
-				;
 				LocalDateTime now = LocalDateTime.now();
 				String nowDate = now.format(formatter);
 
@@ -70,15 +81,26 @@ public class OutputMessage {
 
 				File lastMinuteFile = new File(lastMinuteDate + "_" + pageName + ".json");
 				if (lastMinuteFile.exists()) {
-					Compress compress7zip = new Compress(lastMinuteFile.getName());
-					Thread t = new Thread(compress7zip);
-					t.start();
+					if (!Application.useDebug) {
+						Compress compress7zip = new Compress(lastMinuteFile.getName());
+						Thread t = new Thread(compress7zip);
+						t.start();
+					}
 				}
 
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-		}
+	}
+	
+	private void savePage() {
+		Gson gson = new Gson();
+		String json = gson.toJson(this);
+		JsonObject jsonObject = new JsonParser().parse(json).getAsJsonObject();
+		if (this.pageName == "statistics")
+			jsonObject.getAsJsonObject("page").remove("statPoints");
+		saveText(jsonObject.toString());
+
 	}
 
 	class Compress implements Runnable {

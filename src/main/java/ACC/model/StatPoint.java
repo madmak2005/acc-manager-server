@@ -3,8 +3,10 @@ package ACC.model;
 public class StatPoint {
 	public int 		lapNo = 0;
 	public int 		sessionIndex = 0;
+	public int 		session = 0;
 	public float 	normalizedCarPosition = 0;       //Current player position
 	public int   	iCurrentTime = 0;   //Current lap time in milliseconds
+	public int   	iLastTime = 0;   //Current lap time in milliseconds
 	
 	public int 		isInPit = 0;		//Car is pitting
 	public int 		isInPitLane = 0;	//Car is in pit lane

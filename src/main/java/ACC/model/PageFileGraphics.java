@@ -26,6 +26,11 @@ public class PageFileGraphics implements Page {
 		fillFieldsHelper(o);
 	}
 	
+	public	PageFileGraphics(String jsonString){
+		setPageName("graphics");
+		
+	}
+	
 	@JsonIgnore
 	private Object o;
 
@@ -99,6 +104,21 @@ public class PageFileGraphics implements Page {
     public int missingMandatoryPits = 0;
     public int directionLightsLeft = 0;
     public int directionLightsRight = 0;
+    public int GlobalYellow = 0;
+    public int GlobalYellow1 = 0;
+    public int GlobalYellow2 = 0;
+    public int GlobalYellow3 = 0;
+    public int GlobalWhite = 0;
+    public int GlobalGreen = 0;
+    public int GlobalChequered = 0;
+    public int GlobalRed = 0;
+    public int mfdTyreSet = 0;
+    public float mfdFuelToAdd = 0;
+    public float mfdTyrePressureLF = 0;
+    public float mfdTyrePressureRF = 0;
+    public float mfdTyrePressureLR = 0;
+    public float mfdTyrePressureRR = 0;
+
     
 	@Override
 	public String toJSON() {
@@ -183,6 +203,17 @@ public class PageFileGraphics implements Page {
 	@Override
 	public void setPageName(String pageName) {
 		this.pageName = pageName;
+	}
+	
+	public static PageFileGraphics fromJSON(String jsonString) {
+		PageFileGraphics pg = null;
+		try {
+			pg = new ObjectMapper().readValue(jsonString, PageFileGraphics.class);
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+		}
+		return pg;
+		
 	}
 
 

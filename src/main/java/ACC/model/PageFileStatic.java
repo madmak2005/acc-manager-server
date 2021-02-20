@@ -93,6 +93,8 @@ public class PageFileStatic implements Page{
 	public int PitWindowStart = 0;
 	public int PitWindowEnd = 0;
 	public int isOnline = 0;
+	public String dryTyresName = "";
+	public String wetTyresName = "";
 	
 	public PageFileStatic(SPageFileStatic o) {
 		this.o = o;

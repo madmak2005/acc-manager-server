@@ -2,7 +2,7 @@
 This REST/ WebSocket server is used to download the data described in the "ACC Shared Memory" documentation. You need to have Assetto Corsa Competizione game to see the real data. 
 
 ## Java Version
-Java 1.8 and newer
+Java 1.8 and newer. I tested it on Java 15 and I noticed that it uses 3x less memory compared to Java 1.8.
 
 ## How to start
 1. Use Spring Tool Suite

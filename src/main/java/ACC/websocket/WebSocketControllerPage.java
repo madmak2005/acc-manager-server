@@ -28,6 +28,7 @@ import ACC.model.Message;
 import ACC.model.OutputMessage;
 import ACC.model.PageFileStatistics;
 import ACC.sharedmemory.ACCSharedMemoryService;
+import app.Application;
 
 /**
  * This class allows to open websocket session to receive data of
@@ -68,6 +69,7 @@ public class WebSocketControllerPage {
 		System.out.println("openSession " + pageName);
 		String sessionId = session.getId();
 		livingSessions.put(sessionId, session);
+		
 		switch (pageName) {
 		case "graphics":
 			sessionGraphics = session;
@@ -181,7 +183,8 @@ public class WebSocketControllerPage {
 			automaticCarManagementService.executeMacro();
 	}
 	
-	@Scheduled(fixedRate = 100)
+	
+	@Scheduled(fixedRateString = "#{@applicationPropertyService.getApplicationProperty()}")
 	private void sendTextStatistics() {
 		OutputMessage om = accSharedMemoryService.getPageFileMessage("statistics", fieldsStatistics);
 		if (sessionStatistics != null && om != null)
@@ -220,6 +223,10 @@ public class WebSocketControllerPage {
 		if (sessionStatic != null && sessionStatic.getId() == session.getId()) {
 			System.out.println("onClose sessionStatic");
 			sessionStatic = null;
+		}
+		if (sessionStatistics != null && sessionStatistics.getId() == session.getId()) {
+			System.out.println("onClose sessionStatistics");
+			sessionStatistics = null;
 		}
 
 		livingSessions.remove(sessionId);

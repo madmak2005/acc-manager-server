@@ -68,6 +68,9 @@ public class SPageFileStatic extends Structure {
 				,"PitWindowStart"
 				,"PitWindowEnd"
 				,"isOnline"
+				,"dryTyresName"
+				,"wetTyresName"
+				
 				);
 	}
 	
@@ -132,7 +135,9 @@ public class SPageFileStatic extends Structure {
 	public int PitWindowStart = 0;
 	public int PitWindowEnd = 0;
 	public int isOnline = 0;
-
+	public byte[] dryTyresName = new byte[66];
+	public byte[] wetTyresName = new byte[66];
+	
 }
 
 
