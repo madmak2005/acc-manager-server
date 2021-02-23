@@ -62,7 +62,7 @@ public class PageFileGraphics implements Page {
 	public int[] carID = new int[60];
 	public int playerCarID = 0;
 	public float penaltyTime = 0;
-	public int flag = AC_FLAG_TYPE.AC_NO_FLAG;
+	public int flag = AC_FLAG_TYPE.ACC_NO_FLAG;
 	public int penalty = AC_PENALTYSHOTCUT.None;
 	public int idealLineOn = 0;
 	public int isInPitLane = 0;

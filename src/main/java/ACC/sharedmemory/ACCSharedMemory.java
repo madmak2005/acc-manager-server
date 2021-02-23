@@ -17,7 +17,7 @@ import com.sun.jna.win32.W32APIOptions;
 import ACC.model.PageFileGraphics;
 import ACC.model.PageFilePhysics;
 import ACC.model.PageFileStatic;
-
+import ACC.model.PageFileStatistics;
 import ACC.model.SPageFileGraphics;
 import ACC.model.SPageFilePhysics;
 import ACC.model.SPageFileStatic;
@@ -27,7 +27,8 @@ import me.tongfei.progressbar.ProgressBar;
 
 import org.apache.commons.compress.archivers.sevenz.SevenZArchiveEntry;
 import org.apache.commons.compress.archivers.sevenz.SevenZFile;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -38,7 +39,8 @@ public class ACCSharedMemory {
 	private final MyKernel32 myKernel32;
 	private HANDLE hStatic, hPhysics, hGraphics;
 	private Pointer dStatic, dPhysics, dGraphics;
-
+	private static final Logger LOGGER = LoggerFactory.getLogger(PageFileStatistics.class);
+	
 	List<PageFileGraphics> pageFileGraphicsList = new ArrayList<PageFileGraphics>();
 	List<PageFilePhysics> pageFilePhysicsList = new ArrayList<PageFilePhysics>();
 	List<PageFileStatic> pageFileStaticList = new ArrayList<PageFileStatic>();
@@ -55,13 +57,13 @@ public class ACCSharedMemory {
 	public ACCSharedMemory() {
 		myKernel32 = MyKernel32.INSTANCE;
 		hStatic = myKernel32.OpenFileMapping(0x4, true, "Local\\acpmf_static");
-		dStatic = Kernel32.INSTANCE.MapViewOfFile(hStatic, 0x4, 0, 0, 688);
+		dStatic = Kernel32.INSTANCE.MapViewOfFile(hStatic, 0x4, 0, 0, 820);
 
 		hPhysics = myKernel32.OpenFileMapping(0x4, true, "Local\\acpmf_physics");
 		dPhysics = Kernel32.INSTANCE.MapViewOfFile(hPhysics, 0x4, 0, 0, 800);
 
 		hGraphics = myKernel32.OpenFileMapping(0x4, true, "Local\\acpmf_graphics");
-		dGraphics = Kernel32.INSTANCE.MapViewOfFile(hGraphics, 0x4, 0, 0, 1492);
+		dGraphics = Kernel32.INSTANCE.MapViewOfFile(hGraphics, 0x4, 0, 0, 1548);
 
 		if (Application.useDebug) {
 			decompress();
@@ -75,6 +77,7 @@ public class ACCSharedMemory {
 		if (Application.useDebug && pageFileStaticIterator.hasNext()) {
 			PageFileStatic ps = pageFileStaticIterator.next();
 			if (!pageFileStaticIterator.hasNext()) {
+				LOGGER.info("here we go again (Static)");
 				pageFileStaticIterator = pageFileStaticList.iterator();
 			}
 			ps.setPageName("static");
@@ -89,9 +92,9 @@ public class ACCSharedMemory {
 
 	public PageFilePhysics getPageFilePhysics() {
 		if (Application.useDebug && pageFilePhysicsIterator.hasNext()) {
-			PageFilePhysics pp;
-			pp = pageFilePhysicsIterator.next();
+			PageFilePhysics pp = pageFilePhysicsIterator.next();
 			if (!pageFilePhysicsIterator.hasNext()) {
+				LOGGER.info("here we go again (Physics)");
 				pageFilePhysicsIterator = pageFilePhysicsList.iterator();
 			}
 			pp.setPageName("physics");
@@ -110,6 +113,7 @@ public class ACCSharedMemory {
 			PageFileGraphics pg;
 			pg = pageFileGraphicsIterator.next();
 			if (!pageFileGraphicsIterator.hasNext()) {
+				LOGGER.info("here we go again (Graphics)");
 				pageFileGraphicsIterator = pageFileGraphicsList.iterator();
 			}
 			pg.setPageName("graphics");

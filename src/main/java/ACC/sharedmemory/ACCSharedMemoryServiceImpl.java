@@ -25,7 +25,7 @@ public class ACCSharedMemoryServiceImpl implements ACCSharedMemoryService {
 	
 	PageFilePhysics  lastpp;
 	PageFileGraphics lastpg;
-
+	PageFileStatic   lastps;
 	
 	@Override
 	public OutputMessage getPageFileMessage(String pageTyp, List<String> fieldsFilter) {
@@ -64,6 +64,7 @@ public class ACCSharedMemoryServiceImpl implements ACCSharedMemoryService {
 		
 		case "static" : 
 			PageFileStatic   s = sh.getPageFileStatic();
+			lastps = s;
 			page = s;
 			break;
 		
@@ -97,6 +98,7 @@ public class ACCSharedMemoryServiceImpl implements ACCSharedMemoryService {
 		PageFilePhysics  p = lastpp;
 		PageFileGraphics g = lastpg;
 		
+		
 		statPoint.normalizedCarPosition = g.normalizedCarPosition;
 		statPoint.currentSectorIndex = g.currentSectorIndex;
 		statPoint.iCurrentTime = g.iCurrentTime;
@@ -106,11 +108,12 @@ public class ACCSharedMemoryServiceImpl implements ACCSharedMemoryService {
 		statPoint.lapNo = g.completedLaps;
 		statPoint.isValidLap = g.isValidLap;
 		statPoint.usedFuel = g.usedFuel;
+		statPoint.fuelXlap = g.fuelXLap;
 		statPoint.sessionIndex = g.sessionIndex;
 		statPoint.session = g.session;
 		statPoint.distanceTraveled = g.distanceTraveled;
 		statPoint.sessionTimeLeft = g.sessionTimeLeft;
-		
+		statPoint.flag = g.flag;
 		statPoint.currentMap = g.EngineMap;
 		
 		statPoint.airTemp = p.airTemp;
@@ -132,7 +135,7 @@ public class ACCSharedMemoryServiceImpl implements ACCSharedMemoryService {
 
 	@Override
 	public StatCar getStatCar() {
-		PageFileStatic s = sh.getPageFileStatic();
+		PageFileStatic   s = lastps;
 		StatCar car = new StatCar();
 		car.carModel = s.carModel;
 		car.maxFuel = s.maxFuel;

@@ -26,8 +26,8 @@ public class OutputMessage {
 	public String content;
 	public Page page;
 	public List<String> fields;
-	protected long timestamp;
-	protected String pageName;
+	protected long timestamp = 0;
+	protected String pageName = "";
 	
 	@SuppressWarnings("unused")
 	private String getContent() {
@@ -45,13 +45,19 @@ public class OutputMessage {
 		this.fields = fields;
 		this.timestamp = ZonedDateTime.now().toInstant().toEpochMilli();
 		this.pageName = page.getPageName();
-		if (Application.debug) 
-			savePage();
+		if (Application.debug && page !=null ) {
+			if (Application.useDebug) {
+				if (pageName.equals("statistics") || pageName.equals("graphics")) savePage();
+			} else
+				savePage();
+		}
 		
 		if (fields == null || fields.size() == 0)
 			this.content = page.toJSON();
 		else
 			this.content = page.toJSON(fields);
+		
+
 	}
 
 	public OutputMessage(String content) {

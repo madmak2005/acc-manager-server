@@ -8,11 +8,14 @@ public class StatPoint {
 	public int   	iCurrentTime = 0;   //Current lap time in milliseconds
 	public int   	iLastTime = 0;   //Current lap time in milliseconds
 	
+	public int		flag = 0;
+	
 	public int 		isInPit = 0;		//Car is pitting
 	public int 		isInPitLane = 0;	//Car is in pit lane
 	
 	public float 	fuel = 0;			//Amount of fuel remaining in kg
 	public float 	usedFuel = 0;		//Used fuel since last time refueling
+	public float	fuelXlap = 0;
 	
 	public float 	airTemp = 0;		//Air temperature
 	public float 	roadTemp = 0;		//Road temperature

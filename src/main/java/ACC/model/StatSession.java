@@ -25,6 +25,9 @@ public class StatSession {
 	public float fuelAVG3Laps = 0;
 	public float fuelAVG5Laps = 0;
 	
+	public int avgLapTime3 = 0;
+	public int avgLapTime5 = 0;
+	
 	public float fuelNTFOnEnd = 0;
 	public float fuelEFNMinutesOnEnd = 0;
 	public float fuelEFNLapsOnEnd = 0;

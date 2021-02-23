@@ -155,7 +155,7 @@ public class WebSocketControllerPage {
 
 	}
 
-	@Scheduled(fixedRate = 100)
+	@Scheduled(fixedRateString = "#{@applicationPropertyService.getApplicationProperty()}")
 	private void sendTextGraphics() {
 		OutputMessage om = accSharedMemoryService.getPageFileMessage("graphics", fieldsGraphics);
 		if (sessionGraphics != null && om != null) {
@@ -163,7 +163,7 @@ public class WebSocketControllerPage {
 		}
 	}
 
-	@Scheduled(fixedRate = 100)
+	@Scheduled(fixedRateString = "#{@applicationPropertyService.getApplicationProperty()}")
 	private void sendTextPhysics() {
 		OutputMessage om = accSharedMemoryService.getPageFileMessage("physics", fieldsPhysics);
 		if (sessionPhysics != null && om != null)

@@ -19,6 +19,7 @@ public class StatLap {
 	public float fuelLeftOnStart = 0;
 	public float fuelLeftOnEnd = 0;
 	public float fuelAVGPerMinute = 0;
+	public float fuelXlap = 0;
 	public Map<Integer,Integer> maps = new HashMap<>();
 	public int rainTyres;	//Are rain tyres equipped
 	public boolean isValidLap = true;

@@ -6,9 +6,12 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.core.env.Environment;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 
 import org.slf4j.Logger;
@@ -20,20 +23,19 @@ import org.slf4j.LoggerFactory;
 @EnableWebSocket
 @ComponentScan(basePackages = { "ACC", "virtualKeyboard" })
 public class Application {
-	public static final Logger LOGGER=LoggerFactory.getLogger(Application.class);
-	
+
+	public static Logger LOGGER=LoggerFactory.getLogger(Application.class);
 	public static boolean debug = false;
 	public static boolean useDebug = false;
-		
+
 	public static void main(String[] args) {
-		
-        
 		for (String s: args) {
             if (s.toUpperCase().equals("DEBUG")) {
+            	LOGGER.info("DEBUG: save data to json files");
             	debug = true;
             }
             if (s.toUpperCase().equals("USEDEBUG")) {
-            	LOGGER.debug("USE DEBUG");
+            	LOGGER.info("USE DEBUG: ");
             	useDebug = true;
             }
             
@@ -47,13 +49,17 @@ public class Application {
 		try(final DatagramSocket socket = new DatagramSocket()){
 			  socket.connect(InetAddress.getByName("8.8.8.8"), 10002);
 			  String ip = socket.getLocalAddress().getHostAddress();
-			  
-			  System.out.println("=========================");
-			  System.out.println("My IP: " + ip);
-			  System.out.println("=========================");
+			  String port = "8080";
+			  LOGGER.info("=========================================");
+			  LOGGER.info("In mobile application enter:");
+			  LOGGER.info("IP: " + ip);
+			  LOGGER.info("PORT: " + port);
+			  LOGGER.info("=========================================");
+			  LOGGER.info("In webbrowser: http://localhost:" + port);
+			  LOGGER.info("=========================================");
 
 			} catch (SocketException | UnknownHostException e) {
-				System.out.println(e);
+				LOGGER.error(e.toString());
 			}
 	}
 	
