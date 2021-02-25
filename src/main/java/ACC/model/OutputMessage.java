@@ -14,6 +14,8 @@ import java.util.List;
 
 import org.apache.commons.compress.archivers.sevenz.SevenZArchiveEntry;
 import org.apache.commons.compress.archivers.sevenz.SevenZOutputFile;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -23,11 +25,12 @@ import com.google.gson.JsonParser;
 import app.Application;
 
 public class OutputMessage {
-	public String content;
+	public String content = "";
 	public Page page;
 	public List<String> fields;
 	protected long timestamp = 0;
-	protected String pageName = "";
+	private String pageName = "";
+	private static final Logger LOGGER = LoggerFactory.getLogger(PageFileStatistics.class);
 	
 	@SuppressWarnings("unused")
 	private String getContent() {
@@ -45,11 +48,11 @@ public class OutputMessage {
 		this.fields = fields;
 		this.timestamp = ZonedDateTime.now().toInstant().toEpochMilli();
 		this.pageName = page.getPageName();
-		if (Application.debug && page !=null ) {
+		if (Application.debug && page != null ) {
 			if (Application.useDebug) {
-				if (pageName.equals("statistics") || pageName.equals("graphics")) savePage();
+				if (pageName.equals("statistics") || pageName.equals("graphics")) savePage(page);
 			} else
-				savePage();
+				savePage(page);
 		}
 		
 		if (fields == null || fields.size() == 0)
@@ -99,12 +102,14 @@ public class OutputMessage {
 			}
 	}
 	
-	private void savePage() {
-		Gson gson = new Gson();
-		String json = gson.toJson(this);
-		JsonObject jsonObject = new JsonParser().parse(json).getAsJsonObject();
-		if (this.pageName == "statistics")
-			jsonObject.getAsJsonObject("page").remove("statPoints");
+	private void savePage(Page page) {
+		//Gson gson = new Gson();
+		//LOGGER.info(page.getPageName());
+		//String json = page.toJSON();
+		JsonObject jsonObject = JsonParser.parseString(page.toJSON()).getAsJsonObject();
+		//LOGGER.info(jsonObject.toString());
+		//if (page.getPageName().equals("statistics"))
+		//	jsonObject.getAsJsonObject("page").remove("statPoints");
 		saveText(jsonObject.toString());
 
 	}

@@ -103,6 +103,8 @@ public class ACCSharedMemoryServiceImpl implements ACCSharedMemoryService {
 		statPoint.currentSectorIndex = g.currentSectorIndex;
 		statPoint.iCurrentTime = g.iCurrentTime;
 		statPoint.iLastTime = g.iLastTime;
+		statPoint.iSplit = g.iSplit;
+		statPoint.lastSectorTime = g.lastSectorTime;
 		statPoint.isInPit = g.isInPit;
 		statPoint.isInPitLane = g.isInPitLane;
 		statPoint.lapNo = g.completedLaps;

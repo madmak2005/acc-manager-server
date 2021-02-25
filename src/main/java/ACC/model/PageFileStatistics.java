@@ -80,6 +80,7 @@ public class PageFileStatistics implements Page {
 							System.out.println(gson.toJson(session));
 							session = null;
 						}
+						
 						if (prevStatPoint.usedFuel > statPoint.usedFuel 
 								&& prevStatPoint.distanceTraveled > statPoint.distanceTraveled 
 								&& prevStatPoint.lapNo == statPoint.lapNo
@@ -89,7 +90,17 @@ public class PageFileStatistics implements Page {
 							Gson gson = new Gson();
 							System.out.println(gson.toJson(session));
 							session = null;
-						}
+						} else
+							if (prevStatPoint.distanceTraveled > statPoint.distanceTraveled) {
+								LOGGER.info("NEW SESSION??");
+								sessions.clear();
+								Gson gson = new Gson();
+								System.out.println(gson.toJson(session));
+								session = null;
+							}
+						
+						
+						
 						if (statPoint.flag == AC_FLAG_TYPE.ACC_GREEN_FLAG && prevStatPoint.flag == AC_FLAG_TYPE.ACC_NO_FLAG) {
 							Gson gson = new Gson();
 							System.out.println(gson.toJson(session));
@@ -129,7 +140,6 @@ public class PageFileStatistics implements Page {
 							     	previous = Instant.now();
 							     }
 							}
-							
 							statPoints = new ArrayList<>();
 							statPoints.add(statPoint);
 							// init new lap, we don't have it in current session
@@ -149,7 +159,8 @@ public class PageFileStatistics implements Page {
 									session.bestLap = prevLap;
 								else
 									session.bestLap = session.bestLap.lapTime < prevLap.lapTime ? session.bestLap : prevLap;
-								 
+								prevLap.lapTime =  statPoint.iLastTime;
+								prevLap.splitTimes.put(prevStatPoint.currentSectorIndex, statPoint.iLastTime);
 								prevLap.fuelLeftOnEnd = statPoint.fuel;
 								session.laps.put(statPoint.sessionIndex, prevLap);
 								LOGGER.info("Race start at [ms]: " + String.valueOf(raceStartAt));
@@ -175,6 +186,13 @@ public class PageFileStatistics implements Page {
 
 							}
 						}
+						if (statPoint.currentSectorIndex != prevStatPoint.currentSectorIndex) {
+							if (statPoint.currentSectorIndex > prevStatPoint.currentSectorIndex) {
+								lap.splitTimes.put(prevStatPoint.currentSectorIndex, statPoint.lastSectorTime);
+							}
+						}
+							//lap.splitTimes.put(statPoint.currentSectorIndex, statPoint.iSplit);
+						
 						session.currentLap = lap;
 						lap.lapNo = statPoint.lapNo;
 						lap.distanceTraveled = statPoint.distanceTraveled;

@@ -12,7 +12,7 @@ public class StatLap {
 	public int 		lapTime = 0;
 	public float 	distanceTraveled = 0;
 	
-	public List<Integer> splitTimes = new ArrayList<>();
+	public Map<Integer,Integer> splitTimes = new HashMap<>();
 	
 	public float fuelAdded = 0;
 	public float fuelUsed = 0;

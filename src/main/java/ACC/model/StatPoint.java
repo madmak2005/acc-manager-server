@@ -7,7 +7,7 @@ public class StatPoint {
 	public float 	normalizedCarPosition = 0;       //Current player position
 	public int   	iCurrentTime = 0;   //Current lap time in milliseconds
 	public int   	iLastTime = 0;   //Current lap time in milliseconds
-	
+	public int   	iSplit = 0;
 	public int		flag = 0;
 	
 	public int 		isInPit = 0;		//Car is pitting
@@ -21,6 +21,7 @@ public class StatPoint {
 	public float 	roadTemp = 0;		//Road temperature
 	
 	public int 		currentSectorIndex = 0;
+	public int 		lastSectorTime = 0;
 	
 	public float[] 	carDamage = new float[5];
 	public float[] 	brakeTemp = new float[4]; 		   //Brake discs temperatures
