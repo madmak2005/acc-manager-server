@@ -666,7 +666,7 @@ public class PageFileStatistics implements Page {
 				int c = 22;
 				int sum = 0;
 				float percent = 0;
-				while (iteratorLap.hasNext()) {
+				while (iteratorMap.hasNext()) {
 					Map.Entry<Integer, Integer> map = iteratorMap.next();
 					sum += map.getValue().intValue();
 				}
