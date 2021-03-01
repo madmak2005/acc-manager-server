@@ -102,6 +102,7 @@ public class PageFileGraphics implements Page {
     public float fuelEstimatedLaps = 0.0f;
     public String trackStatus = "";
     public int missingMandatoryPits = 0;
+    public float clock = 0;
     public int directionLightsLeft = 0;
     public int directionLightsRight = 0;
     public int GlobalYellow = 0;

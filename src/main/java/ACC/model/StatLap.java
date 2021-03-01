@@ -30,6 +30,8 @@ public class StatLap {
 	public float pFL, pFR, pRL, pRR = 0;
 	public float tFL, tFR, tRL, tRR = 0;
 	
+	public float clockAtStart = 0;
+	
 	public float rainIntensity = 0;
 	public float trackGripStatus = 0;
 	public String trackStatus = "";

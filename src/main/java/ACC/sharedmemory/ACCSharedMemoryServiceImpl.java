@@ -120,6 +120,7 @@ public class ACCSharedMemoryServiceImpl implements ACCSharedMemoryService {
 		statPoint.rainIntensity = g.rainIntensity;
 		statPoint.trackGripStatus = g.trackGripStatus;
 		statPoint.trackStatus = g.trackStatus;
+		statPoint.clock	=	g.clock;
 		
 		statPoint.airTemp = p.airTemp;
 		statPoint.brakeTemp = p.brakeTemp;

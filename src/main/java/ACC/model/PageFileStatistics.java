@@ -52,11 +52,13 @@ public class PageFileStatistics implements Page {
 	private static final Logger LOGGER = LoggerFactory.getLogger(PageFileStatistics.class);
 
 	private List<StatPoint> statPoints = new ArrayList<>();
-	private List<Float> pFL = new ArrayList<>(), pFR = new ArrayList<>(), pRL = new ArrayList<>(), pRR = new ArrayList<>();
-	private List<Float> tFL = new ArrayList<>(), tFR = new ArrayList<>(), tRL = new ArrayList<>(), tRR = new ArrayList<>();
+	private List<Float> pFL = new ArrayList<>(), pFR = new ArrayList<>(), pRL = new ArrayList<>(),
+			pRR = new ArrayList<>();
+	private List<Float> tFL = new ArrayList<>(), tFR = new ArrayList<>(), tRL = new ArrayList<>(),
+			tRR = new ArrayList<>();
 	private List<Integer> rainIntensity = new ArrayList<>();
 	private List<Integer> trackGripStatus = new ArrayList<>();
-	
+
 	public Map<Integer, StatSession> sessions = new HashMap<>();
 	public StatSession currentSession = new StatSession();
 	private float fuelBeforePit = 0;
@@ -66,7 +68,7 @@ public class PageFileStatistics implements Page {
 	protected Instant previous, current;
 	protected int raceStartAt = 0;
 	protected Integer sessionCounter = 0;
-	
+
 	public void addStatPoint(StatPoint statPoint) {
 
 		if (statPoint.iCurrentTime != 0) {
@@ -75,7 +77,7 @@ public class PageFileStatistics implements Page {
 				prevStatPoint = statPoints.get(statPoints.size() - 1);
 				if (prevStatPoint.iCurrentTime != statPoint.iCurrentTime) {
 					if (prevStatPoint.iCurrentTime > statPoint.iCurrentTime && prevStatPoint.lapNo == statPoint.lapNo) {
-						//LOGGER.info("Kunos miracle. Skip this data");
+						// LOGGER.info("Kunos miracle. Skip this data");
 					} else {
 						statPoints.add(statPoint);
 						if (statPoint.wheelsPressure != null) {
@@ -90,13 +92,13 @@ public class PageFileStatistics implements Page {
 							tRL.add(statPoint.tyreCoreTemperature[2]);
 							tRR.add(statPoint.tyreCoreTemperature[3]);
 						}
-						
+
 						rainIntensity.add(statPoint.rainIntensity);
 						trackGripStatus.add(statPoint.trackGripStatus);
-						
+
 						currentSession = sessions.get(sessionCounter);
-						//StatSession nextSession = sessions.get(statPoint.sessionIndex + 1);
-						if (currentSession != null && (currentSession.distanceTraveled > statPoint.distanceTraveled) ) {
+						// StatSession nextSession = sessions.get(statPoint.sessionIndex + 1);
+						if (currentSession != null && (currentSession.distanceTraveled > statPoint.distanceTraveled)) {
 							LOGGER.info("RESTART??");
 							currentSession = newSession(statPoint);
 						}
@@ -108,7 +110,7 @@ public class PageFileStatistics implements Page {
 							currentSession = newSession(statPoint);
 						} else if (prevStatPoint.distanceTraveled > statPoint.distanceTraveled) {
 							LOGGER.info("NEW SESSION??");
-							//sessions.clear();
+							// sessions.clear();
 							Gson gson = new Gson();
 							System.out.println(gson.toJson(currentSession));
 							currentSession = newSession(statPoint);
@@ -125,8 +127,7 @@ public class PageFileStatistics implements Page {
 							currentSession = newSession(statPoint);
 							currentSession.wasGreenFlag = true;
 						}
-						
-					
+
 						if (currentSession == null) {
 							LOGGER.info("New session");
 							currentSession = newSession(statPoint);
@@ -156,10 +157,11 @@ public class PageFileStatistics implements Page {
 							StatLap prevLap = currentSession.laps.get(statPoint.lapNo - 1);
 							lap.fuelLeftOnStart = statPoint.fuel;
 							lap.maps.put(statPoint.currentMap, 0);
-
+							lap.clockAtStart = statPoint.clock;
 							currentSession.laps.put(statPoint.lapNo, lap);
 							if (prevLap != null) {
-								if (currentSession.wasGreenFlag && currentSession.laps.size()== 2) prevLap.first = true;
+								if (currentSession.wasGreenFlag && currentSession.laps.size() == 2)
+									prevLap.first = true;
 								LOGGER.info("Fuel at the start of the lap [kg]:" + prevLap.fuelLeftOnStart);
 								LOGGER.info("Fuel at the end of the lap [kg]:" + statPoint.fuel);
 								currentSession.lastLap = prevLap;
@@ -168,13 +170,14 @@ public class PageFileStatistics implements Page {
 								if (currentSession.bestLap.lapTime == 0)
 									currentSession.bestLap = prevLap;
 								else
-									currentSession.bestLap = currentSession.bestLap.lapTime < prevLap.lapTime ? currentSession.bestLap
+									currentSession.bestLap = currentSession.bestLap.lapTime < prevLap.lapTime
+											? currentSession.bestLap
 											: prevLap;
 								prevLap.lapTime = statPoint.iLastTime;
 								prevLap.splitTimes.put(prevStatPoint.currentSectorIndex, statPoint.iLastTime);
 								prevLap.fuelLeftOnEnd = statPoint.fuel;
 								prevLap.sessionTimeLeft = prevStatPoint.sessionTimeLeft;
-								//currentSession.laps.put(statPoint.sessionIndex, prevLap);
+								// currentSession.laps.put(statPoint.sessionIndex, prevLap);
 								LOGGER.info("Race start at [ms]: " + String.valueOf(raceStartAt));
 								LOGGER.info("Duration [ms]: " + String.valueOf(statPoint.iLastTime));
 								LOGGER.info("Calculated duration [ms]: "
@@ -213,11 +216,11 @@ public class PageFileStatistics implements Page {
 						if (statPoint.flag == AC_FLAG_TYPE.ACC_CHECKERED_FLAG) {
 							lap.last = true;
 						}
-						
+
 						if (statPoint.flag == AC_FLAG_TYPE.ACC_GREEN_FLAG && !currentSession.wasGreenFlag) {
 							lap.first = true;
 						}
-						
+
 						// we enter the pit
 						if (prevStatPoint != null && prevStatPoint.isInPitLane == 0 && statPoint.isInPitLane == 1) {
 							fuelBeforePit = statPoint.fuel;
@@ -277,9 +280,9 @@ public class PageFileStatistics implements Page {
 				sessions.remove(entry.getKey());
 			}
 		}
-		
+
 		saveToXLSX();
-		
+
 		Gson gson = new Gson();
 		System.out.println(gson.toJson(sessions));
 		sessionCounter++;
@@ -301,12 +304,12 @@ public class PageFileStatistics implements Page {
 			LOGGER.info("Session type: HOTLAP");
 			break;
 		}
-		
+
 		currentSession.car = statPoint.car;
 		LOGGER.info(currentSession.car.carModel + " max tank: [" + currentSession.car.maxFuel + "]");
 		LOGGER.info(currentSession.car.track);
 		LOGGER.info(currentSession.car.playerName);
-		
+
 		sessions.put(sessionCounter, currentSession);
 		return currentSession;
 	}
@@ -346,66 +349,36 @@ public class PageFileStatistics implements Page {
 		session.fuelEFNLapsOnEnd = (float) (session.sessionTimeLeft / (1000 * 60)) * perminutes;
 		session.fuelNTFOnEnd = session.sessionTimeLeft / session.lastLap.lapTime * lap.fuelUsed;
 		// public float fuelEFNMinutesOnEnd = 0;
-		OptionalDouble average = pFL
-	            .stream()
-	            .mapToDouble(a -> a)
-	            .average();
-		lap.pFL = (float)( average.isPresent() ? average.getAsDouble() : 0);
-		
-		average = pFR
-	            .stream()
-	            .mapToDouble(a -> a)
-	            .average();
-		lap.pFR = (float)( average.isPresent() ? average.getAsDouble() : 0);
-		
-		average = pRL
-	            .stream()
-	            .mapToDouble(a -> a)
-	            .average();
-		lap.pRL = (float)( average.isPresent() ? average.getAsDouble() : 0);
-		
-		average = pRR
-	            .stream()
-	            .mapToDouble(a -> a)
-	            .average();
-		lap.pRR = (float)( average.isPresent() ? average.getAsDouble() : 0);
-		
-		average = tFL
-	            .stream()
-	            .mapToDouble(a -> a)
-	            .average();
-		lap.tFL = (float)( average.isPresent() ? average.getAsDouble() : 0);
-		
-		average = tFR
-	            .stream()
-	            .mapToDouble(a -> a)
-	            .average();
-		lap.tFR = (float)( average.isPresent() ? average.getAsDouble() : 0);
-		
-		average = tRL
-	            .stream()
-	            .mapToDouble(a -> a)
-	            .average();
-		lap.tRL = (float)( average.isPresent() ? average.getAsDouble() : 0);
-		
-		average = tRR
-	            .stream()
-	            .mapToDouble(a -> a)
-	            .average();
-		lap.tRR = (float)( average.isPresent() ? average.getAsDouble() : 0);
-		
-		average = rainIntensity
-	            .stream()
-	            .mapToDouble(a -> a)
-	            .average();
-		lap.rainIntensity = (float)( average.isPresent() ? average.getAsDouble() : 0);
-		
-		average = trackGripStatus
-	            .stream()
-	            .mapToDouble(a -> a)
-	            .average();
-		lap.trackGripStatus = (float)( average.isPresent() ? average.getAsDouble() : 0);
-		
+		OptionalDouble average = pFL.stream().mapToDouble(a -> a).average();
+		lap.pFL = (float) (average.isPresent() ? average.getAsDouble() : 0);
+
+		average = pFR.stream().mapToDouble(a -> a).average();
+		lap.pFR = (float) (average.isPresent() ? average.getAsDouble() : 0);
+
+		average = pRL.stream().mapToDouble(a -> a).average();
+		lap.pRL = (float) (average.isPresent() ? average.getAsDouble() : 0);
+
+		average = pRR.stream().mapToDouble(a -> a).average();
+		lap.pRR = (float) (average.isPresent() ? average.getAsDouble() : 0);
+
+		average = tFL.stream().mapToDouble(a -> a).average();
+		lap.tFL = (float) (average.isPresent() ? average.getAsDouble() : 0);
+
+		average = tFR.stream().mapToDouble(a -> a).average();
+		lap.tFR = (float) (average.isPresent() ? average.getAsDouble() : 0);
+
+		average = tRL.stream().mapToDouble(a -> a).average();
+		lap.tRL = (float) (average.isPresent() ? average.getAsDouble() : 0);
+
+		average = tRR.stream().mapToDouble(a -> a).average();
+		lap.tRR = (float) (average.isPresent() ? average.getAsDouble() : 0);
+
+		average = rainIntensity.stream().mapToDouble(a -> a).average();
+		lap.rainIntensity = (float) (average.isPresent() ? average.getAsDouble() : 0);
+
+		average = trackGripStatus.stream().mapToDouble(a -> a).average();
+		lap.trackGripStatus = (float) (average.isPresent() ? average.getAsDouble() : 0);
+
 		LOGGER.info("fuelNTFOnEnd: " + session.fuelNTFOnEnd);
 		LOGGER.info("Full laps +1 left (based on last lap): " + session.sessionTimeLeft / session.lastLap.lapTime);
 		LOGGER.info("Full laps +1 left (based on best lap): " + session.sessionTimeLeft / session.bestLap.lapTime);
@@ -414,7 +387,7 @@ public class PageFileStatistics implements Page {
 	public void saveToXLSX() {
 		Workbook workbook = new XSSFWorkbook();
 		Iterator<Map.Entry<Integer, StatSession>> iterator = sessions.entrySet().iterator();
-		
+
 		while (iterator.hasNext()) {
 			int rowNo = 0;
 			Map.Entry<Integer, StatSession> entry = iterator.next();
@@ -447,11 +420,11 @@ public class PageFileStatistics implements Page {
 			headerCell = header.createCell(1);
 			headerCell.setCellValue("Car");
 			headerCell.setCellStyle(headerStyle);
-			
+
 			headerCell = header.createCell(2);
 			headerCell.setCellValue("Driver name");
 			headerCell.setCellStyle(headerStyle);
-			
+
 			headerCell = header.createCell(3);
 			headerCell.setCellValue("Session type");
 			headerCell.setCellStyle(headerStyle);
@@ -467,7 +440,7 @@ public class PageFileStatistics implements Page {
 			cell = row.createCell(1);
 			cell.setCellValue(entry.getValue().car.carModel);
 			cell.setCellStyle(style);
-			
+
 			cell = row.createCell(2);
 			cell.setCellValue(entry.getValue().car.playerName);
 			cell.setCellStyle(style);
@@ -488,105 +461,109 @@ public class PageFileStatistics implements Page {
 				break;
 			}
 			cell.setCellStyle(style);
-			
+
 			row = sheet.createRow(rowNo++);
 			header = sheet.createRow(rowNo++);
 			header = sheet.createRow(rowNo++);
-			
+
 			headerCell = header.createCell(0);
 			headerCell.setCellValue("Recorded Laps");
 			headerCell.setCellStyle(headerStyle);
-			
+
 			row = sheet.createRow(rowNo++);
-			
+
 			headerCell = header.createCell(0);
 			headerCell.setCellValue("lapNo");
 			headerCell.setCellStyle(headerStyle);
-			
+
 			headerCell = header.createCell(1);
 			headerCell.setCellValue("lapTime");
 			headerCell.setCellStyle(headerStyle);
-			
+
 			headerCell = header.createCell(2);
 			headerCell.setCellValue("splitTime 1");
 			headerCell.setCellStyle(headerStyle);
-			
+
 			headerCell = header.createCell(3);
 			headerCell.setCellValue("splitTime 2");
 			headerCell.setCellStyle(headerStyle);
-			
+
 			headerCell = header.createCell(4);
 			headerCell.setCellValue("splitTime 3");
 			headerCell.setCellStyle(headerStyle);
-			
+
 			headerCell = header.createCell(5);
 			headerCell.setCellValue("fuelLeftOnStart");
 			headerCell.setCellStyle(headerStyle);
-			
+
 			headerCell = header.createCell(6);
 			headerCell.setCellValue("fuelLeftOnEnd");
 			headerCell.setCellStyle(headerStyle);
-			
+
 			headerCell = header.createCell(7);
 			headerCell.setCellValue("fuelAVGPerMinute");
 			headerCell.setCellStyle(headerStyle);
-			
+
 			headerCell = header.createCell(8);
 			headerCell.setCellValue("fuelXlap");
 			headerCell.setCellStyle(headerStyle);
-			
+
 			headerCell = header.createCell(9);
 			headerCell.setCellValue("fuelAdded");
 			headerCell.setCellStyle(headerStyle);
-			
+
 			headerCell = header.createCell(10);
 			headerCell.setCellValue("pFL");
 			headerCell.setCellStyle(headerStyle);
-			
+
 			headerCell = header.createCell(11);
 			headerCell.setCellValue("pFR");
 			headerCell.setCellStyle(headerStyle);
-			
+
 			headerCell = header.createCell(12);
 			headerCell.setCellValue("pRL");
 			headerCell.setCellStyle(headerStyle);
-			
+
 			headerCell = header.createCell(13);
 			headerCell.setCellValue("pRR");
-			headerCell.setCellStyle(headerStyle);			
+			headerCell.setCellStyle(headerStyle);
 
-			headerCell = header.createCell(10);
-			headerCell.setCellValue("tFL");
-			headerCell.setCellStyle(headerStyle);
-			
-			headerCell = header.createCell(11);
-			headerCell.setCellValue("tFR");
-			headerCell.setCellStyle(headerStyle);
-			
-			headerCell = header.createCell(12);
-			headerCell.setCellValue("tRL");
-			headerCell.setCellStyle(headerStyle);
-			
-			headerCell = header.createCell(13);
-			headerCell.setCellValue("tRR");
-			headerCell.setCellStyle(headerStyle);	
-			
 			headerCell = header.createCell(14);
-			headerCell.setCellValue("rainIntensity");
+			headerCell.setCellValue("tFL");
 			headerCell.setCellStyle(headerStyle);
 
 			headerCell = header.createCell(15);
-			headerCell.setCellValue("rainTyres");
-			headerCell.setCellStyle(headerStyle);	
-			
+			headerCell.setCellValue("tFR");
+			headerCell.setCellStyle(headerStyle);
+
 			headerCell = header.createCell(16);
+			headerCell.setCellValue("tRL");
+			headerCell.setCellStyle(headerStyle);
+
+			headerCell = header.createCell(17);
+			headerCell.setCellValue("tRR");
+			headerCell.setCellStyle(headerStyle);
+
+			headerCell = header.createCell(18);
+			headerCell.setCellValue("rainIntensity");
+			headerCell.setCellStyle(headerStyle);
+
+			headerCell = header.createCell(19);
+			headerCell.setCellValue("rainTyres");
+			headerCell.setCellStyle(headerStyle);
+
+			headerCell = header.createCell(20);
 			headerCell.setCellValue("trackGripStatus");
 			headerCell.setCellStyle(headerStyle);
-			
-			headerCell = header.createCell(17);
+
+			headerCell = header.createCell(21);
 			headerCell.setCellValue("trackStatus");
 			headerCell.setCellStyle(headerStyle);
 			
+			headerCell = header.createCell(22);
+			headerCell.setCellValue("used maps");
+			headerCell.setCellStyle(headerStyle);
+
 			Iterator<Map.Entry<Integer, StatLap>> iteratorLap = entry.getValue().laps.entrySet().iterator();
 			int i = 0;
 			while (iteratorLap.hasNext()) {
@@ -599,40 +576,38 @@ public class PageFileStatistics implements Page {
 					cell = row.createCell(10);
 					cell.setCellValue("First lap");
 					cell.setCellStyle(style);
-				}
-				else if (lap.getValue().last) {
+				} else if (lap.getValue().last) {
 					style.setFillForegroundColor(IndexedColors.GREY_50_PERCENT.getIndex());
 					cell = row.createCell(10);
 					cell.setCellValue("Last lap");
 					cell.setCellStyle(style);
-				}
-				else {
+				} else {
 					style.setFillForegroundColor(IndexedColors.WHITE.getIndex());
 					cell.setCellStyle(style);
 				}
-				
+
 				cell.setCellStyle(style);
-				
+
 				cell = row.createCell(1);
 				cell.setCellValue(lap.getValue().lapTime);
 				cell.setCellStyle(style);
-				
+
 				if (lap.getValue().splitTimes.get(0) != null) {
-						cell = row.createCell(2);
-						cell.setCellValue(lap.getValue().splitTimes.get(0));
-						cell.setCellStyle(style);
+					cell = row.createCell(2);
+					cell.setCellValue(lap.getValue().splitTimes.get(0));
+					cell.setCellStyle(style);
 				}
 				if (lap.getValue().splitTimes.get(1) != null) {
-						cell = row.createCell(3);
-						cell.setCellValue(lap.getValue().splitTimes.get(1));
-						cell.setCellStyle(style);
+					cell = row.createCell(3);
+					cell.setCellValue(lap.getValue().splitTimes.get(1));
+					cell.setCellStyle(style);
 				}
 				if (lap.getValue().splitTimes.get(2) != null) {
 					cell = row.createCell(4);
 					cell.setCellValue(lap.getValue().splitTimes.get(2));
 					cell.setCellStyle(style);
 				}
-				
+
 				cell = row.createCell(5);
 				cell.setCellValue(lap.getValue().fuelLeftOnStart);
 				cell.setCellStyle(style);
@@ -648,7 +623,7 @@ public class PageFileStatistics implements Page {
 				cell = row.createCell(9);
 				cell.setCellValue(lap.getValue().fuelAdded);
 				cell.setCellStyle(style);
-				
+
 				cell = row.createCell(10);
 				cell.setCellValue(lap.getValue().pFL);
 				cell.setCellStyle(style);
@@ -661,36 +636,54 @@ public class PageFileStatistics implements Page {
 				cell = row.createCell(13);
 				cell.setCellValue(lap.getValue().pRR);
 				cell.setCellStyle(style);
-				
-				cell = row.createCell(10);
+
+				cell = row.createCell(14);
 				cell.setCellValue(lap.getValue().tFL);
 				cell.setCellStyle(style);
-				cell = row.createCell(11);
+				cell = row.createCell(15);
 				cell.setCellValue(lap.getValue().tFR);
 				cell.setCellStyle(style);
-				cell = row.createCell(12);
+				cell = row.createCell(16);
 				cell.setCellValue(lap.getValue().tRL);
 				cell.setCellStyle(style);
-				cell = row.createCell(13);
+				cell = row.createCell(17);
 				cell.setCellValue(lap.getValue().tRR);
 				cell.setCellStyle(style);
-				cell = row.createCell(14);
+				cell = row.createCell(18);
 				cell.setCellValue(lap.getValue().rainIntensity);
 				cell.setCellStyle(style);
-				cell = row.createCell(15);
+				cell = row.createCell(19);
 				cell.setCellValue(lap.getValue().rainTyres);
 				cell.setCellStyle(style);
-				cell = row.createCell(16);
+				cell = row.createCell(20);
 				cell.setCellValue(lap.getValue().trackGripStatus);
 				cell.setCellStyle(style);
-				cell = row.createCell(17);
+				cell = row.createCell(21);
 				cell.setCellValue(lap.getValue().trackStatus);
 				cell.setCellStyle(style);
+
+				Iterator<Map.Entry<Integer, Integer>> iteratorMap = lap.getValue().maps.entrySet().iterator();
+				int c = 22;
+				int sum = 0;
+				float percent = 0;
+				while (iteratorLap.hasNext()) {
+					Map.Entry<Integer, Integer> map = iteratorMap.next();
+					sum += map.getValue().intValue();
 				}
-				
+				if (sum > 0) {
+					iteratorMap = lap.getValue().maps.entrySet().iterator();
+					while (iteratorLap.hasNext()) {
+						Map.Entry<Integer, Integer> map = iteratorMap.next();
+						percent = (float) (map.getValue() / sum * 100.0);
+						cell = row.createCell(c);
+						cell.setCellValue(percent);
+						cell.setCellStyle(style);
+						c++;
+					}
+				}
 
+			}
 
-			
 		}
 		// SAVE
 		String pattern = "yyyy_MM_dd_HH_mm";

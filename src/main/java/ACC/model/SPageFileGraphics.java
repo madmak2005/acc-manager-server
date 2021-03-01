@@ -166,6 +166,7 @@ public class SPageFileGraphics extends Structure {
     public float fuelEstimatedLaps = 0;
     public byte[] trackStatus = new byte[66];
     public int missingMandatoryPits = 0;
+    public float clock = 0;
     public int directionLightsLeft = 0;
     public int directionLightsRight = 0;
     public int GlobalYellow = 0;

@@ -45,6 +45,8 @@ public class StatPoint {
 	
 	public int 		rainIntensity = 0;
 	
+	public float	clock;
+	
 	public StatCar  car = new StatCar();
 	
 }
