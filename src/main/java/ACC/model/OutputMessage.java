@@ -10,7 +10,9 @@ import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.compress.archivers.sevenz.SevenZArchiveEntry;
 import org.apache.commons.compress.archivers.sevenz.SevenZOutputFile;
@@ -21,6 +23,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.zaxxer.sparsebits.SparseBitSet.Statistics;
 
 import app.Application;
 
@@ -31,7 +34,7 @@ public class OutputMessage {
 	protected long timestamp = 0;
 	private String pageName = "";
 	private static final Logger LOGGER = LoggerFactory.getLogger(PageFileStatistics.class);
-	
+
 	@SuppressWarnings("unused")
 	private String getContent() {
 		return content;
@@ -48,18 +51,26 @@ public class OutputMessage {
 		this.fields = fields;
 		this.timestamp = ZonedDateTime.now().toInstant().toEpochMilli();
 		this.pageName = page.getPageName();
-		if (Application.debug && page != null ) {
+		if (Application.debug && page != null) {
 			if (Application.useDebug) {
-				if (pageName.equals("statistics") || pageName.equals("graphics")) savePage(page);
+				if (pageName.equals("statistics") || pageName.equals("graphics")) {
+					if (pageName.equals("statistics")) {
+						PageFileStatistics ps = new PageFileStatistics();
+						ps.currentSession = ((PageFileStatistics) page).currentSession;
+						savePage(ps);
+					}
+					else 
+						savePage(page);
+				}
 			} else
-				savePage(page);
+				if (!pageName.equals("statistics"))
+					savePage(page);
 		}
-		
+
 		if (fields == null || fields.size() == 0)
 			this.content = page.toJSON();
 		else
 			this.content = page.toJSON(fields);
-		
 
 	}
 
@@ -68,48 +79,46 @@ public class OutputMessage {
 		this.content = content;
 	}
 
-
-
 	private void saveText(String message) {
-			try {
-				String pattern = "yyyy_MM_dd_HH_mm";
-				DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
-				LocalDateTime now = LocalDateTime.now();
-				String nowDate = now.format(formatter);
+		try {
+			String pattern = "yyyy_MM_dd_HH_mm";
+			DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
+			LocalDateTime now = LocalDateTime.now();
+			String nowDate = now.format(formatter);
 
-				// Writing to a file
-				File file = new File(nowDate + "_" + pageName + ".json");
-				file.createNewFile();
-				FileWriter fileWriter = new FileWriter(file, true);
-				fileWriter.append(message + '\n');
-				fileWriter.flush();
-				fileWriter.close();
+			// Writing to a file
+			File file = new File(nowDate + "_" + pageName + ".json");
+			file.createNewFile();
+			FileWriter fileWriter = new FileWriter(file, true);
+			fileWriter.append(message + '\n');
+			fileWriter.flush();
+			fileWriter.close();
 
-				LocalDateTime lastMinute = now.minusMinutes(1);
-				String lastMinuteDate = lastMinute.format(formatter);
+			LocalDateTime lastMinute = now.minusMinutes(1);
+			String lastMinuteDate = lastMinute.format(formatter);
 
-				File lastMinuteFile = new File(lastMinuteDate + "_" + pageName + ".json");
-				if (lastMinuteFile.exists()) {
-					if (!Application.useDebug) {
-						Compress compress7zip = new Compress(lastMinuteFile.getName());
-						Thread t = new Thread(compress7zip);
-						t.start();
-					}
+			File lastMinuteFile = new File(lastMinuteDate + "_" + pageName + ".json");
+			if (lastMinuteFile.exists()) {
+				if (!Application.useDebug) {
+					Compress compress7zip = new Compress(lastMinuteFile.getName());
+					Thread t = new Thread(compress7zip);
+					t.start();
 				}
-
-			} catch (IOException e) {
-				e.printStackTrace();
 			}
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
-	
+
 	private void savePage(Page page) {
-		//Gson gson = new Gson();
-		//LOGGER.info(page.getPageName());
-		//String json = page.toJSON();
+		// Gson gson = new Gson();
+		// LOGGER.info(page.getPageName());
+		// String json = page.toJSON();
 		JsonObject jsonObject = JsonParser.parseString(page.toJSON()).getAsJsonObject();
-		//LOGGER.info(jsonObject.toString());
-		//if (page.getPageName().equals("statistics"))
-		//	jsonObject.getAsJsonObject("page").remove("statPoints");
+		// LOGGER.info(jsonObject.toString());
+		// if (page.getPageName().equals("statistics"))
+		// jsonObject.getAsJsonObject("page").remove("statPoints");
 		saveText(jsonObject.toString());
 
 	}
@@ -126,8 +135,9 @@ public class OutputMessage {
 			File debugFolder = new File("debug");
 			if (!debugFolder.exists())
 				debugFolder.mkdir();
-			
-			try (SevenZOutputFile sevenZOutput = new SevenZOutputFile(new File(debugFolder.getAbsolutePath()+ "\\" +filename + ".7z"))) {
+
+			try (SevenZOutputFile sevenZOutput = new SevenZOutputFile(
+					new File(debugFolder.getAbsolutePath() + "\\" + filename + ".7z"))) {
 				File file = new File(filename);
 				File fileTmp = new File("_" + filename);
 				file.renameTo(fileTmp);

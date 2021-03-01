@@ -92,7 +92,11 @@ public class SPageFileGraphics extends Structure {
                 "mfdTyrePressureLF",
                 "mfdTyrePressureRF",
                 "mfdTyrePressureLR",
-                "mfdTyrePressureRR");
+                "mfdTyrePressureRR",
+                "trackGripStatus",
+                "rainIntensity",
+                "rainIntensityIn10min",
+                "rainIntensityIn30min");
 	}
 
 	public int packetId = 0;
@@ -178,5 +182,9 @@ public class SPageFileGraphics extends Structure {
     public float mfdTyrePressureRF = 0;
     public float mfdTyrePressureLR = 0;
     public float mfdTyrePressureRR = 0;
+    public int trackGripStatus = 0;
+	public int rainIntensity = 0;
+	public int rainIntensityIn10min = 0;
+	public int rainIntensityIn30min = 0;
 	
 }

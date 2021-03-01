@@ -18,10 +18,14 @@ public class StatSession {
 	
 	public StatCar car = new StatCar();
 	
+	public int sessionIndex = 0;
+	public boolean wasGreenFlag = false; 
+	
 	public int bestTime = 0;
 	
 	public float sessionTimeLeft = 0;
 	
+	public float distanceTraveled = 0;
 	public float fuelAVG3Laps = 0;
 	public float fuelAVG5Laps = 0;
 	

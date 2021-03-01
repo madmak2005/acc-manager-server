@@ -28,9 +28,6 @@ public class StatPoint {
 	public float[] 	wheelsPressure = new float[4];
 	
 	public float[] 	tyreCoreTemperature = new float[4];	
-	public float[] 	tyreTempI = new float[4];
-	public float[] 	tyreTempM = new float[4];
-	public float[] 	tyreTempO = new float[4];
 	
 	public float[] 	padLife = new float[4];
 	public float[] 	discLife = new float[4];
@@ -40,8 +37,13 @@ public class StatPoint {
 	public int 		isValidLap = 0;
 	public float 	distanceTraveled = 0;
 	
+	public int		trackGripStatus = 0;
+	public String	trackStatus = "";
+	
 	public float 	sessionTimeLeft = 0;
 	public int 		currentMap = 0;
+	
+	public int 		rainIntensity = 0;
 	
 	public StatCar  car = new StatCar();
 	

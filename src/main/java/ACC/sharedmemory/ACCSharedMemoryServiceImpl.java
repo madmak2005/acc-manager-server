@@ -117,6 +117,9 @@ public class ACCSharedMemoryServiceImpl implements ACCSharedMemoryService {
 		statPoint.sessionTimeLeft = g.sessionTimeLeft;
 		statPoint.flag = g.flag;
 		statPoint.currentMap = g.EngineMap;
+		statPoint.rainIntensity = g.rainIntensity;
+		statPoint.trackGripStatus = g.trackGripStatus;
+		statPoint.trackStatus = g.trackStatus;
 		
 		statPoint.airTemp = p.airTemp;
 		statPoint.brakeTemp = p.brakeTemp;
@@ -127,9 +130,6 @@ public class ACCSharedMemoryServiceImpl implements ACCSharedMemoryService {
 		statPoint.roadTemp = p.roadTemp;
 		statPoint.speedKmh = p.speedKmh;
 		statPoint.tyreCoreTemperature = p.tyreCoreTemperature;
-		statPoint.tyreTempI = p.tyreTempI;
-		statPoint.tyreTempM = p.tyreTempM;
-		statPoint.tyreTempO = p.tyreTempO;
 		statPoint.wheelsPressure = p.wheelsPressure;
 		}
 		return statPoint;
@@ -143,6 +143,7 @@ public class ACCSharedMemoryServiceImpl implements ACCSharedMemoryService {
 		car.maxFuel = s.maxFuel;
 		car.playerName = s.playerName;
 		car.track = s.track;
+		car.sectorCount = s.sectorCount;
 		return car;
 	}
 	

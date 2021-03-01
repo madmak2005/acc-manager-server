@@ -118,6 +118,10 @@ public class PageFileGraphics implements Page {
     public float mfdTyrePressureRF = 0;
     public float mfdTyrePressureLR = 0;
     public float mfdTyrePressureRR = 0;
+    public int trackGripStatus = 0;
+	public int rainIntensity = 0;
+	public int rainIntensityIn10min = 0;
+	public int rainIntensityIn30min = 0;
 
     
 	@Override

@@ -23,4 +23,14 @@ public class StatLap {
 	public Map<Integer,Integer> maps = new HashMap<>();
 	public int rainTyres;	//Are rain tyres equipped
 	public boolean isValidLap = true;
+	public boolean first, last = false;
+	public float sessionTimeLeft = 0;
+	
+	
+	public float pFL, pFR, pRL, pRR = 0;
+	public float tFL, tFR, tRL, tRR = 0;
+	
+	public float rainIntensity = 0;
+	public float trackGripStatus = 0;
+	public String trackStatus = "";
 }
