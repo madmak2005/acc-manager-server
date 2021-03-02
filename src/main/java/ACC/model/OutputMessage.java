@@ -51,20 +51,10 @@ public class OutputMessage {
 		this.fields = fields;
 		this.timestamp = ZonedDateTime.now().toInstant().toEpochMilli();
 		this.pageName = page.getPageName();
-		if (Application.debug && page != null) {
-			if (Application.useDebug) {
-				if (pageName.equals("statistics") || pageName.equals("graphics")) {
-					if (pageName.equals("statistics")) {
-						PageFileStatistics ps = new PageFileStatistics();
-						ps.currentSession = ((PageFileStatistics) page).currentSession;
-						savePage(ps);
-					}
-					else 
-						savePage(page);
-				}
-			} else
-				if (!pageName.equals("statistics"))
+		if (Application.debug && !Application.useDebug && page != null) {
+				if (!pageName.equals("statistics") && page.isACCConnected()) {
 					savePage(page);
+				}
 		}
 
 		if (fields == null || fields.size() == 0)

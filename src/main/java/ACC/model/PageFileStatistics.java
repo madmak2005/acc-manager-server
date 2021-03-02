@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -68,6 +69,9 @@ public class PageFileStatistics implements Page {
 	protected Instant previous, current;
 	protected int raceStartAt = 0;
 	protected Integer sessionCounter = 0;
+	protected Instant lastChange =Instant.now();
+	
+	private boolean saved = false;
 
 	public void addStatPoint(StatPoint statPoint) {
 
@@ -79,6 +83,36 @@ public class PageFileStatistics implements Page {
 					if (prevStatPoint.iCurrentTime > statPoint.iCurrentTime && prevStatPoint.lapNo == statPoint.lapNo) {
 						// LOGGER.info("Kunos miracle. Skip this data");
 					} else {
+						currentSession.packetDelta = Math.abs(statPoint.packetIDG - prevStatPoint.packetIDP); 
+						if (statPoint.lapNo < prevStatPoint.lapNo) {
+							LOGGER.info("LAP number is lower");
+							currentSession = newSession(statPoint);
+						}
+						
+						if (statPoint.lapNo < prevStatPoint.lapNo) {
+							LOGGER.info("LAP number is lower");
+							currentSession = newSession(statPoint);
+						}
+						
+						if (statPoint.packetIDG < prevStatPoint.packetIDG) {
+							LOGGER.info("Data from another session");
+							currentSession = newSession(statPoint);
+						}
+						
+						if (statPoint.packetIDP < prevStatPoint.packetIDP) {
+							LOGGER.info("Data from another session");
+							currentSession = newSession(statPoint);
+						}
+						
+						if (statPoint.packetIDG != prevStatPoint.packetIDG && statPoint.packetIDP != prevStatPoint.packetIDP) {
+							lastChange =Instant.now();
+						}
+						if (Duration.between(lastChange, Instant.now()).getSeconds() > 5 && !saved) {
+							LOGGER.info("Finished? Save sessions.");
+							saveToXLSX();
+							saved = true;
+						}
+						
 						statPoints.add(statPoint);
 						if (statPoint.wheelsPressure != null) {
 							pFL.add(statPoint.wheelsPressure[0]);
@@ -98,16 +132,18 @@ public class PageFileStatistics implements Page {
 
 						currentSession = sessions.get(sessionCounter);
 						// StatSession nextSession = sessions.get(statPoint.sessionIndex + 1);
-						if (currentSession != null && (currentSession.distanceTraveled > statPoint.distanceTraveled)) {
-							LOGGER.info("RESTART??");
-							currentSession = newSession(statPoint);
-						}
+						//if (currentSession != null && (currentSession.distanceTraveled > statPoint.distanceTraveled)) {
+						//	LOGGER.info("RESTART??");
+						//	currentSession = newSession(statPoint);
+						//}
 
+
+						
 						if (prevStatPoint.usedFuel > statPoint.usedFuel
 								&& prevStatPoint.distanceTraveled > statPoint.distanceTraveled
 								&& prevStatPoint.lapNo == statPoint.lapNo && statPoint.isInPitLane == 1) {
 							LOGGER.info("BACK TO PIT??");
-							currentSession = newSession(statPoint);
+							//currentSession = newSession(statPoint);
 						} else if (prevStatPoint.distanceTraveled > statPoint.distanceTraveled) {
 							LOGGER.info("NEW SESSION??");
 							// sessions.clear();
@@ -282,7 +318,7 @@ public class PageFileStatistics implements Page {
 		}
 
 		saveToXLSX();
-
+		saved = false;
 		Gson gson = new Gson();
 		System.out.println(gson.toJson(sessions));
 		sessionCounter++;
@@ -317,7 +353,7 @@ public class PageFileStatistics implements Page {
 	private void calculateLapStats(StatLap lap, StatSession session) {
 		lap.fuelUsed = lap.fuelLeftOnStart - lap.fuelLeftOnEnd;
 		float minutes = (float) lap.lapTime / (1000 * 60);
-		float perminutes = lap.fuelUsed / minutes;
+		float perminutes = lap.fuelUsed + lap.fuelAdded / minutes;
 		if (lap.lapTime > 0)
 			lap.fuelAVGPerMinute = perminutes;
 		float lavg = 0;
@@ -379,6 +415,15 @@ public class PageFileStatistics implements Page {
 		average = trackGripStatus.stream().mapToDouble(a -> a).average();
 		lap.trackGripStatus = (float) (average.isPresent() ? average.getAsDouble() : 0);
 
+		pFL = new ArrayList<>(); 
+		pFR = new ArrayList<>(); 
+		pRL = new ArrayList<>();
+		pRR = new ArrayList<>();
+		tFL = new ArrayList<>(); 
+		tFR = new ArrayList<>(); 
+		tRL = new ArrayList<>();
+		tRR = new ArrayList<>();
+		
 		LOGGER.info("fuelNTFOnEnd: " + session.fuelNTFOnEnd);
 		LOGGER.info("Full laps +1 left (based on last lap): " + session.sessionTimeLeft / session.lastLap.lapTime);
 		LOGGER.info("Full laps +1 left (based on best lap): " + session.sessionTimeLeft / session.bestLap.lapTime);
@@ -686,7 +731,7 @@ public class PageFileStatistics implements Page {
 
 		}
 		// SAVE
-		String pattern = "yyyy_MM_dd_HH_mm";
+		String pattern = "yyyy_MM_dd_HH_mm_ss";
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
 		LocalDateTime now = LocalDateTime.now();
 		String nowDate = now.format(formatter);
@@ -750,5 +795,10 @@ public class PageFileStatistics implements Page {
 			Application.LOGGER.debug(e.toString());
 		}
 		return response;
+	}
+
+	@Override
+	public boolean isACCConnected() {
+		return true;
 	}
 }

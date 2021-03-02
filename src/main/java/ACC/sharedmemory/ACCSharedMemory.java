@@ -19,7 +19,7 @@ import com.sun.jna.win32.W32APIOptions;
 import ACC.model.PageFileGraphics;
 import ACC.model.PageFilePhysics;
 import ACC.model.PageFileStatic;
-import ACC.model.PageFileStatistics;
+
 import ACC.model.SPageFileGraphics;
 import ACC.model.SPageFilePhysics;
 import ACC.model.SPageFileStatic;

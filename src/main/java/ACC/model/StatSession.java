@@ -37,4 +37,6 @@ public class StatSession {
 	public float fuelEFNLapsOnEnd = 0;
 	public float fuelAVGPerLap = 0;
 	
+	public int packetDelta = 0;
+	
 }

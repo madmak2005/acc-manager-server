@@ -221,6 +221,11 @@ public class PageFileGraphics implements Page {
 		
 	}
 
+	@Override
+	public boolean isACCConnected() {
+		return packetId > 0;
+	}
+
 
 }
 

@@ -13,7 +13,7 @@ public class ApplicationPropertyService {
 	private ServerProperties serverProperties;
 	
     public int getApplicationProperty(){
-        return (Application.useDebug && Application.debug ? 10 : 100);
+        return (Application.useDebug && Application.debug ? 5 : 100);
     }
     
     public int getApplicationPort(){

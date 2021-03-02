@@ -47,6 +47,9 @@ public class StatPoint {
 	
 	public float	clock;
 	
+	public int 		packetIDG = 0;
+	public int 		packetIDP = 0;
+	
 	public StatCar  car = new StatCar();
 	
 }

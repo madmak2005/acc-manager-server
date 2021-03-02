@@ -254,4 +254,9 @@ public class PageFilePhysics implements Page {
 		public void setPageName(String pageName) {
 			this.pageName = pageName;
 		}
+
+		@Override
+		public boolean isACCConnected() {
+			return packetId > 0;
+		}
 }
