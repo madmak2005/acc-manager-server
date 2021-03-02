@@ -77,6 +77,7 @@ public class SPageFileGraphics extends Structure {
 				"fuelEstimatedLaps", 
 				"trackStatus",
 				"missingMandatoryPits",
+				"clock",
 				"directionLightsLeft", 
 				"directionLightsRight",
 				"GlobalYellow",

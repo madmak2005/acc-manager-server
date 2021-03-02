@@ -661,7 +661,7 @@ public class PageFileStatistics implements Page {
 				cell = row.createCell(21);
 				cell.setCellValue(lap.getValue().trackStatus);
 				cell.setCellStyle(style);
-
+/*
 				Iterator<Map.Entry<Integer, Integer>> iteratorMap = lap.getValue().maps.entrySet().iterator();
 				int c = 22;
 				int sum = 0;
@@ -681,7 +681,7 @@ public class PageFileStatistics implements Page {
 						c++;
 					}
 				}
-
+*/
 			}
 
 		}
