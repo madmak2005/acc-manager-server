@@ -19,6 +19,7 @@ public class StatSession {
 	public StatCar car = new StatCar();
 	
 	public int sessionIndex = 0;
+	public int internalSessionIndex = 0;
 	public boolean wasGreenFlag = false; 
 	
 	public int bestTime = 0;

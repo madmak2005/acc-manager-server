@@ -104,6 +104,11 @@ public class PageFileStatistics implements Page {
 							currentSession = newSession(statPoint);
 						}
 						
+						if (statPoint.session != prevStatPoint.session) {
+							LOGGER.info("New session");
+							currentSession = newSession(statPoint);
+						}
+						
 						if (statPoint.packetIDG != prevStatPoint.packetIDG && statPoint.packetIDP != prevStatPoint.packetIDP) {
 							lastChange =Instant.now();
 						}
@@ -323,7 +328,8 @@ public class PageFileStatistics implements Page {
 		System.out.println(gson.toJson(sessions));
 		sessionCounter++;
 		currentSession = new StatSession();
-		currentSession.sessionIndex = sessionCounter;
+		currentSession.internalSessionIndex = sessionCounter;
+		currentSession.sessionIndex = statPoint.sessionIndex;
 		currentSession.session_TYPE = statPoint.session;
 
 		switch (statPoint.session) {
@@ -353,7 +359,7 @@ public class PageFileStatistics implements Page {
 	private void calculateLapStats(StatLap lap, StatSession session) {
 		lap.fuelUsed = lap.fuelLeftOnStart - lap.fuelLeftOnEnd;
 		float minutes = (float) lap.lapTime / (1000 * 60);
-		float perminutes = lap.fuelUsed + lap.fuelAdded / minutes;
+		float perminutes = (lap.fuelUsed + lap.fuelAdded) / minutes;
 		if (lap.lapTime > 0)
 			lap.fuelAVGPerMinute = perminutes;
 		float lavg = 0;
@@ -423,6 +429,8 @@ public class PageFileStatistics implements Page {
 		tFR = new ArrayList<>(); 
 		tRL = new ArrayList<>();
 		tRR = new ArrayList<>();
+		rainIntensity = new ArrayList<>();
+		trackGripStatus = new ArrayList<>();
 		
 		LOGGER.info("fuelNTFOnEnd: " + session.fuelNTFOnEnd);
 		LOGGER.info("Full laps +1 left (based on last lap): " + session.sessionTimeLeft / session.lastLap.lapTime);
@@ -436,7 +444,7 @@ public class PageFileStatistics implements Page {
 		while (iterator.hasNext()) {
 			int rowNo = 0;
 			Map.Entry<Integer, StatSession> entry = iterator.next();
-			Sheet sheet = workbook.createSheet("Session " + entry.getValue().sessionIndex);
+			Sheet sheet = workbook.createSheet("Session " + entry.getValue().internalSessionIndex);
 			sheet.setColumnWidth(0, 5000);
 			sheet.setColumnWidth(1, 6000);
 			sheet.setColumnWidth(2, 6000);
@@ -606,7 +614,7 @@ public class PageFileStatistics implements Page {
 			headerCell.setCellStyle(headerStyle);
 			
 			headerCell = header.createCell(22);
-			headerCell.setCellValue("used maps");
+			headerCell.setCellValue("validLap");
 			headerCell.setCellStyle(headerStyle);
 
 			Iterator<Map.Entry<Integer, StatLap>> iteratorLap = entry.getValue().laps.entrySet().iterator();
@@ -705,6 +713,9 @@ public class PageFileStatistics implements Page {
 				cell.setCellStyle(style);
 				cell = row.createCell(21);
 				cell.setCellValue(lap.getValue().trackStatus);
+				cell.setCellStyle(style);
+				cell = row.createCell(22);
+				cell.setCellValue(lap.getValue().isValidLap);
 				cell.setCellStyle(style);
 /*
 				Iterator<Map.Entry<Integer, Integer>> iteratorMap = lap.getValue().maps.entrySet().iterator();
