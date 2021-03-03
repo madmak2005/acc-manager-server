@@ -69,8 +69,8 @@ public class PageFileStatistics implements Page {
 	protected Instant previous, current;
 	protected int raceStartAt = 0;
 	protected Integer sessionCounter = 0;
-	protected Instant lastChange =Instant.now();
-	
+	protected Instant lastChange = Instant.now();
+
 	private boolean saved = false;
 
 	public void addStatPoint(StatPoint statPoint) {
@@ -83,41 +83,42 @@ public class PageFileStatistics implements Page {
 					if (prevStatPoint.iCurrentTime > statPoint.iCurrentTime && prevStatPoint.lapNo == statPoint.lapNo) {
 						// LOGGER.info("Kunos miracle. Skip this data");
 					} else {
-						currentSession.packetDelta = Math.abs(statPoint.packetIDG - prevStatPoint.packetIDP); 
+						currentSession.packetDelta = Math.abs(statPoint.packetIDG - prevStatPoint.packetIDP);
 						if (statPoint.lapNo < prevStatPoint.lapNo) {
 							LOGGER.info("LAP number is lower");
 							currentSession = newSession(statPoint);
 						}
-						
+
 						if (statPoint.lapNo < prevStatPoint.lapNo) {
 							LOGGER.info("LAP number is lower");
 							currentSession = newSession(statPoint);
 						}
-						
+
 						if (statPoint.packetIDG < prevStatPoint.packetIDG) {
 							LOGGER.info("Data from another session");
 							currentSession = newSession(statPoint);
 						}
-						
+
 						if (statPoint.packetIDP < prevStatPoint.packetIDP) {
 							LOGGER.info("Data from another session");
 							currentSession = newSession(statPoint);
 						}
-						
+
 						if (statPoint.session != prevStatPoint.session) {
 							LOGGER.info("New session");
 							currentSession = newSession(statPoint);
 						}
-						
-						if (statPoint.packetIDG != prevStatPoint.packetIDG && statPoint.packetIDP != prevStatPoint.packetIDP) {
-							lastChange =Instant.now();
+
+						if (statPoint.packetIDG != prevStatPoint.packetIDG
+								&& statPoint.packetIDP != prevStatPoint.packetIDP) {
+							lastChange = Instant.now();
 						}
 						if (Duration.between(lastChange, Instant.now()).getSeconds() > 5 && !saved) {
 							LOGGER.info("Finished? Save sessions.");
 							saveToXLSX();
 							saved = true;
 						}
-						
+
 						statPoints.add(statPoint);
 						if (statPoint.wheelsPressure != null) {
 							pFL.add(statPoint.wheelsPressure[0]);
@@ -137,18 +138,17 @@ public class PageFileStatistics implements Page {
 
 						currentSession = sessions.get(sessionCounter);
 						// StatSession nextSession = sessions.get(statPoint.sessionIndex + 1);
-						//if (currentSession != null && (currentSession.distanceTraveled > statPoint.distanceTraveled)) {
-						//	LOGGER.info("RESTART??");
-						//	currentSession = newSession(statPoint);
-						//}
+						// if (currentSession != null && (currentSession.distanceTraveled >
+						// statPoint.distanceTraveled)) {
+						// LOGGER.info("RESTART??");
+						// currentSession = newSession(statPoint);
+						// }
 
-
-						
 						if (prevStatPoint.usedFuel > statPoint.usedFuel
 								&& prevStatPoint.distanceTraveled > statPoint.distanceTraveled
 								&& prevStatPoint.lapNo == statPoint.lapNo && statPoint.isInPitLane == 1) {
 							LOGGER.info("BACK TO PIT??");
-							//currentSession = newSession(statPoint);
+							// currentSession = newSession(statPoint);
 						} else if (prevStatPoint.distanceTraveled > statPoint.distanceTraveled) {
 							LOGGER.info("NEW SESSION??");
 							// sessions.clear();
@@ -309,12 +309,14 @@ public class PageFileStatistics implements Page {
 		Iterator<Map.Entry<Integer, StatSession>> iterator = sessions.entrySet().iterator();
 		while (iterator.hasNext()) {
 			Map.Entry<Integer, StatSession> entry = iterator.next();
-			Iterator<Map.Entry<Integer, StatLap>> iteratorLap = entry.getValue().laps.entrySet().iterator();
-			int i = 0;
-			while (iteratorLap.hasNext()) {
-				Map.Entry<Integer, StatLap> lap = iteratorLap.next();
-				if (lap.getValue().splitTimes.size() != entry.getValue().car.sectorCount) {
-					entry.getValue().laps.remove(lap.getKey());
+			if (entry.getValue().laps != null) {
+				Iterator<Map.Entry<Integer, StatLap>> iteratorLap = entry.getValue().laps.entrySet().iterator();
+				int i = 0;
+				while (iteratorLap.hasNext()) {
+					Map.Entry<Integer, StatLap> lap = iteratorLap.next();
+					if (lap.getValue().splitTimes.size() != entry.getValue().car.sectorCount) {
+						entry.getValue().laps.remove(lap.getKey());
+					}
 				}
 			}
 			if (entry.getValue().laps.size() == 0) {
@@ -421,17 +423,17 @@ public class PageFileStatistics implements Page {
 		average = trackGripStatus.stream().mapToDouble(a -> a).average();
 		lap.trackGripStatus = (float) (average.isPresent() ? average.getAsDouble() : 0);
 
-		pFL = new ArrayList<>(); 
-		pFR = new ArrayList<>(); 
+		pFL = new ArrayList<>();
+		pFR = new ArrayList<>();
 		pRL = new ArrayList<>();
 		pRR = new ArrayList<>();
-		tFL = new ArrayList<>(); 
-		tFR = new ArrayList<>(); 
+		tFL = new ArrayList<>();
+		tFR = new ArrayList<>();
 		tRL = new ArrayList<>();
 		tRR = new ArrayList<>();
 		rainIntensity = new ArrayList<>();
 		trackGripStatus = new ArrayList<>();
-		
+
 		LOGGER.info("fuelNTFOnEnd: " + session.fuelNTFOnEnd);
 		LOGGER.info("Full laps +1 left (based on last lap): " + session.sessionTimeLeft / session.lastLap.lapTime);
 		LOGGER.info("Full laps +1 left (based on best lap): " + session.sessionTimeLeft / session.bestLap.lapTime);
@@ -612,7 +614,7 @@ public class PageFileStatistics implements Page {
 			headerCell = header.createCell(21);
 			headerCell.setCellValue("trackStatus");
 			headerCell.setCellStyle(headerStyle);
-			
+
 			headerCell = header.createCell(22);
 			headerCell.setCellValue("validLap");
 			headerCell.setCellStyle(headerStyle);
@@ -717,27 +719,17 @@ public class PageFileStatistics implements Page {
 				cell = row.createCell(22);
 				cell.setCellValue(lap.getValue().isValidLap);
 				cell.setCellStyle(style);
-/*
-				Iterator<Map.Entry<Integer, Integer>> iteratorMap = lap.getValue().maps.entrySet().iterator();
-				int c = 22;
-				int sum = 0;
-				float percent = 0;
-				while (iteratorMap.hasNext()) {
-					Map.Entry<Integer, Integer> map = iteratorMap.next();
-					sum += map.getValue().intValue();
-				}
-				if (sum > 0) {
-					iteratorMap = lap.getValue().maps.entrySet().iterator();
-					while (iteratorLap.hasNext()) {
-						Map.Entry<Integer, Integer> map = iteratorMap.next();
-						percent = (float) (map.getValue() / sum * 100.0);
-						cell = row.createCell(c);
-						cell.setCellValue(percent);
-						cell.setCellStyle(style);
-						c++;
-					}
-				}
-*/
+				/*
+				 * Iterator<Map.Entry<Integer, Integer>> iteratorMap =
+				 * lap.getValue().maps.entrySet().iterator(); int c = 22; int sum = 0; float
+				 * percent = 0; while (iteratorMap.hasNext()) { Map.Entry<Integer, Integer> map
+				 * = iteratorMap.next(); sum += map.getValue().intValue(); } if (sum > 0) {
+				 * iteratorMap = lap.getValue().maps.entrySet().iterator(); while
+				 * (iteratorLap.hasNext()) { Map.Entry<Integer, Integer> map =
+				 * iteratorMap.next(); percent = (float) (map.getValue() / sum * 100.0); cell =
+				 * row.createCell(c); cell.setCellValue(percent); cell.setCellStyle(style); c++;
+				 * } }
+				 */
 			}
 
 		}
