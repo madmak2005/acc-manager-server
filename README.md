@@ -16,9 +16,12 @@ Java 1.8 and newer. I tested it on Java 15 and I noticed that it uses 3x less me
 
 ## WebSockets
 Just open in any websocket client. You can use online site http://www.websocket.org/echo.html (use http for ws:// because wss:// is not supported) or any websocket plugin avaiable for your web browser.
-1. ws://x.x.x.x:8080/acc/graphics (refresh rate 333 ms)
-2. ws://x.x.x.x:8080/acc/physics (refresh rate 333 ms)
-3. ws://x.x.x.x:8080/acc/static (refresh rate 2000 ms)
+1. ws://x.x.x.x:8080/acc/graphics (refresh rate 100 ms)
+2. ws://x.x.x.x:8080/acc/physics (refresh rate 100 ms)
+3. ws://x.x.x.x:8080/acc/statistics (refresh rate 100 ms)
+4. ws://x.x.x.x:8080/acc/static (refresh rate 2000 ms)
+
+New in 1.1.7: you can send {"action": "saveSessions"} to ws://x.x.x.x:8080/acc/statistics and sava all collected data in xlsx file.
 
 It is possible to filter JSON fields by sending message to the serwer through WebSocket session. For instance sending: 
 ```
