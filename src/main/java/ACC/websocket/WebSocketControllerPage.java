@@ -73,15 +73,15 @@ public class WebSocketControllerPage {
 		switch (pageName) {
 		case "graphics":
 			sessionGraphics = session;
-			sendTextGraphics();
+			//sendTextGraphics();
 			break;
 		case "physics":
 			sessionPhysics = session;
-			sendTextPhysics();
+			//sendTextPhysics();
 			break;
 		case "static":
 			sessionStatic = session;
-			sendTextStatic();
+			//sendTextStatic();
 			break;
 		case "macro":
 			sessionMacro = session;
@@ -89,7 +89,7 @@ public class WebSocketControllerPage {
 			break;
 		case "statistics":
 			sessionStatistics = session;
-			sendTextStatistics();
+			//sendTextStatistics();
 			break;
 		}
 	}
@@ -150,6 +150,17 @@ public class WebSocketControllerPage {
 		}
 		if (sessionStatic != null && sessionStatic.getId() == session.getId()) {
 			fieldsStatic = msg.getFildsToFilter();
+		}
+		if (sessionStatistics != null && sessionStatistics.getId() == session.getId()) {
+			if (message.startsWith("{")) {
+				if (message.equals("{\"action\": \"saveSessions\"}")) {
+					OutputMessage om = accSharedMemoryService.getPageFileMessage("statistics", fieldsStatistics);
+					statistics = (PageFileStatistics) om.page;
+					statistics.saveToXLSX();
+				}
+			} else {
+				fieldsStatistics = msg.getFildsToFilter();
+			}
 		}
 		System.out.println("onMessage");
 

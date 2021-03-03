@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -32,6 +33,7 @@ import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.servlet.mvc.method.annotation.SessionAttributeMethodArgumentResolver;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -57,6 +59,7 @@ public class PageFileStatistics implements Page {
 			pRR = new ArrayList<>();
 	private List<Float> tFL = new ArrayList<>(), tFR = new ArrayList<>(), tRL = new ArrayList<>(),
 			tRR = new ArrayList<>();
+	private List<Float> airTemp = new ArrayList<>(), roadTemp = new ArrayList<>();
 	private List<Integer> rainIntensity = new ArrayList<>();
 	private List<Integer> trackGripStatus = new ArrayList<>();
 
@@ -72,13 +75,26 @@ public class PageFileStatistics implements Page {
 	protected Instant lastChange = Instant.now();
 
 	private boolean saved = false;
+ 
+	private String mstoStr(long durationInMillis) {
+		long millis = durationInMillis % 1000;
+		long second = (durationInMillis / 1000) % 60;
+		long minute = (durationInMillis / (1000 * 60)) % 60;
+		long hour = (durationInMillis / (1000 * 60 * 60)) % 24;
 
+		return String.format("%02d:%02d:%02d:%03d",hour, minute, second, millis);
+	}
+	
 	public void addStatPoint(StatPoint statPoint) {
 
 		if (statPoint.iCurrentTime != 0) {
 			StatPoint prevStatPoint = null;
 			if (statPoints.size() > 0) {
 				prevStatPoint = statPoints.get(statPoints.size() - 1);
+				if (statPoint.packetIDG != prevStatPoint.packetIDG
+						&& statPoint.packetIDP != prevStatPoint.packetIDP) {
+					lastChange = Instant.now();
+				}
 				if (prevStatPoint.iCurrentTime != statPoint.iCurrentTime) {
 					if (prevStatPoint.iCurrentTime > statPoint.iCurrentTime && prevStatPoint.lapNo == statPoint.lapNo) {
 						// LOGGER.info("Kunos miracle. Skip this data");
@@ -109,10 +125,7 @@ public class PageFileStatistics implements Page {
 							currentSession = newSession(statPoint);
 						}
 
-						if (statPoint.packetIDG != prevStatPoint.packetIDG
-								&& statPoint.packetIDP != prevStatPoint.packetIDP) {
-							lastChange = Instant.now();
-						}
+
 						if (Duration.between(lastChange, Instant.now()).getSeconds() > 5 && !saved) {
 							LOGGER.info("Finished? Save sessions.");
 							saveToXLSX();
@@ -120,6 +133,7 @@ public class PageFileStatistics implements Page {
 						}
 
 						statPoints.add(statPoint);
+						
 						if (statPoint.wheelsPressure != null) {
 							pFL.add(statPoint.wheelsPressure[0]);
 							pFR.add(statPoint.wheelsPressure[1]);
@@ -132,7 +146,8 @@ public class PageFileStatistics implements Page {
 							tRL.add(statPoint.tyreCoreTemperature[2]);
 							tRR.add(statPoint.tyreCoreTemperature[3]);
 						}
-
+						airTemp.add(statPoint.airTemp);
+						roadTemp.add(statPoint.roadTemp);
 						rainIntensity.add(statPoint.rainIntensity);
 						trackGripStatus.add(statPoint.trackGripStatus);
 
@@ -153,7 +168,7 @@ public class PageFileStatistics implements Page {
 							LOGGER.info("NEW SESSION??");
 							// sessions.clear();
 							Gson gson = new Gson();
-							System.out.println(gson.toJson(currentSession));
+							//System.out.println(gson.toJson(currentSession));
 							currentSession = newSession(statPoint);
 						}
 
@@ -161,7 +176,7 @@ public class PageFileStatistics implements Page {
 								&& statPoint.session == AC_SESSION_TYPE.AC_RACE && currentSession != null
 								&& !currentSession.wasGreenFlag) {
 							Gson gson = new Gson();
-							System.out.println(gson.toJson(currentSession));
+							//System.out.println(gson.toJson(currentSession));
 							LOGGER.info("GREEN FLAG, GREEN FLAG, GREEN, GREEN, GREEN!!!!!!!");
 							raceStartAt = statPoint.iCurrentTime;
 							LOGGER.info("Race start at [ms]: " + String.valueOf(raceStartAt));
@@ -177,7 +192,7 @@ public class PageFileStatistics implements Page {
 						currentSession.sessionTimeLeft = statPoint.sessionTimeLeft;
 						currentSession.distanceTraveled = statPoint.distanceTraveled;
 						StatLap lap = currentSession.laps.get(statPoint.lapNo);
-
+						
 						if (lap == null) {
 							LOGGER.info("New lap started: [" + statPoint.lapNo + "]");
 							long duration = 0;
@@ -224,25 +239,24 @@ public class PageFileStatistics implements Page {
 								LOGGER.info("Calculated duration [ms]: "
 										+ String.valueOf(statPoint.iLastTime - raceStartAt));
 								long durationInMillis = statPoint.iLastTime - raceStartAt;
-								long millis = durationInMillis % 1000;
-								long second = (durationInMillis / 1000) % 60;
-								long minute = (durationInMillis / (1000 * 60)) % 60;
-								long hour = (durationInMillis / (1000 * 60 * 60)) % 24;
+
 								prevLap.lapTime = statPoint.iLastTime - raceStartAt;
 								prevLap.fuelXlap = statPoint.fuelXlap;
 								prevLap.trackStatus = prevStatPoint.trackStatus;
-								LOGGER.info(String.format("Last lap: %02d:%02d:%02d.%d", hour, minute, second, millis));
+								LOGGER.info("Last lap: " + mstoStr(durationInMillis));
 								calculateLapStats(prevLap, currentSession); // we got new lap, calculate previous
 								Gson gson = new Gson();
 								if (raceStartAt > 0)
 									raceStartAt = 0;
-								System.out.println(gson.toJson(prevLap));
+								//System.out.println(gson.toJson(prevLap));
 
 							} else {
 								// first registered lap
 								currentSession.laps.get(statPoint.lapNo).distanceTraveled = statPoint.distanceTraveled;
 
 							}
+						} else {
+							if (lap.fuelLeftOnStart == 0 && statPoint.fuel != 0 && lap.lapNo == statPoint.lapNo) lap.fuelLeftOnStart = statPoint.fuel;
 						}
 						if (statPoint.currentSectorIndex != prevStatPoint.currentSectorIndex) {
 							if (statPoint.currentSectorIndex > prevStatPoint.currentSectorIndex) {
@@ -297,6 +311,11 @@ public class PageFileStatistics implements Page {
 					}
 				} else {
 					statPoints.add(statPoint);
+					if (Duration.between(lastChange, Instant.now()).getSeconds() > 5 && !saved) {
+						LOGGER.info("Finished? Save sessions.");
+						saveToXLSX();
+						saved = true;
+					}
 				}
 			} else {
 				LOGGER.info("let's get the party started!");
@@ -306,6 +325,7 @@ public class PageFileStatistics implements Page {
 	}
 
 	private StatSession newSession(StatPoint statPoint) {
+		List<Integer> sessionsToRemove = new ArrayList<>();
 		Iterator<Map.Entry<Integer, StatSession>> iterator = sessions.entrySet().iterator();
 		while (iterator.hasNext()) {
 			Map.Entry<Integer, StatSession> entry = iterator.next();
@@ -320,14 +340,18 @@ public class PageFileStatistics implements Page {
 				}
 			}
 			if (entry.getValue().laps.size() == 0) {
-				sessions.remove(entry.getKey());
+				sessionsToRemove.add(entry.getKey());
 			}
 		}
+		
+		sessionsToRemove.forEach( key -> {
+			sessions.remove(key);
+		});
 
-		saveToXLSX();
+		//saveToXLSX();
 		saved = false;
 		Gson gson = new Gson();
-		System.out.println(gson.toJson(sessions));
+		//System.out.println(gson.toJson(sessions));
 		sessionCounter++;
 		currentSession = new StatSession();
 		currentSession.internalSessionIndex = sessionCounter;
@@ -389,10 +413,22 @@ public class PageFileStatistics implements Page {
 		}
 		session.fuelAVG5Laps = lavg / i;
 		session.avgLapTime5 = Math.round(avgMS / i);
-		session.fuelAVGPerLap = lap.fuelXlap;
-		session.fuelEFNLapsOnEnd = (float) (session.sessionTimeLeft / (1000 * 60)) * perminutes;
-		session.fuelNTFOnEnd = session.sessionTimeLeft / session.lastLap.lapTime * lap.fuelUsed;
-		// public float fuelEFNMinutesOnEnd = 0;
+		lap.fuelAVGPerLap = lap.fuelXlap;
+		lap.fuelNTFOnEnd = (session.avgLapTime3 + session.sessionTimeLeft) / session.lastLap.lapTime * lap.fuelUsed;
+
+		lap.fuelEFNLapsOnEnd = (float) ( (session.avgLapTime3+session.sessionTimeLeft) / (1000 * 60)) * perminutes;
+		if (avgMS != 0 && (lavg / avgMS) != 0) {
+			if (lap.fuelAdded > 0)
+				if (session.bestLap != null && session.bestLap.lapTime > 0 && lap.fuelXlap > 0) 
+					lap.fuelEstForNextMiliseconds = lap.fuelLeftOnEnd / (lap.fuelXlap / session.bestLap.lapTime);
+				else
+					lap.fuelEstForNextMiliseconds = (lap.fuelLeftOnEnd / (lap.fuelXlap / avgMS) );
+			else
+				lap.fuelEstForNextMiliseconds = (lap.fuelLeftOnEnd / (lavg / avgMS) );
+		}
+		
+
+		
 		OptionalDouble average = pFL.stream().mapToDouble(a -> a).average();
 		lap.pFL = (float) (average.isPresent() ? average.getAsDouble() : 0);
 
@@ -423,6 +459,12 @@ public class PageFileStatistics implements Page {
 		average = trackGripStatus.stream().mapToDouble(a -> a).average();
 		lap.trackGripStatus = (float) (average.isPresent() ? average.getAsDouble() : 0);
 
+		average = airTemp.stream().mapToDouble(a -> a).average();
+		lap.airTemp = (float) (average.isPresent() ? average.getAsDouble() : 0);
+		
+		average = roadTemp.stream().mapToDouble(a -> a).average();
+		lap.roadTemp = (float) (average.isPresent() ? average.getAsDouble() : 0);
+		
 		pFL = new ArrayList<>();
 		pFR = new ArrayList<>();
 		pRL = new ArrayList<>();
@@ -433,8 +475,9 @@ public class PageFileStatistics implements Page {
 		tRR = new ArrayList<>();
 		rainIntensity = new ArrayList<>();
 		trackGripStatus = new ArrayList<>();
-
-		LOGGER.info("fuelNTFOnEnd: " + session.fuelNTFOnEnd);
+		airTemp = new ArrayList<>();
+		roadTemp = new ArrayList<>();
+		LOGGER.info("fuelNTFOnEnd: " + lap.fuelNTFOnEnd);
 		LOGGER.info("Full laps +1 left (based on last lap): " + session.sessionTimeLeft / session.lastLap.lapTime);
 		LOGGER.info("Full laps +1 left (based on best lap): " + session.sessionTimeLeft / session.bestLap.lapTime);
 	}
@@ -442,7 +485,8 @@ public class PageFileStatistics implements Page {
 	public void saveToXLSX() {
 		Workbook workbook = new XSSFWorkbook();
 		Iterator<Map.Entry<Integer, StatSession>> iterator = sessions.entrySet().iterator();
-
+		DecimalFormat df = new DecimalFormat("0.000");
+		
 		while (iterator.hasNext()) {
 			int rowNo = 0;
 			Map.Entry<Integer, StatSession> entry = iterator.next();
@@ -548,23 +592,23 @@ public class PageFileStatistics implements Page {
 			headerCell.setCellStyle(headerStyle);
 
 			headerCell = header.createCell(5);
-			headerCell.setCellValue("fuelLeftOnStart");
+			headerCell.setCellValue("Fuel start lap");
 			headerCell.setCellStyle(headerStyle);
 
 			headerCell = header.createCell(6);
-			headerCell.setCellValue("fuelLeftOnEnd");
+			headerCell.setCellValue("Fuel end lap");
 			headerCell.setCellStyle(headerStyle);
 
 			headerCell = header.createCell(7);
-			headerCell.setCellValue("fuelAVGPerMinute");
+			headerCell.setCellValue("l/min");
 			headerCell.setCellStyle(headerStyle);
 
 			headerCell = header.createCell(8);
-			headerCell.setCellValue("fuelXlap");
+			headerCell.setCellValue("l/lap");
 			headerCell.setCellStyle(headerStyle);
 
 			headerCell = header.createCell(9);
-			headerCell.setCellValue("fuelAdded");
+			headerCell.setCellValue("refuel [l]");
 			headerCell.setCellStyle(headerStyle);
 
 			headerCell = header.createCell(10);
@@ -618,6 +662,26 @@ public class PageFileStatistics implements Page {
 			headerCell = header.createCell(22);
 			headerCell.setCellValue("validLap");
 			headerCell.setCellStyle(headerStyle);
+			
+			headerCell = header.createCell(23);
+			headerCell.setCellValue("airTemp");
+			headerCell.setCellStyle(headerStyle);
+			
+			headerCell = header.createCell(24);
+			headerCell.setCellValue("roadTemp");
+			headerCell.setCellStyle(headerStyle);
+			
+			headerCell = header.createCell(25);
+			headerCell.setCellValue("Fuel for next [lap]");
+			headerCell.setCellStyle(headerStyle);
+			
+			headerCell = header.createCell(26);
+			headerCell.setCellValue("Fuel for next [time]");
+			headerCell.setCellStyle(headerStyle);
+			
+			headerCell = header.createCell(27);
+			headerCell.setCellValue("Seesion time left");
+			headerCell.setCellStyle(headerStyle);
 
 			Iterator<Map.Entry<Integer, StatLap>> iteratorLap = entry.getValue().laps.entrySet().iterator();
 			int i = 0;
@@ -644,68 +708,70 @@ public class PageFileStatistics implements Page {
 				cell.setCellStyle(style);
 
 				cell = row.createCell(1);
-				cell.setCellValue(lap.getValue().lapTime);
+				cell.setCellValue(mstoStr(lap.getValue().lapTime));
 				cell.setCellStyle(style);
 
 				if (lap.getValue().splitTimes.get(0) != null) {
 					cell = row.createCell(2);
-					cell.setCellValue(lap.getValue().splitTimes.get(0));
+					cell.setCellValue(mstoStr(lap.getValue().splitTimes.get(0)));
 					cell.setCellStyle(style);
 				}
 				if (lap.getValue().splitTimes.get(1) != null) {
 					cell = row.createCell(3);
-					cell.setCellValue(lap.getValue().splitTimes.get(1));
+					cell.setCellValue(mstoStr(lap.getValue().splitTimes.get(1)-lap.getValue().splitTimes.get(0)));
 					cell.setCellStyle(style);
 				}
 				if (lap.getValue().splitTimes.get(2) != null) {
 					cell = row.createCell(4);
-					cell.setCellValue(lap.getValue().splitTimes.get(2));
+					cell.setCellValue(mstoStr(lap.getValue().splitTimes.get(2)-lap.getValue().splitTimes.get(1)));
 					cell.setCellStyle(style);
 				}
 
 				cell = row.createCell(5);
-				cell.setCellValue(lap.getValue().fuelLeftOnStart);
+				cell.setCellValue(df.format(lap.getValue().fuelLeftOnStart));
 				cell.setCellStyle(style);
 				cell = row.createCell(6);
-				cell.setCellValue(lap.getValue().fuelLeftOnEnd);
+				cell.setCellValue(df.format(lap.getValue().fuelLeftOnEnd));
 				cell.setCellStyle(style);
 				cell = row.createCell(7);
-				cell.setCellValue(lap.getValue().fuelAVGPerMinute);
+				cell.setCellValue(df.format(lap.getValue().fuelAVGPerMinute));
 				cell.setCellStyle(style);
 				cell = row.createCell(8);
-				cell.setCellValue(lap.getValue().fuelXlap);
+				cell.setCellValue(df.format(lap.getValue().fuelXlap));
 				cell.setCellStyle(style);
 				cell = row.createCell(9);
-				cell.setCellValue(lap.getValue().fuelAdded);
+				cell.setCellValue(df.format(lap.getValue().fuelAdded));
 				cell.setCellStyle(style);
 
+				boolean wet = lap.getValue().rainTyres == 1 ? true : false;
+				
 				cell = row.createCell(10);
-				cell.setCellValue(lap.getValue().pFL);
-				cell.setCellStyle(style);
+				cell.setCellValue(df.format(lap.getValue().pFL));
+				cell.setCellStyle(pressureXLSXStyle(workbook, lap.getValue().pFL, wet));
 				cell = row.createCell(11);
-				cell.setCellValue(lap.getValue().pFR);
-				cell.setCellStyle(style);
+				cell.setCellValue(df.format(lap.getValue().pFR));
+				cell.setCellStyle(pressureXLSXStyle(workbook, lap.getValue().pFR, wet));
 				cell = row.createCell(12);
-				cell.setCellValue(lap.getValue().pRL);
-				cell.setCellStyle(style);
+				cell.setCellValue(df.format(lap.getValue().pRL));
+				cell.setCellStyle(pressureXLSXStyle(workbook, lap.getValue().pRL, wet));
 				cell = row.createCell(13);
-				cell.setCellValue(lap.getValue().pRR);
-				cell.setCellStyle(style);
+				cell.setCellValue(df.format(lap.getValue().pRR));
+				cell.setCellStyle(pressureXLSXStyle(workbook, lap.getValue().pRR, wet));
 
 				cell = row.createCell(14);
-				cell.setCellValue(lap.getValue().tFL);
+				cell.setCellValue(df.format(lap.getValue().tFL));
 				cell.setCellStyle(style);
 				cell = row.createCell(15);
-				cell.setCellValue(lap.getValue().tFR);
+				cell.setCellValue(df.format(lap.getValue().tFR));
 				cell.setCellStyle(style);
 				cell = row.createCell(16);
-				cell.setCellValue(lap.getValue().tRL);
+				cell.setCellValue(df.format(lap.getValue().tRL));
 				cell.setCellStyle(style);
 				cell = row.createCell(17);
-				cell.setCellValue(lap.getValue().tRR);
+				cell.setCellValue(df.format(lap.getValue().tRR));
 				cell.setCellStyle(style);
 				cell = row.createCell(18);
-				cell.setCellValue(lap.getValue().rainIntensity);
+				cell.setCellValue(df.format(lap.getValue().rainIntensity));
 				cell.setCellStyle(style);
 				cell = row.createCell(19);
 				cell.setCellValue(lap.getValue().rainTyres);
@@ -719,6 +785,22 @@ public class PageFileStatistics implements Page {
 				cell = row.createCell(22);
 				cell.setCellValue(lap.getValue().isValidLap);
 				cell.setCellStyle(style);
+				cell = row.createCell(23);
+				cell.setCellValue(df.format(lap.getValue().airTemp));
+				cell.setCellStyle(style);
+				cell = row.createCell(24);
+				cell.setCellValue(df.format(lap.getValue().roadTemp));
+				cell.setCellStyle(style);
+				cell = row.createCell(25);
+				cell.setCellValue(df.format(lap.getValue().fuelEFNLapsOnEnd));
+				cell.setCellStyle(style);
+				cell = row.createCell(26);
+				cell.setCellValue(mstoStr(Math.round(lap.getValue().fuelEstForNextMiliseconds)));
+				cell.setCellStyle(style);
+				cell = row.createCell(27);
+				cell.setCellValue(mstoStr(Math.round(lap.getValue().sessionTimeLeft)));
+				cell.setCellStyle(style);
+				
 				/*
 				 * Iterator<Map.Entry<Integer, Integer>> iteratorMap =
 				 * lap.getValue().maps.entrySet().iterator(); int c = 22; int sum = 0; float
@@ -744,16 +826,18 @@ public class PageFileStatistics implements Page {
 		File currDir = new File(".");
 		String path = currDir.getAbsolutePath();
 		String fileLocation = path.substring(0, path.length() - 1) + nowDate + ".xlsx";
-		System.out.println(fileLocation);
+		LOGGER.info(fileLocation);
 
 		FileOutputStream outputStream;
 		try {
 			outputStream = new FileOutputStream(fileLocation);
 			workbook.write(outputStream);
 			workbook.close();
+			outputStream.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
 
 	}
 
@@ -784,6 +868,34 @@ public class PageFileStatistics implements Page {
 		return response;
 	}
 
+	private CellStyle pressureXLSXStyle(Workbook workbook, float psi, boolean wet) {
+		
+		CellStyle coldStyle = workbook.createCellStyle();
+		coldStyle.setFillForegroundColor(IndexedColors.LIGHT_BLUE.getIndex());
+		coldStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+		
+		CellStyle normalStyle = workbook.createCellStyle();
+		normalStyle.setFillForegroundColor(IndexedColors.LIGHT_GREEN.getIndex());
+		normalStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+		
+		CellStyle warmStyle = workbook.createCellStyle();
+		warmStyle.setFillForegroundColor(IndexedColors.LIGHT_ORANGE.getIndex());
+		warmStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+		
+		CellStyle hotStyle = workbook.createCellStyle();
+		hotStyle.setFillForegroundColor(IndexedColors.RED.getIndex());
+		hotStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+		
+		if (!wet) {
+			if (psi < 27.5) return coldStyle; 
+				else if (psi >= 27.5 && psi <= 28.0 ) return normalStyle; 
+					else if (psi > 28.0 && psi < 28.5) return warmStyle; 
+						else return hotStyle;
+		} else {
+			return normalStyle;
+		}
+	}
+	
 	@Override
 	public String toJSON(List<String> fields) {
 		String response = "";

@@ -33,11 +33,6 @@ public class StatSession {
 	public int avgLapTime3 = 0;
 	public int avgLapTime5 = 0;
 	
-	public float fuelNTFOnEnd = 0;
-	public float fuelEFNMinutesOnEnd = 0;
-	public float fuelEFNLapsOnEnd = 0;
-	public float fuelAVGPerLap = 0;
-	
 	public int packetDelta = 0;
 	
 }

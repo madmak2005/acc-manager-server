@@ -70,9 +70,6 @@ public class ACCSharedMemoryServiceImpl implements ACCSharedMemoryService {
 		if (statPoint != null && statPoint.iCurrentTime > 0) {
 			statPoint.car = getStatCar();
 			statistics.addStatPoint(statPoint);
-			statistics.sessions.forEach( (i,action) -> {
-			});
-				
 		}
 		return statistics;
 	}

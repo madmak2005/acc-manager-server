@@ -14,6 +14,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.apache.commons.compress.archivers.sevenz.SevenZArchiveEntry;
 import org.apache.commons.compress.archivers.sevenz.SevenZOutputFile;
 import org.slf4j.Logger;
@@ -56,11 +57,19 @@ public class OutputMessage {
 					savePage(page);
 				}
 		}
-
-		if (fields == null || fields.size() == 0)
-			this.content = page.toJSON();
-		else
-			this.content = page.toJSON(fields);
+		if (!pageName.equals("statistics")) {
+			if (fields == null || fields.size() == 0)
+				this.content = page.toJSON();
+			else
+				this.content = page.toJSON(fields);
+		} else {
+			PageFileStatistics stat = (PageFileStatistics) page;
+			Gson gson = new Gson();
+			stat.currentSession.last3Laps = new CircularFifoQueue<>(3);
+			stat.currentSession.last5Laps = new CircularFifoQueue<>(5);
+			stat.currentSession.lastLap = new StatLap();
+			this.content = gson.toJson(stat.currentSession);
+		}
 
 	}
 

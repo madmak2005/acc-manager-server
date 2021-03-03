@@ -30,6 +30,15 @@ public class StatLap {
 	public float pFL, pFR, pRL, pRR = 0;
 	public float tFL, tFR, tRL, tRR = 0;
 	
+	public float airTemp = 0;
+	public float roadTemp = 0;
+	
+	public float fuelNTFOnEnd = 0;
+	public float fuelEstForNextMiliseconds = 0;
+	public float fuelEFNLapsOnEnd = 0;
+	
+	public float fuelAVGPerLap = 0;
+	
 	public float clockAtStart = 0;
 	
 	public float rainIntensity = 0;
