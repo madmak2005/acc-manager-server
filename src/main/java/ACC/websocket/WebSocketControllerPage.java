@@ -181,7 +181,7 @@ public class WebSocketControllerPage {
 			sendText(sessionPhysics, om.content);
 	}
 
-	@Scheduled(fixedRate = 10000)
+	@Scheduled(fixedRate = 2000)
 	private void sendTextStatic() {
 		OutputMessage om = accSharedMemoryService.getPageFileMessage("static", fieldsStatic);
 		if (sessionStatic != null && om != null)
