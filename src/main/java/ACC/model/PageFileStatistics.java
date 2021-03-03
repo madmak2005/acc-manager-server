@@ -486,10 +486,13 @@ public class PageFileStatistics implements Page {
 		Workbook workbook = new XSSFWorkbook();
 		Iterator<Map.Entry<Integer, StatSession>> iterator = sessions.entrySet().iterator();
 		DecimalFormat df = new DecimalFormat("0.000");
-		
+		List<Integer> sessionsToRemove = new ArrayList<>();
 		while (iterator.hasNext()) {
 			int rowNo = 0;
 			Map.Entry<Integer, StatSession> entry = iterator.next();
+			if (iterator.hasNext())
+				sessionsToRemove.add(entry.getKey());
+			
 			Sheet sheet = workbook.createSheet("Session " + entry.getValue().internalSessionIndex);
 			sheet.setColumnWidth(0, 5000);
 			sheet.setColumnWidth(1, 6000);
@@ -838,7 +841,9 @@ public class PageFileStatistics implements Page {
 			e.printStackTrace();
 		}
 		
-
+		sessionsToRemove.forEach( key -> {
+			sessions.remove(key);
+		});
 	}
 
 	@Override
