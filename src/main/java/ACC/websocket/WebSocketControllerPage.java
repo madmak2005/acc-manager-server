@@ -13,12 +13,15 @@ import javax.websocket.Session;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 
+import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import ACC.ApplicationContextAwareImpl;
 import ACC.acm.AutomaticCarManagementService;
@@ -195,11 +198,22 @@ public class WebSocketControllerPage {
 	}
 	
 	
-	@Scheduled(fixedRateString = "#{@applicationPropertyService.getApplicationProperty()}")
+	@Scheduled(fixedRateString = "#{@applicationPropertyService.getStatisticsInterval()}")
 	private void sendTextStatistics() {
 		OutputMessage om = accSharedMemoryService.getPageFileMessage("statistics", fieldsStatistics);
-		if (sessionStatistics != null && om != null)
-			sendText(sessionStatistics, om.content);
+		if (sessionStatistics != null && om != null) {
+			PageFileStatistics stat = (PageFileStatistics) om.page;
+			//stat.currentSession.last3Laps = new CircularFifoQueue<>(3);
+			//stat.currentSession.last5Laps = new CircularFifoQueue<>(5);
+			/*
+			Gson gson = new GsonBuilder()
+	                .setPrettyPrinting()
+	                .serializeSpecialFloatingPointValues() // This is the key
+	                .create();
+	        */
+			sendText(sessionStatistics, stat.currentSession.toJSON());
+		}
+			
 	}
 	
 	private void saveStatistics() {

@@ -13,7 +13,11 @@ public class ApplicationPropertyService {
 	private ServerProperties serverProperties;
 	
     public int getApplicationProperty(){
-        return (Application.useDebug && Application.debug ? 5 : 100);
+        return (Application.useDebug && Application.debug ? 50 : 100);
+    }
+    
+    public int getStatisticsInterval(){
+        return (Application.useDebug && Application.debug ? 50: 333);
     }
     
     public int getApplicationPort(){

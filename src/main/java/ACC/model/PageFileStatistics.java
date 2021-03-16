@@ -35,6 +35,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.servlet.mvc.method.annotation.SessionAttributeMethodArgumentResolver;
 
+import com.fasterxml.jackson.annotation.JsonFilter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ser.FilterProvider;
@@ -44,6 +46,7 @@ import com.google.gson.Gson;
 
 import app.Application;
 
+@JsonFilter("filter1")
 public class PageFileStatistics implements Page {
 
 	public PageFileStatistics() {
@@ -51,32 +54,28 @@ public class PageFileStatistics implements Page {
 		setPageName("statistics");
 		previous = Instant.now();
 	}
-
+	@JsonIgnore
 	private static final Logger LOGGER = LoggerFactory.getLogger(PageFileStatistics.class);
-
-	private List<StatPoint> statPoints = new ArrayList<>();
-	private List<Float> pFL = new ArrayList<>(), pFR = new ArrayList<>(), pRL = new ArrayList<>(),
-			pRR = new ArrayList<>();
-	private List<Float> tFL = new ArrayList<>(), tFR = new ArrayList<>(), tRL = new ArrayList<>(),
-			tRR = new ArrayList<>();
-	private List<Float> airTemp = new ArrayList<>(), roadTemp = new ArrayList<>();
-	private List<Integer> rainIntensity = new ArrayList<>();
-	private List<Integer> trackGripStatus = new ArrayList<>();
-
+	@JsonIgnore
 	public Map<Integer, StatSession> sessions = new HashMap<>();
+	
 	public StatSession currentSession = new StatSession();
-	private float fuelBeforePit = 0;
-	private float fuelAfterPit = 0;
 	private String pageName;
+	@JsonIgnore
 	protected LocalDateTime currentDateAndTime = LocalDateTime.now();
+	@JsonIgnore
 	protected Instant previous, current;
+	
 	protected int raceStartAt = 0;
+	@JsonIgnore
 	protected Integer sessionCounter = 0;
+	@JsonIgnore
 	protected Instant lastChange = Instant.now();
-
+	
+	@JsonIgnore
 	private boolean saved = false;
  
-	private String mstoStr(long durationInMillis) {
+	public static String mstoStr(long durationInMillis) {
 		long millis = durationInMillis % 1000;
 		long second = (durationInMillis / 1000) % 60;
 		long minute = (durationInMillis / (1000 * 60)) % 60;
@@ -86,13 +85,20 @@ public class PageFileStatistics implements Page {
 	}
 	
 	public void addStatPoint(StatPoint statPoint) {
+		StatPoint prevStatPoint = null;
+		currentSession = sessions.get(sessionCounter);
+
+		if (currentSession == null) {
+			LOGGER.info("New session");
+			currentSession = newSession(statPoint);
+		}
 
 		if (statPoint.iCurrentTime != 0) {
-			StatPoint prevStatPoint = null;
-			if (statPoints.size() > 0) {
-				prevStatPoint = statPoints.get(statPoints.size() - 1);
-				if (statPoint.packetIDG != prevStatPoint.packetIDG
-						&& statPoint.packetIDP != prevStatPoint.packetIDP) {
+			if (currentSession.currentLap.statPoints.size() > 0) {
+				prevStatPoint = currentSession.currentLap.statPoints
+						.get(currentSession.currentLap.statPoints.size() - 1);
+				currentSession.currentLap.addStatPoint(statPoint);
+				if (statPoint.packetIDG != prevStatPoint.packetIDG && statPoint.packetIDP != prevStatPoint.packetIDP) {
 					lastChange = Instant.now();
 				}
 				if (prevStatPoint.iCurrentTime != statPoint.iCurrentTime) {
@@ -100,217 +106,70 @@ public class PageFileStatistics implements Page {
 						// LOGGER.info("Kunos miracle. Skip this data");
 					} else {
 						currentSession.packetDelta = Math.abs(statPoint.packetIDG - prevStatPoint.packetIDP);
-						if (statPoint.lapNo < prevStatPoint.lapNo) {
-							LOGGER.info("LAP number is lower");
-							currentSession = newSession(statPoint);
-						}
-
-						if (statPoint.lapNo < prevStatPoint.lapNo) {
-							LOGGER.info("LAP number is lower");
-							currentSession = newSession(statPoint);
-						}
-
-						if (statPoint.packetIDG < prevStatPoint.packetIDG) {
-							LOGGER.info("Data from another session");
-							currentSession = newSession(statPoint);
-						}
-
-						if (statPoint.packetIDP < prevStatPoint.packetIDP) {
-							LOGGER.info("Data from another session");
-							currentSession = newSession(statPoint);
-						}
-
-						if (statPoint.session != prevStatPoint.session) {
-							LOGGER.info("New session");
-							currentSession = newSession(statPoint);
-						}
-
-
 						if (Duration.between(lastChange, Instant.now()).getSeconds() > 5 && !saved) {
 							LOGGER.info("Finished? Save sessions.");
 							saveToXLSX();
 							saved = true;
 						}
 
-						statPoints.add(statPoint);
-						
-						if (statPoint.wheelsPressure != null) {
-							pFL.add(statPoint.wheelsPressure[0]);
-							pFR.add(statPoint.wheelsPressure[1]);
-							pRL.add(statPoint.wheelsPressure[2]);
-							pRR.add(statPoint.wheelsPressure[3]);
-						}
-						if (statPoint.tyreCoreTemperature != null) {
-							tFL.add(statPoint.tyreCoreTemperature[0]);
-							tFR.add(statPoint.tyreCoreTemperature[1]);
-							tRL.add(statPoint.tyreCoreTemperature[2]);
-							tRR.add(statPoint.tyreCoreTemperature[3]);
-						}
-						airTemp.add(statPoint.airTemp);
-						roadTemp.add(statPoint.roadTemp);
-						rainIntensity.add(statPoint.rainIntensity);
-						trackGripStatus.add(statPoint.trackGripStatus);
-
-						currentSession = sessions.get(sessionCounter);
-						// StatSession nextSession = sessions.get(statPoint.sessionIndex + 1);
-						// if (currentSession != null && (currentSession.distanceTraveled >
-						// statPoint.distanceTraveled)) {
-						// LOGGER.info("RESTART??");
-						// currentSession = newSession(statPoint);
-						// }
-
-						if (prevStatPoint.usedFuel > statPoint.usedFuel
-								&& prevStatPoint.distanceTraveled > statPoint.distanceTraveled
-								&& prevStatPoint.lapNo == statPoint.lapNo && statPoint.isInPitLane == 1) {
-							LOGGER.info("BACK TO PIT??");
-							// currentSession = newSession(statPoint);
-						} else if (prevStatPoint.distanceTraveled > statPoint.distanceTraveled) {
-							LOGGER.info("NEW SESSION??");
-							// sessions.clear();
-							Gson gson = new Gson();
-							//System.out.println(gson.toJson(currentSession));
+						if (newSessionStarted(prevStatPoint, statPoint))
 							currentSession = newSession(statPoint);
-						}
 
 						if (statPoint.flag == AC_FLAG_TYPE.ACC_GREEN_FLAG
 								&& statPoint.session == AC_SESSION_TYPE.AC_RACE && currentSession != null
 								&& !currentSession.wasGreenFlag) {
-							Gson gson = new Gson();
-							//System.out.println(gson.toJson(currentSession));
+							// System.out.println(gson.toJson(currentSession));
 							LOGGER.info("GREEN FLAG, GREEN FLAG, GREEN, GREEN, GREEN!!!!!!!");
 							raceStartAt = statPoint.iCurrentTime;
 							LOGGER.info("Race start at [ms]: " + String.valueOf(raceStartAt));
 							currentSession = newSession(statPoint);
 							currentSession.wasGreenFlag = true;
+							currentSession.currentLap.first = true;
 						}
 
-						if (currentSession == null) {
-							LOGGER.info("New session");
-							currentSession = newSession(statPoint);
-						}
-
-						currentSession.sessionTimeLeft = statPoint.sessionTimeLeft;
-						currentSession.distanceTraveled = statPoint.distanceTraveled;
 						StatLap lap = currentSession.laps.get(statPoint.lapNo);
-						
+
 						if (lap == null) {
-							LOGGER.info("New lap started: [" + statPoint.lapNo + "]");
-							long duration = 0;
-							current = Instant.now();
-							if (previous != null) {
-								duration = ChronoUnit.MILLIS.between(previous, current);
-								long durationofLap = statPoint.iLastTime;
-								if (durationofLap != 0) {
-									DecimalFormat df = new DecimalFormat("#.##");
-									LOGGER.info("Efficiency: " + df.format((float) duration / durationofLap * 100));
-									previous = Instant.now();
+							if (statPoint.normalizedCarPosition <= 1) {
+								LOGGER.info("New lap started: [" + statPoint.lapNo + "]");
+								LOGGER.info("Car position: [" + statPoint.normalizedCarPosition + "]");
+								StatLap prevLap = currentSession.laps.get(statPoint.lapNo - 1);
+								if (prevLap != null) {
+									prevLap.lapTime = statPoint.iLastTime;
+									prevLap.splitTimes.put(statPoint.car.sectorCount - 1, statPoint.iLastTime);
+									prevLap.lapTime = statPoint.iLastTime;
 								}
-							}
-							statPoints = new ArrayList<>();
-							statPoints.add(statPoint);
-							// init new lap, we don't have it in current session
-							lap = new StatLap();
-							StatLap prevLap = currentSession.laps.get(statPoint.lapNo - 1);
-							lap.fuelLeftOnStart = statPoint.fuel;
-							lap.maps.put(statPoint.currentMap, 0);
-							lap.clockAtStart = statPoint.clock;
-							currentSession.laps.put(statPoint.lapNo, lap);
-							if (prevLap != null) {
-								if (currentSession.wasGreenFlag && currentSession.laps.size() == 2)
-									prevLap.first = true;
-								LOGGER.info("Fuel at the start of the lap [kg]:" + prevLap.fuelLeftOnStart);
-								LOGGER.info("Fuel at the end of the lap [kg]:" + statPoint.fuel);
-								currentSession.lastLap = prevLap;
-								currentSession.last3Laps.add(prevLap);
-								currentSession.last5Laps.add(prevLap);
-								if (currentSession.bestLap.lapTime == 0)
-									currentSession.bestLap = prevLap;
-								else
-									currentSession.bestLap = currentSession.bestLap.lapTime < prevLap.lapTime
-											? currentSession.bestLap
-											: prevLap;
-								prevLap.lapTime = statPoint.iLastTime;
-								prevLap.splitTimes.put(prevStatPoint.currentSectorIndex, statPoint.iLastTime);
-								prevLap.fuelLeftOnEnd = statPoint.fuel;
-								prevLap.sessionTimeLeft = prevStatPoint.sessionTimeLeft;
-								// currentSession.laps.put(statPoint.sessionIndex, prevLap);
-								LOGGER.info("Race start at [ms]: " + String.valueOf(raceStartAt));
-								LOGGER.info("Duration [ms]: " + String.valueOf(statPoint.iLastTime));
-								LOGGER.info("Calculated duration [ms]: "
-										+ String.valueOf(statPoint.iLastTime - raceStartAt));
-								long durationInMillis = statPoint.iLastTime - raceStartAt;
 
-								prevLap.lapTime = statPoint.iLastTime - raceStartAt;
-								prevLap.fuelXlap = statPoint.fuelXlap;
-								prevLap.trackStatus = prevStatPoint.trackStatus;
-								LOGGER.info("Last lap: " + mstoStr(durationInMillis));
-								calculateLapStats(prevLap, currentSession); // we got new lap, calculate previous
-								Gson gson = new Gson();
-								if (raceStartAt > 0)
-									raceStartAt = 0;
-								//System.out.println(gson.toJson(prevLap));
+								long duration = 0;
+								current = Instant.now();
+								if (previous != null) {
+									duration = ChronoUnit.MILLIS.between(previous, current);
+									long durationofLap = statPoint.iLastTime;
+									if (durationofLap != 0) {
+										DecimalFormat df = new DecimalFormat("#.##");
+										LOGGER.info("Efficiency: " + df.format((float) duration / durationofLap * 100));
+										previous = Instant.now();
+									}
+								}
 
-							} else {
-								// first registered lap
-								currentSession.laps.get(statPoint.lapNo).distanceTraveled = statPoint.distanceTraveled;
-
+								// init new lap, we don't have it in current session
+								lap = new StatLap();
+								lap.addStatPoint(statPoint);
+								currentSession.addStatLap(lap);
+								currentSession.addStatPoint(statPoint);
 							}
 						} else {
-							if (lap.fuelLeftOnStart == 0 && statPoint.fuel != 0 && lap.lapNo == statPoint.lapNo) lap.fuelLeftOnStart = statPoint.fuel;
-						}
-						if (statPoint.currentSectorIndex != prevStatPoint.currentSectorIndex) {
-							if (statPoint.currentSectorIndex > prevStatPoint.currentSectorIndex) {
-								lap.splitTimes.put(prevStatPoint.currentSectorIndex, statPoint.lastSectorTime);
-							}
-						}
-						// lap.splitTimes.put(statPoint.currentSectorIndex, statPoint.iSplit);
+							if (statPoint.currentSectorIndex > 0)
+								lap.splitTimes.put(statPoint.currentSectorIndex - 1, statPoint.lastSectorTime);
+							if (lap.fuelLeftOnStart == 0 && statPoint.fuel != 0 && lap.lapNo == statPoint.lapNo)
+								lap.fuelLeftOnStart = statPoint.fuel;
 
+						}
 						currentSession.currentLap = lap;
-						lap.lapNo = statPoint.lapNo;
-						lap.distanceTraveled = statPoint.distanceTraveled;
-						if (statPoint.flag == AC_FLAG_TYPE.ACC_CHECKERED_FLAG) {
-							lap.last = true;
-						}
-
-						if (statPoint.flag == AC_FLAG_TYPE.ACC_GREEN_FLAG && !currentSession.wasGreenFlag) {
-							lap.first = true;
-						}
-
-						// we enter the pit
-						if (prevStatPoint != null && prevStatPoint.isInPitLane == 0 && statPoint.isInPitLane == 1) {
-							fuelBeforePit = statPoint.fuel;
-							lap.toPit = true;
-						}
-
-						// we left the pit. Did we add some fuel?
-						if (prevStatPoint != null && prevStatPoint.isInPitLane == 1 && statPoint.isInPitLane == 0) {
-							lap.fromPit = true;
-							fuelAfterPit = statPoint.fuel;
-							if (fuelAfterPit > fuelBeforePit)
-								lap.fuelAdded = fuelAfterPit - fuelBeforePit;
-						}
-
-						// lap.fuelLeftOnEnd = Math.min(statPoint.fuel, lap.fuelLeftOnEnd); // keep the
-						// lowest value in case of refueling;
-						lap.lapTime = statPoint.iCurrentTime;
-						lap.isValidLap = !(statPoint.isValidLap == 0); // zero == false
-
-						if (prevStatPoint != null) {
-							// sum usage of a map during lap in milliseconds
-							Integer currentMapMS = lap.maps.get(statPoint.currentMap);
-							if (currentMapMS != null) {
-								if (statPoint.currentMap == prevStatPoint.currentMap
-										&& statPoint.lapNo == prevStatPoint.lapNo) {
-									currentMapMS += 1;
-									lap.maps.put(statPoint.currentMap, currentMapMS);
-								}
-							}
-
-						}
-						// session.sessionTimeLeft = statPoint.sessionTimeLeft;
 					}
 				} else {
-					statPoints.add(statPoint);
+					currentSession.currentLap.addStatPoint(statPoint);
+					currentSession.addStatPoint(statPoint);
 					if (Duration.between(lastChange, Instant.now()).getSeconds() > 5 && !saved) {
 						LOGGER.info("Finished? Save sessions.");
 						saveToXLSX();
@@ -319,11 +178,50 @@ public class PageFileStatistics implements Page {
 				}
 			} else {
 				LOGGER.info("let's get the party started!");
-				statPoints.add(statPoint);
+				if (currentSession.currentLap.statPoints.size() == 0)
+					currentSession.currentLap.addStatPoint(statPoint);
+				else
+					if (currentSession.currentLap.statPoints.get(currentSession.currentLap.statPoints.size()-1).normalizedCarPosition > statPoint.normalizedCarPosition )
+						currentSession.currentLap.addStatPoint(statPoint);
 			}
 		}
 	}
 
+	private boolean newSessionStarted(StatPoint prevStatPoint, StatPoint currentStatPoint) {
+		boolean newSession = false;
+		if (currentStatPoint.lapNo < prevStatPoint.lapNo) {
+			LOGGER.info("LAP number is lower");
+			newSession = true;
+		}
+
+		if (currentStatPoint.lapNo < prevStatPoint.lapNo) {
+			LOGGER.info("LAP number is lower");
+			newSession = true;
+		}
+
+		if (currentStatPoint.packetIDG < prevStatPoint.packetIDG) {
+			LOGGER.info("Data from another session");
+			newSession = true;
+		}
+
+		if (currentStatPoint.packetIDP < prevStatPoint.packetIDP) {
+			LOGGER.info("Data from another session");
+			newSession = true;
+		}
+
+		if (currentStatPoint.session != prevStatPoint.session) {
+			LOGGER.info("New session");
+			newSession = true;
+		}
+		
+		if (prevStatPoint.distanceTraveled > currentStatPoint.distanceTraveled && prevStatPoint.lapNo > currentStatPoint.lapNo) {
+			LOGGER.info("Distance traveled is lower: IT IS A NEW SESSION");
+			newSession = true;
+		}
+		
+		return newSession;
+	}
+	
 	private StatSession newSession(StatPoint statPoint) {
 		List<Integer> sessionsToRemove = new ArrayList<>();
 		Iterator<Map.Entry<Integer, StatSession>> iterator = sessions.entrySet().iterator();
@@ -382,105 +280,7 @@ public class PageFileStatistics implements Page {
 		return currentSession;
 	}
 
-	private void calculateLapStats(StatLap lap, StatSession session) {
-		lap.fuelUsed = lap.fuelLeftOnStart - lap.fuelLeftOnEnd;
-		float minutes = (float) lap.lapTime / (1000 * 60);
-		float perminutes = (lap.fuelUsed + lap.fuelAdded) / minutes;
-		if (lap.lapTime > 0)
-			lap.fuelAVGPerMinute = perminutes;
-		float lavg = 0;
-		int avgMS = 0;
-		int i = 0;
-		Iterator<StatLap> i3laps = session.last3Laps.iterator();
-		while (i3laps.hasNext()) {
-			i++;
-			StatLap l = i3laps.next();
-			lavg += l.fuelUsed;
-			avgMS += l.lapTime;
-		}
-		session.fuelAVG3Laps = lavg / i;
-		session.avgLapTime3 = Math.round(avgMS / i);
-
-		lavg = 0;
-		avgMS = 0;
-		i = 0;
-		Iterator<StatLap> i5laps = session.last5Laps.iterator();
-		while (i5laps.hasNext()) {
-			i++;
-			StatLap l = i5laps.next();
-			lavg += l.fuelUsed;
-			avgMS += l.lapTime;
-		}
-		session.fuelAVG5Laps = lavg / i;
-		session.avgLapTime5 = Math.round(avgMS / i);
-		lap.fuelAVGPerLap = lap.fuelXlap;
-		lap.fuelNTFOnEnd = (session.avgLapTime3 + session.sessionTimeLeft) / session.lastLap.lapTime * lap.fuelUsed;
-
-		lap.fuelEFNLapsOnEnd = (float) ( (session.avgLapTime3+session.sessionTimeLeft) / (1000 * 60)) * perminutes;
-		if (avgMS != 0 && (lavg / avgMS) != 0) {
-			if (lap.fuelAdded > 0)
-				if (session.bestLap != null && session.bestLap.lapTime > 0 && lap.fuelXlap > 0) 
-					lap.fuelEstForNextMiliseconds = lap.fuelLeftOnEnd / (lap.fuelXlap / session.bestLap.lapTime);
-				else
-					lap.fuelEstForNextMiliseconds = (lap.fuelLeftOnEnd / (lap.fuelXlap / avgMS) );
-			else
-				lap.fuelEstForNextMiliseconds = (lap.fuelLeftOnEnd / (lavg / avgMS) );
-		}
-		
-
-		
-		OptionalDouble average = pFL.stream().mapToDouble(a -> a).average();
-		lap.pFL = (float) (average.isPresent() ? average.getAsDouble() : 0);
-
-		average = pFR.stream().mapToDouble(a -> a).average();
-		lap.pFR = (float) (average.isPresent() ? average.getAsDouble() : 0);
-
-		average = pRL.stream().mapToDouble(a -> a).average();
-		lap.pRL = (float) (average.isPresent() ? average.getAsDouble() : 0);
-
-		average = pRR.stream().mapToDouble(a -> a).average();
-		lap.pRR = (float) (average.isPresent() ? average.getAsDouble() : 0);
-
-		average = tFL.stream().mapToDouble(a -> a).average();
-		lap.tFL = (float) (average.isPresent() ? average.getAsDouble() : 0);
-
-		average = tFR.stream().mapToDouble(a -> a).average();
-		lap.tFR = (float) (average.isPresent() ? average.getAsDouble() : 0);
-
-		average = tRL.stream().mapToDouble(a -> a).average();
-		lap.tRL = (float) (average.isPresent() ? average.getAsDouble() : 0);
-
-		average = tRR.stream().mapToDouble(a -> a).average();
-		lap.tRR = (float) (average.isPresent() ? average.getAsDouble() : 0);
-
-		average = rainIntensity.stream().mapToDouble(a -> a).average();
-		lap.rainIntensity = (float) (average.isPresent() ? average.getAsDouble() : 0);
-
-		average = trackGripStatus.stream().mapToDouble(a -> a).average();
-		lap.trackGripStatus = (float) (average.isPresent() ? average.getAsDouble() : 0);
-
-		average = airTemp.stream().mapToDouble(a -> a).average();
-		lap.airTemp = (float) (average.isPresent() ? average.getAsDouble() : 0);
-		
-		average = roadTemp.stream().mapToDouble(a -> a).average();
-		lap.roadTemp = (float) (average.isPresent() ? average.getAsDouble() : 0);
-		
-		pFL = new ArrayList<>();
-		pFR = new ArrayList<>();
-		pRL = new ArrayList<>();
-		pRR = new ArrayList<>();
-		tFL = new ArrayList<>();
-		tFR = new ArrayList<>();
-		tRL = new ArrayList<>();
-		tRR = new ArrayList<>();
-		rainIntensity = new ArrayList<>();
-		trackGripStatus = new ArrayList<>();
-		airTemp = new ArrayList<>();
-		roadTemp = new ArrayList<>();
-		LOGGER.info("fuelNTFOnEnd: " + lap.fuelNTFOnEnd);
-		LOGGER.info("Full laps +1 left (based on last lap): " + session.sessionTimeLeft / session.lastLap.lapTime);
-		LOGGER.info("Full laps +1 left (based on best lap): " + session.sessionTimeLeft / session.bestLap.lapTime);
-	}
+	
 
 	public void saveToXLSX() {
 		Workbook workbook = new XSSFWorkbook();
@@ -749,38 +549,38 @@ public class PageFileStatistics implements Page {
 				boolean wet = lap.getValue().rainTyres == 1 ? true : false;
 				
 				cell = row.createCell(10);
-				cell.setCellValue(df.format(lap.getValue().pFL));
-				cell.setCellStyle(pressureXLSXStyle(workbook, lap.getValue().pFL, wet));
+				cell.setCellValue(df.format(lap.getValue().avgpFL));
+				cell.setCellStyle(pressureXLSXStyle(workbook, lap.getValue().avgpFL, wet));
 				cell = row.createCell(11);
-				cell.setCellValue(df.format(lap.getValue().pFR));
-				cell.setCellStyle(pressureXLSXStyle(workbook, lap.getValue().pFR, wet));
+				cell.setCellValue(df.format(lap.getValue().avgpFR));
+				cell.setCellStyle(pressureXLSXStyle(workbook, lap.getValue().avgpFR, wet));
 				cell = row.createCell(12);
-				cell.setCellValue(df.format(lap.getValue().pRL));
-				cell.setCellStyle(pressureXLSXStyle(workbook, lap.getValue().pRL, wet));
+				cell.setCellValue(df.format(lap.getValue().avgpRL));
+				cell.setCellStyle(pressureXLSXStyle(workbook, lap.getValue().avgpRL, wet));
 				cell = row.createCell(13);
-				cell.setCellValue(df.format(lap.getValue().pRR));
-				cell.setCellStyle(pressureXLSXStyle(workbook, lap.getValue().pRR, wet));
+				cell.setCellValue(df.format(lap.getValue().avgpRR));
+				cell.setCellStyle(pressureXLSXStyle(workbook, lap.getValue().avgpRR, wet));
 
 				cell = row.createCell(14);
-				cell.setCellValue(df.format(lap.getValue().tFL));
+				cell.setCellValue(df.format(lap.getValue().avgtFL));
 				cell.setCellStyle(style);
 				cell = row.createCell(15);
-				cell.setCellValue(df.format(lap.getValue().tFR));
+				cell.setCellValue(df.format(lap.getValue().avgtFR));
 				cell.setCellStyle(style);
 				cell = row.createCell(16);
-				cell.setCellValue(df.format(lap.getValue().tRL));
+				cell.setCellValue(df.format(lap.getValue().avgtRL));
 				cell.setCellStyle(style);
 				cell = row.createCell(17);
-				cell.setCellValue(df.format(lap.getValue().tRR));
+				cell.setCellValue(df.format(lap.getValue().avgtRR));
 				cell.setCellStyle(style);
 				cell = row.createCell(18);
-				cell.setCellValue(df.format(lap.getValue().rainIntensity));
+				cell.setCellValue(df.format(lap.getValue().avgRainIntensity));
 				cell.setCellStyle(style);
 				cell = row.createCell(19);
 				cell.setCellValue(lap.getValue().rainTyres);
 				cell.setCellStyle(style);
 				cell = row.createCell(20);
-				cell.setCellValue(lap.getValue().trackGripStatus);
+				cell.setCellValue(lap.getValue().avgTrackGripStatus);
 				cell.setCellStyle(style);
 				cell = row.createCell(21);
 				cell.setCellValue(lap.getValue().trackStatus);
@@ -789,10 +589,10 @@ public class PageFileStatistics implements Page {
 				cell.setCellValue(lap.getValue().isValidLap);
 				cell.setCellStyle(style);
 				cell = row.createCell(23);
-				cell.setCellValue(df.format(lap.getValue().airTemp));
+				cell.setCellValue(df.format(lap.getValue().avgAirTemp));
 				cell.setCellStyle(style);
 				cell = row.createCell(24);
-				cell.setCellValue(df.format(lap.getValue().roadTemp));
+				cell.setCellValue(df.format(lap.getValue().avgRoadTemp));
 				cell.setCellStyle(style);
 				cell = row.createCell(25);
 				cell.setCellValue(df.format(lap.getValue().fuelEFNLapsOnEnd));
@@ -904,7 +704,7 @@ public class PageFileStatistics implements Page {
 	@Override
 	public String toJSON(List<String> fields) {
 		String response = "";
-		Page page = this;
+		PageFileStatistics page = this;
 		try {
 			Set<String> fieldsFilter = new HashSet<String>(fields);
 			FilterProvider filters = new SimpleFilterProvider().addFilter("filter1",

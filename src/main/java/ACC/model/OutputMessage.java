@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -64,11 +65,16 @@ public class OutputMessage {
 				this.content = page.toJSON(fields);
 		} else {
 			PageFileStatistics stat = (PageFileStatistics) page;
-			Gson gson = new Gson();
-			stat.currentSession.last3Laps = new CircularFifoQueue<>(3);
-			stat.currentSession.last5Laps = new CircularFifoQueue<>(5);
-			stat.currentSession.lastLap = new StatLap();
-			this.content = gson.toJson(stat.currentSession);
+			Gson gson = new GsonBuilder()
+                .setPrettyPrinting()
+                .serializeSpecialFloatingPointValues() // This is the key
+                .serializeNulls()
+                .create();
+			//stat.currentSession.last3Laps = new CircularFifoQueue<>(3);
+			//stat.currentSession.last5Laps = new CircularFifoQueue<>(5);
+			//stat.currentSession.lastLap = new StatLap();
+			
+			this.content = gson.toJson(stat.toJSON());
 		}
 
 	}
