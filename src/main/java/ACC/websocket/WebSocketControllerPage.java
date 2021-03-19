@@ -30,6 +30,7 @@ import ACC.acm.MacroManagement;
 import ACC.model.Message;
 import ACC.model.OutputMessage;
 import ACC.model.PageFileStatistics;
+import ACC.saving.ACCDataSaveService;
 import ACC.sharedmemory.ACCSharedMemoryService;
 import app.Application;
 
@@ -50,8 +51,12 @@ public class WebSocketControllerPage {
 
 	private AutomaticCarManagementService automaticCarManagementService = (AutomaticCarManagementService) ApplicationContextAwareImpl
 			.getApplicationContext().getBean("automaticCarManagementService");
+	
 	private ACCSharedMemoryService accSharedMemoryService = (ACCSharedMemoryService) ApplicationContextAwareImpl
 			.getApplicationContext().getBean("accSharedMemoryService");
+	
+	private ACCDataSaveService accDataSaveService = (ACCDataSaveService) ApplicationContextAwareImpl
+			.getApplicationContext().getBean("accDataSaveService");
 
 	private static Map<String, Session> livingSessions = new ConcurrentHashMap<String, Session>();
 	private static Session sessionGraphics, sessionPhysics, sessionStatic, sessionMacro, sessionStatistics;
@@ -159,7 +164,7 @@ public class WebSocketControllerPage {
 				if (message.equals("{\"action\": \"saveSessions\"}")) {
 					OutputMessage om = accSharedMemoryService.getPageFileMessage("statistics", fieldsStatistics);
 					statistics = (PageFileStatistics) om.page;
-					statistics.saveToXLSX();
+					accDataSaveService.saveToXLS(statistics);
 				}
 			} else {
 				fieldsStatistics = msg.getFildsToFilter();
@@ -216,9 +221,9 @@ public class WebSocketControllerPage {
 			
 	}
 	
-	private void saveStatistics() {
-		statistics.saveToXLSX();
-	}
+	//private void saveStatistics() {
+//		statistics.saveToXLSX();
+//	}
 
 	private void sendText(Session session, String message) {
 		RemoteEndpoint.Basic basic = session.getBasicRemote();

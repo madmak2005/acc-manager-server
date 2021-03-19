@@ -6,6 +6,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
 import ACC.acm.AutomaticCarManagementService;
+import ACC.saving.ACCDataSaveService;
 import ACC.sharedmemory.ACCSharedMemoryService;
 
 
@@ -13,6 +14,14 @@ import ACC.sharedmemory.ACCSharedMemoryService;
 @ComponentScan("ACC")
 public class ACCConfig {
 
+	@Autowired
+	private ACCDataSaveService accDataSaveService;
+	
+	@Bean 
+	public ACCDataSaveService accDataSaveService() {
+		return accDataSaveService;
+	}
+	
 	@Autowired
 	private ACCSharedMemoryService accSharedMemoryService;
 	
@@ -28,4 +37,6 @@ public class ACCConfig {
 	public AutomaticCarManagementService automaticCarManagementService() {
 		return automaticCarManagementService;
 	}
+
+
 }

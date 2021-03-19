@@ -11,15 +11,18 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.google.gson.Gson;
 
+import ACC.ApplicationContextAwareImpl;
 import ACC.model.OutputMessage;
 import ACC.model.PageFileStatistics;
+import ACC.saving.ACCDataSaveService;
 import ACC.sharedmemory.ACCSharedMemoryService;
 
 @RestController
 public class RestControler {
 	
 	@Autowired
-	ACCSharedMemoryService accSharedMemoryService; 
+	ACCSharedMemoryService accSharedMemoryService;
+	ACCDataSaveService accDataSaveService;
 	
 	@GetMapping("/SPageFileStatic")
 	public String getStaticJson() {
@@ -41,7 +44,7 @@ public class RestControler {
 		List<String> fieldsStatistics = new ArrayList<String>();
 		OutputMessage om = accSharedMemoryService.getPageFileMessage("statistics", fieldsStatistics);
 		PageFileStatistics statistics = (PageFileStatistics) om.page;
-		statistics.saveToXLSX();
+		//accDataSaveService.saveToXLS(statistics);
 		return statistics.toJSON();
 	}
 	
