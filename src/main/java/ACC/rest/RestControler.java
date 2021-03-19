@@ -1,5 +1,7 @@
 package ACC.rest;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -11,43 +13,55 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.google.gson.Gson;
 
-import ACC.ApplicationContextAwareImpl;
 import ACC.model.OutputMessage;
 import ACC.model.PageFileStatistics;
 import ACC.saving.ACCDataSaveService;
+import ACC.saving.DocsQuickstart;
 import ACC.sharedmemory.ACCSharedMemoryService;
 
 @RestController
 public class RestControler {
-	
+
 	@Autowired
 	ACCSharedMemoryService accSharedMemoryService;
 	ACCDataSaveService accDataSaveService;
-	
+
 	@GetMapping("/SPageFileStatic")
 	public String getStaticJson() {
 		return accSharedMemoryService.getPageFile("static").toJSON();
 	}
-	
+
 	@GetMapping("/SPageFilePhysics")
 	public String getPhysicsJson() {
 		return accSharedMemoryService.getPageFile("physics").toJSON();
 	}
-	
+
 	@GetMapping("/SPageFileGraphics")
 	public String getGraphicsJson() {
 		return accSharedMemoryService.getPageFile("graphics").toJSON();
 	}
-	
+
 	@GetMapping("/save")
 	public String saveSessions() {
 		List<String> fieldsStatistics = new ArrayList<String>();
 		OutputMessage om = accSharedMemoryService.getPageFileMessage("statistics", fieldsStatistics);
 		PageFileStatistics statistics = (PageFileStatistics) om.page;
-		//accDataSaveService.saveToXLS(statistics);
+		// accDataSaveService.saveToXLS(statistics);
 		return statistics.toJSON();
 	}
-	
+
+	@GetMapping("/google")
+	public String saveSessionsGoogle() {
+		DocsQuickstart dq = new DocsQuickstart();
+		try {
+			dq.docsTest();
+		} catch (IOException | GeneralSecurityException e) {
+			// TODO Auto-generated catch block
+			return e.toString();
+		}
+		return "ok";
+	}
+
 	@GetMapping("/getSession")
 	public String getSessions(@RequestParam Map<String, String> allParams) {
 		List<String> fieldsStatistics = new ArrayList<String>();
@@ -56,21 +70,19 @@ public class RestControler {
 			Gson gson = new Gson();
 			PageFileStatistics s = (PageFileStatistics) om.page;
 			switch (allParams.get("range")) {
-			case "all" : 
+			case "all":
 				return om.content;
 			case "lastLap":
 				return gson.toJson(s.currentSession.lastLap);
 			case "currentSession":
 				return gson.toJson(s.currentSession);
 			default:
-				return om.content;	
-			}
-		}
-			else {
-				System.out.println(om.content);
 				return om.content;
 			}
+		} else {
+			System.out.println(om.content);
+			return om.content;
+		}
 	}
-	
 
 }
