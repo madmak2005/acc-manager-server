@@ -201,7 +201,26 @@
     <artifactId>google-http-client-jackson2</artifactId>
     <version>1.39.1</version>
 </dependency>
+<!-- https://mvnrepository.com/artifact/com.google.apis/google-api-services-sheets -->
+<dependency>
+    <groupId>com.google.apis</groupId>
+    <artifactId>google-api-services-sheets</artifactId>
+    <version>v4-rev614-1.18.0-rc</version>
+</dependency>
   
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-oauth2-client</artifactId>
+		</dependency>
 	</dependencies>
 	<build>
 		<plugins>
