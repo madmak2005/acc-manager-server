@@ -111,8 +111,8 @@ public class ACCSharedMemoryServiceImpl implements ACCSharedMemoryService {
 		statPoint.brakeTemp = p.brakeTemp;
 		statPoint.carDamage = p.carDamage;
 		statPoint.discLife = p.discLife;
-		statPoint.fuel = p.fuel;
 		statPoint.padLife = p.padLife;
+		statPoint.fuel = p.fuel;
 		statPoint.roadTemp = p.roadTemp;
 		statPoint.speedKmh = p.speedKmh;
 		statPoint.tyreCoreTemperature = p.tyreCoreTemperature;

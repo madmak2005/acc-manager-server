@@ -39,6 +39,9 @@ public class StatLap {
 
 	public float avgpFL, avgpFR, avgpRL, avgpRR = 0;
 	public float avgtFL, avgtFR, avgtRL, avgtRR = 0;
+	
+	public float avgBPFL, avgBPFR, avgBPRL, avgBPRR = 0;
+	public float avgBDFL, avgBDFR, avgBDRL, avgBDRR = 0;
 
 	public float avgAirTemp = 0;
 	public float avgRoadTemp = 0;
@@ -59,6 +62,10 @@ public class StatLap {
 			pRR = new ArrayList<>();
 	protected List<Float> tFL = new ArrayList<>(), tFR = new ArrayList<>(), tRL = new ArrayList<>(),
 			tRR = new ArrayList<>();
+	protected List<Float> bpFL = new ArrayList<>(), bpFR = new ArrayList<>(), bpRL = new ArrayList<>(),
+			bpRR = new ArrayList<>();
+	protected List<Float> bdFL = new ArrayList<>(), bdFR = new ArrayList<>(), bdRL = new ArrayList<>(),
+			bdRR = new ArrayList<>();
 
 	protected List<Integer> rainIntensity = new ArrayList<>();
 	protected List<Integer> trackGripStatus = new ArrayList<>();
@@ -96,6 +103,20 @@ public class StatLap {
 			tRL.add(currentStatPoint.tyreCoreTemperature[2]);
 			tRR.add(currentStatPoint.tyreCoreTemperature[3]);
 		}
+		
+		if (currentStatPoint.tyreCoreTemperature != null) {
+			bpFL.add(currentStatPoint.padLife[0]);
+			bpFR.add(currentStatPoint.padLife[1]);
+			bpRL.add(currentStatPoint.padLife[2]);
+			bpRR.add(currentStatPoint.padLife[3]);
+		}
+		
+		if (currentStatPoint.tyreCoreTemperature != null) {
+			bdFL.add(currentStatPoint.discLife[0]);         
+			bdFR.add(currentStatPoint.discLife[1]);         
+			bdRL.add(currentStatPoint.discLife[2]);         
+			bdRR.add(currentStatPoint.discLife[3]);         
+		}                                                  
 		
 		Integer currentMapSteps = maps.get(currentStatPoint.currentMap);
 		if (currentMapSteps != null) {
@@ -179,7 +200,31 @@ public class StatLap {
 
 			average = tRR.stream().mapToDouble(a -> a).average();
 			avgtRR = (float) (average.isPresent() ? average.getAsDouble() : 0);
+			
+			average = bdFL.stream().mapToDouble(a -> a).average();
+			avgBDFL = (float) (average.isPresent() ? average.getAsDouble() : 0);
 
+			average = bdFR.stream().mapToDouble(a -> a).average();
+			avgBDFR = (float) (average.isPresent() ? average.getAsDouble() : 0);
+
+			average = bdRL.stream().mapToDouble(a -> a).average();
+			avgBDRL = (float) (average.isPresent() ? average.getAsDouble() : 0);
+
+			average = bdRR.stream().mapToDouble(a -> a).average();
+			avgBDRR = (float) (average.isPresent() ? average.getAsDouble() : 0);
+
+			average = bpFL.stream().mapToDouble(a -> a).average();
+			avgBPFL = (float) (average.isPresent() ? average.getAsDouble() : 0);
+
+			average = bpFR.stream().mapToDouble(a -> a).average();
+			avgBPFR = (float) (average.isPresent() ? average.getAsDouble() : 0);
+
+			average = bpRL.stream().mapToDouble(a -> a).average();
+			avgBPRL = (float) (average.isPresent() ? average.getAsDouble() : 0);
+
+			average = bpRR.stream().mapToDouble(a -> a).average();
+			avgBPRR = (float) (average.isPresent() ? average.getAsDouble() : 0);
+			
 			average = rainIntensity.stream().mapToDouble(a -> a).average();
 			avgRainIntensity = (float) (average.isPresent() ? average.getAsDouble() : 0);
 

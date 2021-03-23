@@ -242,6 +242,38 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 				headerCell = header.createCell(27);
 				headerCell.setCellValue("Seesion time left");
 				headerCell.setCellStyle(headerStyle);
+				
+				headerCell = header.createCell(28);
+				headerCell.setCellValue("pbFL");
+				headerCell.setCellStyle(headerStyle);
+
+				headerCell = header.createCell(29);
+				headerCell.setCellValue("pbFR");
+				headerCell.setCellStyle(headerStyle);
+
+				headerCell = header.createCell(30);
+				headerCell.setCellValue("pbRL");
+				headerCell.setCellStyle(headerStyle);
+
+				headerCell = header.createCell(31);
+				headerCell.setCellValue("pbRR");
+				headerCell.setCellStyle(headerStyle);
+				
+				headerCell = header.createCell(32);
+				headerCell.setCellValue("pdFL");
+				headerCell.setCellStyle(headerStyle);
+
+				headerCell = header.createCell(33);
+				headerCell.setCellValue("pdFR");
+				headerCell.setCellStyle(headerStyle);
+
+				headerCell = header.createCell(34);
+				headerCell.setCellValue("pdRL");
+				headerCell.setCellStyle(headerStyle);
+
+				headerCell = header.createCell(35);
+				headerCell.setCellValue("pdRR");
+				headerCell.setCellStyle(headerStyle);
 
 				Iterator<Map.Entry<Integer, StatLap>> iteratorLap = entry.getValue().laps.entrySet().iterator();
 				int i = 0;
@@ -361,6 +393,31 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 					cell.setCellValue(mstoStr(Math.round(lap.getValue().sessionTimeLeft)));
 					cell.setCellStyle(style);
 					
+					cell = row.createCell(28);
+					cell.setCellValue(df.format(lap.getValue().avgBPFL));
+					cell.setCellStyle(style);
+					cell = row.createCell(29);
+					cell.setCellValue(df.format(lap.getValue().avgBPFR));
+					cell.setCellStyle(style);
+					cell = row.createCell(30);
+					cell.setCellValue(df.format(lap.getValue().avgBPRL));
+					cell.setCellStyle(style);
+					cell = row.createCell(31);
+					cell.setCellValue(df.format(lap.getValue().avgBPRR));
+					cell.setCellStyle(style);
+					
+					cell = row.createCell(32);
+					cell.setCellValue(df.format(lap.getValue().avgBDFL));
+					cell.setCellStyle(style);
+					cell = row.createCell(33);
+					cell.setCellValue(df.format(lap.getValue().avgBDFR));
+					cell.setCellStyle(style);
+					cell = row.createCell(34);
+					cell.setCellValue(df.format(lap.getValue().avgBDRL));
+					cell.setCellStyle(style);
+					cell = row.createCell(35);
+					cell.setCellValue(df.format(lap.getValue().avgBDRR));
+					cell.setCellStyle(style);
 					/*
 					 * Iterator<Map.Entry<Integer, Integer>> iteratorMap =
 					 * lap.getValue().maps.entrySet().iterator(); int c = 22; int sum = 0; float
