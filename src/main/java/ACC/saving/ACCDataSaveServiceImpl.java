@@ -244,35 +244,35 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 				headerCell.setCellStyle(headerStyle);
 				
 				headerCell = header.createCell(28);
-				headerCell.setCellValue("pbFL");
+				headerCell.setCellValue("padsFL");
 				headerCell.setCellStyle(headerStyle);
 
 				headerCell = header.createCell(29);
-				headerCell.setCellValue("pbFR");
+				headerCell.setCellValue("padsFR");
 				headerCell.setCellStyle(headerStyle);
 
 				headerCell = header.createCell(30);
-				headerCell.setCellValue("pbRL");
+				headerCell.setCellValue("padsRL");
 				headerCell.setCellStyle(headerStyle);
 
 				headerCell = header.createCell(31);
-				headerCell.setCellValue("pbRR");
+				headerCell.setCellValue("padsRR");
 				headerCell.setCellStyle(headerStyle);
 				
 				headerCell = header.createCell(32);
-				headerCell.setCellValue("pdFL");
+				headerCell.setCellValue("disksFL");
 				headerCell.setCellStyle(headerStyle);
 
 				headerCell = header.createCell(33);
-				headerCell.setCellValue("pdFR");
+				headerCell.setCellValue("disksFR");
 				headerCell.setCellStyle(headerStyle);
 
 				headerCell = header.createCell(34);
-				headerCell.setCellValue("pdRL");
+				headerCell.setCellValue("disksRL");
 				headerCell.setCellStyle(headerStyle);
 
 				headerCell = header.createCell(35);
-				headerCell.setCellValue("pdRR");
+				headerCell.setCellValue("disksRR");
 				headerCell.setCellStyle(headerStyle);
 
 				Iterator<Map.Entry<Integer, StatLap>> iteratorLap = entry.getValue().laps.entrySet().iterator();
