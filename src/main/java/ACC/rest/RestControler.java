@@ -24,6 +24,8 @@ public class RestControler {
 
 	@Autowired
 	ACCSharedMemoryService accSharedMemoryService;
+	
+	@Autowired
 	ACCDataSaveService accDataSaveService;
 
 	@GetMapping("/SPageFileStatic")
@@ -46,7 +48,7 @@ public class RestControler {
 		List<String> fieldsStatistics = new ArrayList<String>();
 		OutputMessage om = accSharedMemoryService.getPageFileMessage("statistics", fieldsStatistics);
 		PageFileStatistics statistics = (PageFileStatistics) om.page;
-		// accDataSaveService.saveToXLS(statistics);
+		accDataSaveService.saveToXLS(statistics);
 		return statistics.toJSON();
 	}
 
