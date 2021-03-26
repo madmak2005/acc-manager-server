@@ -18,9 +18,12 @@ import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
 import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
+import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeRequestUrl;
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
+import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
@@ -37,17 +40,26 @@ import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.List;
 
+import javax.annotation.PostConstruct;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
 
+@Controller
 public class SheetsQuickstart {
     private static final String APPLICATION_NAME = "ACC Server Manager";
     private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
     private static final String TOKENS_DIRECTORY_PATH = "tokens";
+    private static HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
 
     /**
      * Global instance of the scopes required by this quickstart.
@@ -55,17 +67,23 @@ public class SheetsQuickstart {
      */
     private static final List<String> SCOPES = Collections.singletonList(SheetsScopes.SPREADSHEETS_READONLY);
     private static final String CREDENTIALS_FILE_PATH = "/credentials/credentials.json";
+    private static final String CREDENTIALS_FOLDER_PATH = "/credentialsFolder/";
+    private static final String USER_IDENTIFIER_KEY = "MY_DUMMY_USER";
 
+    private GoogleAuthorizationCodeFlow flow;
+    
+	@Value("${google.oauth.callback.uri}")
+	private String CALLBACK_URI;
+	
     /**
      * Creates an authorized Credential object.
      * @param HTTP_TRANSPORT The network HTTP Transport.
      * @return An authorized Credential object.
      * @throws IOException If the credentials.json file cannot be found.
      */
+    /*
     private static Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
         // Load client secrets.
-    	
-     
         Resource resource = new ClassPathResource(CREDENTIALS_FILE_PATH);
         InputStream in = resource.getInputStream();
         if (in == null) {
@@ -74,15 +92,81 @@ public class SheetsQuickstart {
         GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
 
         // Build flow and trigger user authorization request.
-        GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
+       
+        flow = new GoogleAuthorizationCodeFlow.Builder(
                 HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, SCOPES)
                 .setDataStoreFactory(new FileDataStoreFactory(new java.io.File(TOKENS_DIRECTORY_PATH)))
                 .setAccessType("offline")
                 .build();
+        
         LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8889).build();
         return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
         
     }
+    */
+    
+   
+    @PostConstruct
+	public void init() throws Exception {
+        // Load client secrets.
+        Resource resource = new ClassPathResource(CREDENTIALS_FILE_PATH);
+        InputStream in = resource.getInputStream();
+        if (in == null) {
+            throw new FileNotFoundException("Resource not found: " + CREDENTIALS_FILE_PATH);
+        }
+        GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
+
+        // Build flow and trigger user authorization request.
+       /*
+        flow = new GoogleAuthorizationCodeFlow.Builder(
+                HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, SCOPES)
+                .setDataStoreFactory(new FileDataStoreFactory(new java.io.File(TOKENS_DIRECTORY_PATH)))
+                .setAccessType("offline")
+                .build();
+        */
+        Resource credentialsFolder = new ClassPathResource(CREDENTIALS_FOLDER_PATH);
+       // SheetsQuickstart.class.getResource(CREDENTIALS_FOLDER_PATH).getPath();
+        flow = new GoogleAuthorizationCodeFlow.Builder(HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, SCOPES)
+				.setDataStoreFactory(new FileDataStoreFactory(credentialsFolder.getFile())).build();
+	}
+    
+    @GetMapping(value = { "/g" })
+	public String showHomePage() throws Exception {
+    	boolean isUserAuthenticated = false;
+		Credential credential = flow.loadCredential(USER_IDENTIFIER_KEY);
+		if (credential != null) {
+			boolean tokenValid = credential.refreshToken();
+			if (tokenValid) {
+				isUserAuthenticated = true;
+			}
+			docsTest();
+		}
+		return isUserAuthenticated ? "dashboard.html" : "index.html";
+	}
+    
+	@GetMapping(value = { "/googlesignin" })
+	public void doGoogleSignIn(HttpServletResponse response) throws Exception {
+		GoogleAuthorizationCodeRequestUrl url = flow.newAuthorizationUrl();
+		String redirectURL = url.setRedirectUri(CALLBACK_URI).setAccessType("offline").build();
+		response.sendRedirect(redirectURL);
+	}
+
+	@GetMapping(value = { "/oauth" })
+	public String saveAuthorizationCode(HttpServletRequest request) throws Exception {
+		String code = request.getParameter("code");
+		if (code != null) {
+			saveToken(code);
+			//return "dashboard.html";
+		}
+
+		return "index.html";
+	}
+	
+	private void saveToken(String code) throws Exception {
+		GoogleTokenResponse response = flow.newTokenRequest(code).setRedirectUri(CALLBACK_URI).execute();
+		flow.createAndStoreCredential(response, USER_IDENTIFIER_KEY);
+
+	}
 
     /**
      * Prints the names and majors of students in a sample spreadsheet:
@@ -93,7 +177,8 @@ public class SheetsQuickstart {
         final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
         final String spreadsheetId = "1URXzC3t6bpwQ8IEffQafzOdUPIK3gvNbZVtGRb8SX54";
         final String range = "Class Data!A2:E";
-        Sheets service = new Sheets.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
+        Credential credential = flow.loadCredential(USER_IDENTIFIER_KEY);
+        Sheets service = new Sheets.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential)
                 .setApplicationName(APPLICATION_NAME)
                 .build();
         ValueRange response = service.spreadsheets().values()

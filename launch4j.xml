@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch4jConfig>
+  <dontWrapJar>false</dontWrapJar>
+  <headerType>console</headerType>
+  <jar>C:\Users\tomasz.makowski\Documents\workspace-spring-tool-suite-4-4.8.0.RELEASE\ACCManager\target\ACCManager-1.1.5.jar</jar>
+  <outfile>C:\Users\tomasz.makowski\Documents\workspace-spring-tool-suite-4-4.8.0.RELEASE\ACCManager\target\ACCManagerDEBUG.exe</outfile>
+  <errTitle></errTitle>
+  <cmdLine>debug</cmdLine>
+  <chdir>.</chdir>
+  <priority>normal</priority>
+  <downloadUrl>http://java.com/download</downloadUrl>
+  <supportUrl></supportUrl>
+  <stayAlive>false</stayAlive>
+  <restartOnCrash>false</restartOnCrash>
+  <manifest></manifest>
+  <icon></icon>
+  <jre>
+    <path></path>
+    <bundledJre64Bit>false</bundledJre64Bit>
+    <bundledJreAsFallback>false</bundledJreAsFallback>
+    <minVersion>1.8</minVersion>
+    <maxVersion></maxVersion>
+    <jdkPreference>preferJre</jdkPreference>
+    <runtimeBits>64/32</runtimeBits>
+    <initialHeapSize>128</initialHeapSize>
+    <maxHeapSize>256</maxHeapSize>
+  </jre>
+</launch4jConfig>

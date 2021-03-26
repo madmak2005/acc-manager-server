@@ -77,6 +77,7 @@ public class StatSession {
 					});
 				}
 				LOGGER.info("Start pos " + lastLap.firstStatPoint.normalizedCarPosition);
+
 				LOGGER.info("End pos " + lastLap.statPoints.get(currentLap.statPoints.size()-1).normalizedCarPosition);
 				lastLap.calculateLapStats();
 			}
