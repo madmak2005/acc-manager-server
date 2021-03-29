@@ -16,7 +16,7 @@ import com.google.gson.Gson;
 import ACC.model.OutputMessage;
 import ACC.model.PageFileStatistics;
 import ACC.saving.ACCDataSaveService;
-import ACC.saving.SheetsQuickstart;
+import ACC.saving.GoogleController;
 import ACC.sharedmemory.ACCSharedMemoryService;
 
 @RestController
@@ -54,7 +54,7 @@ public class RestControler {
 
 	@GetMapping("/google")
 	public String saveSessionsGoogle() {
-		SheetsQuickstart dq = new SheetsQuickstart();
+		GoogleController dq = new GoogleController();
 		try {
 			dq.docsTest();
 		} catch (IOException | GeneralSecurityException e) {

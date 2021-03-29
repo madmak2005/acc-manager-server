@@ -2,7 +2,7 @@ $(document).ready(function(){
 	
 	$("#saveGoogle").click(function(){
 		$.ajax({
-			url:'/g',
+			url:'/saveGoogle',
 			success: function() {
 				alert("Saved to Google Sheet");
 			}

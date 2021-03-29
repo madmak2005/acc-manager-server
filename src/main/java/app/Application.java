@@ -40,17 +40,11 @@ import org.slf4j.LoggerFactory;
 @EnableWebSocket
 @ComponentScan(basePackages = { "ACC", "virtualKeyboard" })
 public class Application {
-    private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
-    private static final String TOKENS_DIRECTORY_PATH = "tokens";
     
 	public static Logger LOGGER=LoggerFactory.getLogger(Application.class);
 	public static boolean debug = false;
 	public static boolean useDebug = false;
 
-    private static final List<String> SCOPES = Collections.singletonList(SheetsScopes.SPREADSHEETS_READONLY);
-    private static final String CREDENTIALS_FILE_PATH = "/credentials/credentials.json";
-    public static Credential googleCredential;
-	
 	public static void main(String[] args) {
 		for (String s: args) {
             if (s.toUpperCase().equals("DEBUG")) {
@@ -85,30 +79,4 @@ public class Application {
 				LOGGER.error(e.toString());
 			}
 	}
-	
-    /**
-     * Creates an authorized Credential object.
-     * @param HTTP_TRANSPORT The network HTTP Transport.
-     * @return An authorized Credential object.
-     * @throws IOException If the credentials.json file cannot be found.
-     */
-    private static Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
-        // Load client secrets.
-    	//InputStream in = new FileInputStream(CREDENTIALS_FILE_PATH);
-        InputStream in = Application.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
-        if (in == null) {
-            throw new FileNotFoundException("Resource not found: " + CREDENTIALS_FILE_PATH);
-        }
-        GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
-
-        // Build flow and trigger user authorization request.
-        GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
-                HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, SCOPES)
-                .setDataStoreFactory(new FileDataStoreFactory(new java.io.File(TOKENS_DIRECTORY_PATH)))
-                .setAccessType("offline")
-                .build();
-        LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8888).build();
-        return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
-    }
-
 }

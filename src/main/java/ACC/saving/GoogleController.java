@@ -13,30 +13,13 @@ package ACC.saving;
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// [START sheets_quickstart]
-import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
-import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
-import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
-import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeRequestUrl;
-import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
-import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.client.util.store.FileDataStoreFactory;
-import com.google.api.services.sheets.v4.Sheets;
-import com.google.api.services.sheets.v4.SheetsScopes;
-import com.google.api.services.sheets.v4.model.ValueRange;
-
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.security.GeneralSecurityException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -47,64 +30,54 @@ import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 
+// [START sheets_quickstart]
+import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
+import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeRequestUrl;
+import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
+import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.client.util.store.FileDataStoreFactory;
+import com.google.api.services.sheets.v4.Sheets;
+import com.google.api.services.sheets.v4.SheetsScopes;
+import com.google.api.services.sheets.v4.model.ValueRange;
+
+import ACC.ApplicationContextAwareImpl;
+import ACC.model.OutputMessage;
+import ACC.model.PageFileStatistics;
+import ACC.sharedmemory.ACCSharedMemoryService;
+
 @Controller
-public class SheetsQuickstart {
-    private static final String APPLICATION_NAME = "ACC Server Manager";
-    private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
-    private static final String TOKENS_DIRECTORY_PATH = "tokens";
+public class GoogleController {
+	
+	private ACCSharedMemoryService accSharedMemoryService = (ACCSharedMemoryService) ApplicationContextAwareImpl
+			.getApplicationContext().getBean("accSharedMemoryService");
+	
+	private ACCDataSaveService accDataSaveService = (ACCDataSaveService) ApplicationContextAwareImpl
+			.getApplicationContext().getBean("accDataSaveService");
+	
+    static final String APPLICATION_NAME = "ACC Server Manager";
+    static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
     private static HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
 
-    /**
-     * Global instance of the scopes required by this quickstart.
-     * If modifying these scopes, delete your previously saved tokens/ folder.
-     */
-    private static final List<String> SCOPES = Collections.singletonList(SheetsScopes.SPREADSHEETS_READONLY);
+    private static final List<String> SCOPES = Collections.singletonList(SheetsScopes.SPREADSHEETS);
     private static final String CREDENTIALS_FILE_PATH = "/credentials/credentials.json";
-    private static final String CREDENTIALS_FOLDER_PATH = "/credentialsFolder/";
-    private static final String USER_IDENTIFIER_KEY = "MY_DUMMY_USER";
+    private static final String CREDENTIALS_FOLDER_PATH = "credentialsFolder";
+    static final String USER_IDENTIFIER_KEY = "MY_DUMMY_USER";
 
-    private GoogleAuthorizationCodeFlow flow;
+    String spreadsheetId = "1URXzC3t6bpwQ8IEffQafzOdUPIK3gvNbZVtGRb8SX54";
+    
+    static GoogleAuthorizationCodeFlow flow;
     
 	@Value("${google.oauth.callback.uri}")
 	private String CALLBACK_URI;
-	
-    /**
-     * Creates an authorized Credential object.
-     * @param HTTP_TRANSPORT The network HTTP Transport.
-     * @return An authorized Credential object.
-     * @throws IOException If the credentials.json file cannot be found.
-     */
-    /*
-    private static Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
-        // Load client secrets.
-        Resource resource = new ClassPathResource(CREDENTIALS_FILE_PATH);
-        InputStream in = resource.getInputStream();
-        if (in == null) {
-            throw new FileNotFoundException("Resource not found: " + CREDENTIALS_FILE_PATH);
-        }
-        GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
-
-        // Build flow and trigger user authorization request.
-       
-        flow = new GoogleAuthorizationCodeFlow.Builder(
-                HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, SCOPES)
-                .setDataStoreFactory(new FileDataStoreFactory(new java.io.File(TOKENS_DIRECTORY_PATH)))
-                .setAccessType("offline")
-                .build();
-        
-        LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8889).build();
-        return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
-        
-    }
-    */
-    
    
     @PostConstruct
 	public void init() throws Exception {
@@ -116,21 +89,12 @@ public class SheetsQuickstart {
         }
         GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
 
-        // Build flow and trigger user authorization request.
-       /*
-        flow = new GoogleAuthorizationCodeFlow.Builder(
-                HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, SCOPES)
-                .setDataStoreFactory(new FileDataStoreFactory(new java.io.File(TOKENS_DIRECTORY_PATH)))
-                .setAccessType("offline")
-                .build();
-        */
-        Resource credentialsFolder = new ClassPathResource(CREDENTIALS_FOLDER_PATH);
-       // SheetsQuickstart.class.getResource(CREDENTIALS_FOLDER_PATH).getPath();
+        File credentialsFolder = new File(CREDENTIALS_FOLDER_PATH);
         flow = new GoogleAuthorizationCodeFlow.Builder(HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, SCOPES)
-				.setDataStoreFactory(new FileDataStoreFactory(credentialsFolder.getFile())).build();
+				.setDataStoreFactory(new FileDataStoreFactory(credentialsFolder)).build();
 	}
     
-    @GetMapping(value = { "/g" })
+    @GetMapping(value = { "/saveGoogle" })
 	public String showHomePage() throws Exception {
     	boolean isUserAuthenticated = false;
 		Credential credential = flow.loadCredential(USER_IDENTIFIER_KEY);
@@ -139,7 +103,9 @@ public class SheetsQuickstart {
 			if (tokenValid) {
 				isUserAuthenticated = true;
 			}
-			docsTest();
+			OutputMessage om = accSharedMemoryService.getPageFileMessage("statistics", new ArrayList<String>());
+			PageFileStatistics statistics = (PageFileStatistics) om.page;
+			accDataSaveService.saveToGoogle(statistics,spreadsheetId);
 		}
 		return isUserAuthenticated ? "dashboard.html" : "index.html";
 	}
@@ -156,7 +122,7 @@ public class SheetsQuickstart {
 		String code = request.getParameter("code");
 		if (code != null) {
 			saveToken(code);
-			//return "dashboard.html";
+			return "dashboard.html";
 		}
 
 		return "index.html";
@@ -175,7 +141,7 @@ public class SheetsQuickstart {
     public void docsTest() throws IOException, GeneralSecurityException {
         // Build a new authorized API client service.
         final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-        final String spreadsheetId = "1URXzC3t6bpwQ8IEffQafzOdUPIK3gvNbZVtGRb8SX54";
+        
         final String range = "Class Data!A2:E";
         Credential credential = flow.loadCredential(USER_IDENTIFIER_KEY);
         Sheets service = new Sheets.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential)

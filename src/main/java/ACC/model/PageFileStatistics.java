@@ -175,8 +175,10 @@ public class PageFileStatistics implements Page {
 						currentSession.currentLap = lap;
 					}
 				} else {
-					currentSession.currentLap.addStatPoint(statPoint);
-					currentSession.addStatPoint(statPoint);
+					if (currentSession != null) {
+						currentSession.currentLap.addStatPoint(statPoint);
+						currentSession.addStatPoint(statPoint);
+					}
 					if (Duration.between(lastChange, Instant.now()).getSeconds() > 5 && !saved) {
 						LOGGER.info("Finished? Save sessions.");
 						accDataSaveService.saveToXLS(this);
