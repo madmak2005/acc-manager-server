@@ -529,10 +529,10 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 				
 				Iterator<Map.Entry<Integer, StatLap>> iteratorLap = entry.getValue().laps.entrySet().iterator();
 				int ii = 0;
-				
+				List<List<Object>> values = new ArrayList<>();
 				while (iteratorLap.hasNext()) {
 					Map.Entry<Integer, StatLap> lap = iteratorLap.next();
-					
+					List<Object> v =
 					        Arrays.asList(
 									mstoStr(lap.getValue().lapTime),
 									lap.getValue().splitTimes.get(0) != null ?	mstoStr(lap.getValue().splitTimes.get(0)) : 0,
@@ -571,14 +571,10 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 									df.format(lap.getValue().avgBDRL),
 									df.format(lap.getValue().avgBDRR)
 
-					        )
+					        );
 					        
-					        List<List<Object>> values = Arrays.asList(
-					        Arrays.asList(
-					                "c","d"
-					        )
 
-					);
+					values.add(v);
 			
 
 			ValueRange body = new ValueRange()
