@@ -496,7 +496,7 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 			boolean tabForDriverExists = false;
 			Iterator<com.google.api.services.sheets.v4.model.Sheet> i = sheets.iterator();
 			com.google.api.services.sheets.v4.model.Sheet ourTab = null;
-			if (i.hasNext() || !tabForDriverExists) {
+			while (i.hasNext() || !tabForDriverExists) {
 				com.google.api.services.sheets.v4.model.Sheet sh = i.next();
 				if(sh.getProperties().getTitle().equals(pageFileStatistics.currentSession.car.playerName)) {
 					ourTab = sh;
@@ -517,7 +517,7 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 		        System.out.println(response.toPrettyString());
 			}
 			
-			range = pageFileStatistics.currentSession.car.playerName +"!A"+1+":E";
+			range = pageFileStatistics.currentSession.car.playerName +"!A"+1+":AJ";
 			Iterator<Map.Entry<Integer, StatSession>> iterator = pageFileStatistics.sessions.entrySet().iterator();
 			DecimalFormat df = new DecimalFormat("0.000");
 			List<Integer> sessionsToRemove = new ArrayList<>();
@@ -527,13 +527,56 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 				if (iterator.hasNext())
 					sessionsToRemove.add(entry.getKey());
 				
+				StatSession session = entry.getValue();
 				Iterator<Map.Entry<Integer, StatLap>> iteratorLap = entry.getValue().laps.entrySet().iterator();
 				int ii = 0;
 				List<List<Object>> values = new ArrayList<>();
+				List<Object> header =
+				        Arrays.asList(
+				        		"Session index",
+								"Lap time",
+								"Split 1",
+								"Split 2",
+								"Split 3",
+								"Fuel [start line]",
+								"Fuel [finish line]",
+								"Fuel afg [l/minute]",
+								"Fuel afg [l/lap]",
+								"Refuel [l]",
+								"Used wet",
+								"PSI FL",
+								"PSI FR",
+								"PSI RL",
+								"PSI RR",
+								"°C FL",
+								"°C FR",
+								"°C RL",
+								"°C RR",
+								"Rain intensity",
+								"Rain tires",
+								"Track grip status",
+								"Track status",
+								"Valid Lap",
+								"Air [°C]",
+								"Road [°C]",
+								"Est for next [laps]",
+								"Est for next [time]",
+								"Session Time Left",
+								"B. pads FL",
+								"B. pads FR",
+								"B. pads RL",
+								"B. pads RR",
+								"B. disks FL",
+								"B. disks FR",
+								"B. disks RL",
+								"B. disks RR"
+
+				        );
 				while (iteratorLap.hasNext()) {
 					Map.Entry<Integer, StatLap> lap = iteratorLap.next();
 					List<Object> v =
 					        Arrays.asList(
+					        		session.internalSessionIndex,
 									mstoStr(lap.getValue().lapTime),
 									lap.getValue().splitTimes.get(0) != null ?	mstoStr(lap.getValue().splitTimes.get(0)) : 0,
 									lap.getValue().splitTimes.get(1) != null ?  mstoStr(lap.getValue().splitTimes.get(1) - lap.getValue().splitTimes.get(0)) : 0,
