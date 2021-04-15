@@ -97,7 +97,9 @@ public class SPageFileGraphics extends Structure {
                 "trackGripStatus",
                 "rainIntensity",
                 "rainIntensityIn10min",
-                "rainIntensityIn30min");
+                "rainIntensityIn30min",
+                "currentTyreSet",
+				"strategyTyreSet");
 	}
 
 	public int packetId = 0;
@@ -188,5 +190,7 @@ public class SPageFileGraphics extends Structure {
 	public int rainIntensity = 0;
 	public int rainIntensityIn10min = 0;
 	public int rainIntensityIn30min = 0;
+	public int currentTyreSet = 0;
+	public int strategyTyreSet = 0;
 	
 }

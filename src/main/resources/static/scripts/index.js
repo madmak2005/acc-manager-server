@@ -1,10 +1,21 @@
 $(document).ready(function(){
-	
-	$("#saveGoogle").click(function(){
+
+	$("#setGoogle").click(function(){
+		var sheet = {}
+		var infoModal = $('#myModal');
+    	sheet["sheetID"] = $("#sheetID").val();
 		$.ajax({
-			url:'/saveGoogle',
-			success: function() {
-				alert("Saved to Google Sheet");
+			type: "POST",
+			url:'/setGoogleSheetID',
+			contentType: "application/json",
+			data: JSON.stringify(sheet),
+			success: function(response) {
+				console.log(response);
+				var htmlData = '';
+                htmlData += 'SUCCESS';
+                htmlData += '';
+                infoModal.find('#modal-body')[0].innerHTML = htmlData;
+                infoModal.modal();
 			}
 		});
 	});

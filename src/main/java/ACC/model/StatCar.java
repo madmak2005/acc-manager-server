@@ -5,5 +5,7 @@ public class StatCar {
 	public String carModel= "";
 	public String track= ""; 
 	public String playerName= ""; 
+	public String playerSurname= "";
+	public String playerNick= "";
 	public int sectorCount = 3;
 }

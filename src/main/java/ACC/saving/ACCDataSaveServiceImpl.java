@@ -3,6 +3,8 @@ package ACC.saving;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.security.GeneralSecurityException;
 import java.text.DecimalFormat;
 import java.time.LocalDateTime;
@@ -12,6 +14,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -22,8 +25,10 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.joda.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.stereotype.Service;
 
@@ -34,16 +39,13 @@ import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.model.AddSheetRequest;
 import com.google.api.services.sheets.v4.model.BatchUpdateSpreadsheetRequest;
 import com.google.api.services.sheets.v4.model.BatchUpdateSpreadsheetResponse;
-import com.google.api.services.sheets.v4.model.GridCoordinate;
 import com.google.api.services.sheets.v4.model.Request;
-import com.google.api.services.sheets.v4.model.RowData;
 import com.google.api.services.sheets.v4.model.SheetProperties;
 import com.google.api.services.sheets.v4.model.Spreadsheet;
-import com.google.api.services.sheets.v4.model.UpdateCellsRequest;
 import com.google.api.services.sheets.v4.model.UpdateValuesResponse;
 import com.google.api.services.sheets.v4.model.ValueRange;
 
-import ACC.ApplicationContextAwareImpl;
+import ACC.ApplicationPropertyService;
 import ACC.model.AC_SESSION_TYPE;
 import ACC.model.PageFileStatistics;
 import ACC.model.StatLap;
@@ -54,18 +56,23 @@ import ACC.model.StatSession;
 public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 	private static final Logger LOGGER = LoggerFactory.getLogger(PageFileStatistics.class);
 
+	@Autowired
+	private ApplicationPropertyService applicationPropertyService;
+	/*
+	private ApplicationPropertyService applicationPropertyService = (ApplicationPropertyService) ApplicationContextAwareImpl
+			.getApplicationContext().getBean("applicationPropertyService");
+	 */
 	@Override
 	public void saveToXLS(PageFileStatistics pageFileStatistics) {
-
 		Workbook workbook = new XSSFWorkbook();
 		Iterator<Map.Entry<Integer, StatSession>> iterator = pageFileStatistics.sessions.entrySet().iterator();
 		DecimalFormat df = new DecimalFormat("0.000");
-		List<Integer> sessionsToRemove = new ArrayList<>();
+		//List<Integer> sessionsToRemove = new ArrayList<>();
 		while (iterator.hasNext()) {
 			int rowNo = 0;
 			Map.Entry<Integer, StatSession> entry = iterator.next();
-			if (iterator.hasNext())
-				sessionsToRemove.add(entry.getKey());
+			//if (iterator.hasNext())
+			//	sessionsToRemove.add(entry.getKey());
 
 			Sheet sheet = workbook.createSheet("Session " + entry.getValue().internalSessionIndex);
 			sheet.setColumnWidth(0, 5000);
@@ -472,167 +479,206 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 			e.printStackTrace();
 		}
 
-		sessionsToRemove.forEach(key -> {
-			pageFileStatistics.sessions.remove(key);
-		});
+		//sessionsToRemove.forEach(key -> {
+		//	pageFileStatistics.sessions.remove(key);
+		//});
 	}
 
 	@Override
-	public void saveToGoogle(PageFileStatistics pageFileStatistics, String spreadsheetId) {
-		try {
-			final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-			String range = "Class Data!A2:E";
-			Credential credential;
+	public boolean saveToGoogle(PageFileStatistics pageFileStatistics) {
+		String spreadsheetId = applicationPropertyService.getSheetID();
+		if (spreadsheetId != null && !spreadsheetId.isEmpty()) {
+			try {
+				final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+				String range = "Class Data!A2:E";
+				Credential credential;
 
-			credential = GoogleController.flow.loadCredential(GoogleController.USER_IDENTIFIER_KEY);
+				credential = GoogleController.flow.loadCredential(GoogleController.USER_IDENTIFIER_KEY);
 
-			Sheets service = new Sheets.Builder(HTTP_TRANSPORT, GoogleController.JSON_FACTORY, credential)
-					.setApplicationName(GoogleController.APPLICATION_NAME).build();
-			
-			
-			Spreadsheet sp = service.spreadsheets().get(spreadsheetId).execute();
-			List<com.google.api.services.sheets.v4.model.Sheet> sheets = sp.getSheets();
-			
-			boolean tabForDriverExists = false;
-			Iterator<com.google.api.services.sheets.v4.model.Sheet> i = sheets.iterator();
-			com.google.api.services.sheets.v4.model.Sheet ourTab = null;
-			while (i.hasNext() || !tabForDriverExists) {
-				com.google.api.services.sheets.v4.model.Sheet sh = i.next();
-				if(sh.getProperties().getTitle().equals(pageFileStatistics.currentSession.car.playerName)) {
-					ourTab = sh;
-					tabForDriverExists = true;
+				Sheets service = new Sheets.Builder(HTTP_TRANSPORT, GoogleController.JSON_FACTORY, credential)
+						.setApplicationName(GoogleController.APPLICATION_NAME).build();
+
+				Spreadsheet sp = service.spreadsheets().get(spreadsheetId).execute();
+				List<com.google.api.services.sheets.v4.model.Sheet> sheets = sp.getSheets();
+
+				boolean tabForDriverExists = false;
+				Iterator<com.google.api.services.sheets.v4.model.Sheet> i = sheets.iterator();
+				com.google.api.services.sheets.v4.model.Sheet ourTab = null;
+				String tabName=LocalDate.now().toString()+ "_" + pageFileStatistics.currentSession.internalSessionIndex + "_" + pageFileStatistics.currentSession.car.playerNick;
+				if (i.hasNext()) {
+					do {
+						com.google.api.services.sheets.v4.model.Sheet sh = i.next();
+						if (sh.getProperties().getTitle().equals(tabName)) {
+							ourTab = sh;
+							tabForDriverExists = true;
+						}
+					} while (i.hasNext());
+				} 
+
+				if (!tabForDriverExists) {
+					sheets.add(ourTab);
+					sp.setSheets(sheets);
+					List<Request> requests = new ArrayList<>();
+					requests.add(new Request().setAddSheet(new AddSheetRequest().setProperties(
+							new SheetProperties().setTitle(tabName))));
+					BatchUpdateSpreadsheetRequest body = new BatchUpdateSpreadsheetRequest().setRequests(requests);
+					BatchUpdateSpreadsheetResponse response = service.spreadsheets().batchUpdate(spreadsheetId, body)
+							.execute();
+					System.out.println(response.toPrettyString());
+					pageFileStatistics.googleSaved = false;
 				}
-			}
-
-			if (!tabForDriverExists){
-				sheets.add(ourTab);
-				sp.setSheets(sheets);
-				List<Request> requests = new ArrayList<>();
-				requests.add(new Request().setAddSheet(new AddSheetRequest()
-			            .setProperties(new SheetProperties()
-			                .setTitle(pageFileStatistics.currentSession.car.playerName)))
-			        );
-				BatchUpdateSpreadsheetRequest body = new BatchUpdateSpreadsheetRequest().setRequests(requests);
-		        BatchUpdateSpreadsheetResponse response = service.spreadsheets().batchUpdate(spreadsheetId, body).execute();
-		        System.out.println(response.toPrettyString());
-			}
-			
-			range = pageFileStatistics.currentSession.car.playerName +"!A"+1+":AJ";
-			Iterator<Map.Entry<Integer, StatSession>> iterator = pageFileStatistics.sessions.entrySet().iterator();
-			DecimalFormat df = new DecimalFormat("0.000");
-			List<Integer> sessionsToRemove = new ArrayList<>();
-			while (iterator.hasNext()) {
-				int rowNo = 0;
-				Map.Entry<Integer, StatSession> entry = iterator.next();
-				if (iterator.hasNext())
-					sessionsToRemove.add(entry.getKey());
 				
-				StatSession session = entry.getValue();
-				Iterator<Map.Entry<Integer, StatLap>> iteratorLap = entry.getValue().laps.entrySet().iterator();
-				int ii = 0;
+				
+				Iterator<Map.Entry<Integer, StatSession>> iterator = pageFileStatistics.sessions.entrySet().iterator();
+				DecimalFormat df = new DecimalFormat("0.000");
+				
 				List<List<Object>> values = new ArrayList<>();
-				List<Object> header =
-				        Arrays.asList(
-				        		"Session index",
-								"Lap time",
-								"Split 1",
-								"Split 2",
-								"Split 3",
-								"Fuel [start line]",
-								"Fuel [finish line]",
-								"Fuel afg [l/minute]",
-								"Fuel afg [l/lap]",
-								"Refuel [l]",
-								"Used wet",
-								"PSI FL",
-								"PSI FR",
-								"PSI RL",
-								"PSI RR",
-								"°C FL",
-								"°C FR",
-								"°C RL",
-								"°C RR",
-								"Rain intensity",
-								"Rain tires",
-								"Track grip status",
-								"Track status",
-								"Valid Lap",
-								"Air [°C]",
-								"Road [°C]",
-								"Est for next [laps]",
-								"Est for next [time]",
-								"Session Time Left",
-								"B. pads FL",
-								"B. pads FR",
-								"B. pads RL",
-								"B. pads RR",
-								"B. disks FL",
-								"B. disks FR",
-								"B. disks RL",
-								"B. disks RR"
+				while (iterator.hasNext()) {
+					int rowNo = 0;
+					Map.Entry<Integer, StatSession> entry = iterator.next();
 
-				        );
-				while (iteratorLap.hasNext()) {
-					Map.Entry<Integer, StatLap> lap = iteratorLap.next();
-					List<Object> v =
-					        Arrays.asList(
-					        		session.internalSessionIndex,
-									mstoStr(lap.getValue().lapTime),
-									lap.getValue().splitTimes.get(0) != null ?	mstoStr(lap.getValue().splitTimes.get(0)) : 0,
-									lap.getValue().splitTimes.get(1) != null ?  mstoStr(lap.getValue().splitTimes.get(1) - lap.getValue().splitTimes.get(0)) : 0,
-									lap.getValue().splitTimes.get(2) != null ?	mstoStr(lap.getValue().splitTimes.get(2) - lap.getValue().splitTimes.get(1)) : 0,
-									df.format(lap.getValue().fuelLeftOnStart),
-									df.format(lap.getValue().fuelLeftOnEnd),
-									df.format(lap.getValue().fuelAVGPerMinute),
-									df.format(lap.getValue().fuelXlap),
-									df.format(lap.getValue().fuelAdded),
-									lap.getValue().rainTyres == 1 ? true : false,
-									df.format(lap.getValue().avgpFL),
-									df.format(lap.getValue().avgpFR),
-									df.format(lap.getValue().avgpRL),
-									df.format(lap.getValue().avgpRR),
-									df.format(lap.getValue().avgtFL),
-									df.format(lap.getValue().avgtFR),
-									df.format(lap.getValue().avgtRL),
-									df.format(lap.getValue().avgtRR),
-									df.format(lap.getValue().avgRainIntensity),
-									lap.getValue().rainTyres,
-									lap.getValue().avgTrackGripStatus,
-									lap.getValue().trackStatus,
-									lap.getValue().isValidLap,
-									df.format(lap.getValue().avgAirTemp),
-									df.format(lap.getValue().avgRoadTemp),
-									df.format(lap.getValue().fuelEFNLapsOnEnd),
-									mstoStr(Math.round(lap.getValue().fuelEstForNextMiliseconds)),
-									mstoStr(Math.round(lap.getValue().sessionTimeLeft)),
-									df.format(lap.getValue().avgBPFL),
-									df.format(lap.getValue().avgBPFR),
-									df.format(lap.getValue().avgBPRL),
-									df.format(lap.getValue().avgBPRR),
-									df.format(lap.getValue().avgBDFL),
-									df.format(lap.getValue().avgBDFR),
-									df.format(lap.getValue().avgBDRL),
-									df.format(lap.getValue().avgBDRR)
+					StatSession session = entry.getValue();
+					Iterator<Map.Entry<Integer, StatLap>> iteratorLap = entry.getValue().laps.entrySet().iterator();
+					int ii = 1;
+					
+					List<Object> sessionHeader = Arrays.asList("Car", "Track", "Current time in game");
+					values.add(sessionHeader);
+					int seconds = (int) Math.floor(session.currentLap.clockAtStart);
+					long hours = TimeUnit.SECONDS.toHours(seconds);
+					long min = TimeUnit.SECONDS.toMinutes(seconds) - 60 * hours;
+					long sec = seconds - (60 * 60 * hours) - (60 * min);
+					String clockAtStart = String.format("%02d:%02d:%02d", hours,min,sec
+					  );
+					List<Object> sessionValues = Arrays.asList(
+							session.car.carModel, session.car.track, clockAtStart);					
+					values.add(sessionValues);
+					ValueRange body = new ValueRange().setValues(values);
+					range = tabName + "!A" + 1 + ":AL";
+					UpdateValuesResponse result = service.spreadsheets().values().update(spreadsheetId, range, body)
+							.setValueInputOption("RAW").execute();
+					values.clear();
+					
+					if (!pageFileStatistics.googleSaved) {
+						List<Object> headerMFD = Arrays.asList(
+						"mfdTyreSet",
+						"mfdFuelToAdd",
+						"mfdTyrePressureLF",
+						"mfdTyrePressureRF",
+						"mfdTyrePressureLR",
+						"mfdTyrePressureRR",
+						"ACC_RAIN_INTENSITY",
+						"ACC_RAIN_INTENSITY",
+						"currentTyreSet",
+						"strategyTyreSet"
+						);
+						values.add(headerMFD);
+						range = tabName + "!A" + 4 + ":AL";
+						body = new ValueRange().setValues(values);
+						result = service.spreadsheets().values().update(spreadsheetId, range, body)
+								.setValueInputOption("RAW").execute();
+						values.clear();
+					}
+					List<Object> valuesMFD = Arrays.asList(
+					session.currentLap.mfdTyreSet,          
+					session.currentLap.mfdFuelToAdd,      
+					new BigDecimal(session.currentLap.mfdTyrePressureLF).setScale(1, RoundingMode.HALF_UP).doubleValue(),
+					new BigDecimal(session.currentLap.mfdTyrePressureRF).setScale(1, RoundingMode.HALF_UP).doubleValue(),
+					new BigDecimal(session.currentLap.mfdTyrePressureLR).setScale(1, RoundingMode.HALF_UP).doubleValue(),
+					new BigDecimal(session.currentLap.mfdTyrePressureRR).setScale(1, RoundingMode.HALF_UP).doubleValue(),
+					session.currentLap.rainIntensityIn10min,
+					session.currentLap.rainIntensityIn30min,
+					session.currentLap.currentTyreSet,      
+					session.currentLap.strategyTyreSet);     
+					values.add(valuesMFD);
+					
+					range = tabName + "!A" + 5 + ":AL";
+					body = new ValueRange().setValues(values);
+					result = service.spreadsheets().values().update(spreadsheetId, range, body)
+							.setValueInputOption("RAW").execute();
+					values.clear();
+					
+					if (!pageFileStatistics.googleSaved) {
+						List<Object> header = Arrays.asList("internalLapIndex", "Lap time", "Split 1", "Split 2", "Split 3",
+								"Fuel [start line]", "Fuel [finish line]", "Fuel afg [l/minute]", "Fuel avg [l/lap]",
+								"Refuel [l]", "Used wet", "PSI FL", "PSI FR", "PSI RL", "PSI RR", "°C FL", "°C FR", "°C RL",
+								"°C RR", "Rain intensity", "Track grip status", 
+								"Air [°C]", "Road [°C]", "Est for next [laps]", "Est for next [time]", "Session Time Left",
+								"Worst brake pad", "Worst brake disk"
+						);
+						values.add(header);
+					}
+					range = tabName + "!A" + 7 + ":AL";
+					body = new ValueRange().setValues(values);
+					result = service.spreadsheets().values().update(spreadsheetId, range, body)
+							.setValueInputOption("RAW").execute();
+					values.clear();
+					
+					boolean firstLapToSave = true;
+					while (iteratorLap.hasNext()) {
+						Map.Entry<Integer, StatLap> lap = iteratorLap.next();
+							if(!lap.getValue().saved) {
+								if (firstLapToSave || !pageFileStatistics.googleSaved) {
+									ii = lap.getValue().internalLapIndex;
+									firstLapToSave = false;
+								}
+								List<Object> v = Arrays.asList(
+										lap.getValue().internalLapIndex,
+										mstoStr(lap.getValue().lapTime),
+										lap.getValue().splitTimes.get(0) != null ? mstoStr(lap.getValue().splitTimes.get(0))
+												: 0,
+										lap.getValue().splitTimes.get(1) != null
+												? mstoStr(lap.getValue().splitTimes.get(1) - lap.getValue().splitTimes.get(0))
+												: 0,
+										lap.getValue().splitTimes.get(2) != null
+												? mstoStr(lap.getValue().splitTimes.get(2) - lap.getValue().splitTimes.get(1))
+												: 0,
+										new BigDecimal(lap.getValue().fuelLeftOnStart).setScale(3, RoundingMode.HALF_UP).doubleValue(), 
+										new BigDecimal(lap.getValue().fuelLeftOnEnd).setScale(3, RoundingMode.HALF_UP).doubleValue(),
+										new BigDecimal(lap.getValue().fuelAVGPerMinute).setScale(3, RoundingMode.HALF_UP).doubleValue(), 
+										new BigDecimal(lap.getValue().fuelXlap).setScale(3, RoundingMode.HALF_UP).doubleValue(),
+										new BigDecimal(lap.getValue().fuelAdded).setScale(0, RoundingMode.HALF_UP).doubleValue(), 
+										lap.getValue().rainTyres == 1 ? true : false,
+										new BigDecimal(lap.getValue().avgpFL).setScale(2, RoundingMode.HALF_UP).doubleValue(), 
+										new BigDecimal(lap.getValue().avgpFR).setScale(2, RoundingMode.HALF_UP).doubleValue(),
+										new BigDecimal(lap.getValue().avgpRL).setScale(2, RoundingMode.HALF_UP).doubleValue(), 
+										new BigDecimal(lap.getValue().avgpRR).setScale(2, RoundingMode.HALF_UP).doubleValue(),
+										new BigDecimal(lap.getValue().avgtFL).setScale(2, RoundingMode.HALF_UP).doubleValue(), 
+										new BigDecimal(lap.getValue().avgtFR).setScale(2, RoundingMode.HALF_UP).doubleValue(),
+										new BigDecimal(lap.getValue().avgtRL).setScale(2, RoundingMode.HALF_UP).doubleValue(), 
+										new BigDecimal(lap.getValue().avgtRR).setScale(2, RoundingMode.HALF_UP).doubleValue(),
+										new BigDecimal(lap.getValue().avgRainIntensity).setScale(2, RoundingMode.HALF_UP).doubleValue(), 
+										new BigDecimal(lap.getValue().avgTrackGripStatus).setScale(2, RoundingMode.HALF_UP).doubleValue(), 
+										new BigDecimal(lap.getValue().avgAirTemp).setScale(2, RoundingMode.HALF_UP).doubleValue(),
+										new BigDecimal(lap.getValue().avgRoadTemp).setScale(2, RoundingMode.HALF_UP).doubleValue(), 
+										new BigDecimal(lap.getValue().fuelEFNLapsOnEnd).setScale(2, RoundingMode.HALF_UP).doubleValue(),
+										mstoStr(Math.round(lap.getValue().fuelEstForNextMiliseconds)),
+										mstoStr(Math.round(lap.getValue().sessionTimeLeft)), 
+										new BigDecimal(Math.min( Math.min(lap.getValue().avgBPFL, lap.getValue().avgBPFR), Math.min(lap.getValue().avgBPRL, lap.getValue().avgBPRR) ) ).setScale(2, RoundingMode.HALF_UP).doubleValue(),
+										new BigDecimal(Math.min( Math.min(lap.getValue().avgBDFL, lap.getValue().avgBDFR), Math.min(lap.getValue().avgBDRL, lap.getValue().avgBDRR) ) ).setScale(2, RoundingMode.HALF_UP).doubleValue()
+								);
+								
+								values.add(v);
+							}
+						body = new ValueRange().setValues(values);
+						int lapLoc = ii + 8;
+						range = tabName + "!A" + lapLoc + ":AL";
+						LOGGER.info("Values size: " + values.size());
+						result = service.spreadsheets().values().update(spreadsheetId, range, body)
+								.setValueInputOption("RAW").execute();
+						LOGGER.info("Result size: " + result.size());
+						values.clear();
+					}
+				}
 
-					        );
-					        
-
-					values.add(v);
-			
-
-			ValueRange body = new ValueRange()
-			        .setValues(values);
-			UpdateValuesResponse result =
-			        service.spreadsheets().values().update(spreadsheetId, range, body)
-			                .setValueInputOption("RAW")
-			                .execute();
-			}			
-			}	
-
-		} catch (IOException | GeneralSecurityException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			} catch (IOException | GeneralSecurityException e) {
+				LOGGER.info(e.toString());
+				return false;
+			}
+		} else {
+			LOGGER.info("Google service not yet configured.");
+			return false;
 		}
+		return true;
 	}
 
 	private CellStyle pressureXLSXStyle(Workbook workbook, float psi, boolean wet) {

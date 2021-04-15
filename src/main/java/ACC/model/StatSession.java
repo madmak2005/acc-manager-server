@@ -39,6 +39,8 @@ public class StatSession {
 	
 	public int sessionIndex = 0;
 	public int internalSessionIndex = 0;
+	public int internalLapIndex = 0;
+	
 	public boolean wasGreenFlag = false; 
 	
 	public int bestTime = 999999999;
@@ -55,6 +57,8 @@ public class StatSession {
 	public int packetDelta = 0;
 	
 	protected void addStatLap(StatLap lap) {
+		internalLapIndex++;
+		lap.internalLapIndex = internalLapIndex; 
 		laps.put(lap.lapNo, lap);
 		if (laps.size() > 1) {
 			lastLap = laps.get(laps.size() - 2);
@@ -82,7 +86,6 @@ public class StatSession {
 				lastLap.calculateLapStats();
 			}
 		}
-		calculateSessionStats();
 		
 		LOGGER.info(String.valueOf(currentLap.lapNo));
 		LOGGER.info(String.valueOf(currentLap.lapTime));
@@ -96,7 +99,7 @@ public class StatSession {
 		distanceTraveled = currentStatPoint.distanceTraveled;
 	}
 	
-	protected  void calculateSessionStats() {
+	protected void calculateSessionStats() {
 		
 		float lavg = 0;
 		int avgMS = 0;
@@ -134,7 +137,12 @@ public class StatSession {
 		
 		
 		currentLap.fuelNTFOnEnd = currentLap.lapTime * currentLap.fuelUsed == 0 ? 0 : ((avgLapTime3 + sessionTimeLeft) / avgLapTime5) * fuelAVG5Laps;
-		currentLap.fuelEFNLapsOnEnd = (float) (currentLap.fuelLeftOnEnd) / (minutes * perminutes);
+		
+		if ((minutes * perminutes) > 0)
+			currentLap.fuelEFNLapsOnEnd = (float) (currentLap.fuelLeftOnEnd) / (minutes * perminutes);
+		else 
+			currentLap.fuelEFNLapsOnEnd = 0;
+		
 		currentLap.fuelEstForNextMiliseconds =  (currentLap.fuelEFNLapsOnEnd * avgLapTime5);
 	
 	}

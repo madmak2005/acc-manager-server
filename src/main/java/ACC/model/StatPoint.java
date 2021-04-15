@@ -50,6 +50,17 @@ public class StatPoint {
 	public int 		packetIDG = 0;
 	public int 		packetIDP = 0;
 	
+    public int mfdTyreSet = 0;
+    public float mfdFuelToAdd = 0;
+    public float mfdTyrePressureLF = 0;
+    public float mfdTyrePressureRF = 0;
+    public float mfdTyrePressureLR = 0;
+    public float mfdTyrePressureRR = 0;
+	public int rainIntensityIn10min = 0;
+	public int rainIntensityIn30min = 0;
+	public int currentTyreSet = 0;
+	public int strategyTyreSet = 0;    
+	
 	public StatCar  car = new StatCar();
 	
 }

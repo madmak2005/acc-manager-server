@@ -1,41 +1,21 @@
 package ACC.model;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.OptionalDouble;
 import java.util.Set;
 
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.FillPatternType;
-import org.apache.poi.ss.usermodel.IndexedColors;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFFont;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.servlet.mvc.method.annotation.SessionAttributeMethodArgumentResolver;
+import org.springframework.context.ApplicationContext;
 
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -48,19 +28,17 @@ import com.google.gson.Gson;
 
 import ACC.ApplicationContextAwareImpl;
 import ACC.saving.ACCDataSaveService;
-import ACC.sharedmemory.ACCSharedMemoryService;
 import app.Application;
 
 @JsonFilter("filter1")
 public class PageFileStatistics implements Page {
-	@Autowired
-	ACCDataSaveService accDataSaveService;
 
 	public PageFileStatistics() {
 		super();
 		setPageName("statistics");
 		previous = Instant.now();
 	}
+	
 	@JsonIgnore
 	private static final Logger LOGGER = LoggerFactory.getLogger(PageFileStatistics.class);
 	@JsonIgnore
@@ -81,7 +59,10 @@ public class PageFileStatistics implements Page {
 	
 	@JsonIgnore
 	private boolean saved = false;
- 
+	
+	@JsonIgnore
+	public boolean googleSaved = false;
+	
 	public static String mstoStr(long durationInMillis) {
 		long millis = durationInMillis % 1000;
 		long second = (durationInMillis / 1000) % 60;
@@ -115,8 +96,12 @@ public class PageFileStatistics implements Page {
 						currentSession.packetDelta = Math.abs(statPoint.packetIDG - prevStatPoint.packetIDP);
 						if (Duration.between(lastChange, Instant.now()).getSeconds() > 5 && !saved) {
 							LOGGER.info("Finished? Save sessions.");
-							accDataSaveService.saveToXLS(this);
-							saved = true;
+							ApplicationContext context = ApplicationContextAwareImpl.getApplicationContext();
+							if (context != null) {
+								ACCDataSaveService accDataSaveService = (ACCDataSaveService) context.getBean("accDataSaveService");
+								accDataSaveService.saveToXLS(this);
+								saved = true;
+							}
 						}
 
 						if (newSessionStarted(prevStatPoint, statPoint))
@@ -125,7 +110,6 @@ public class PageFileStatistics implements Page {
 						if (statPoint.flag == AC_FLAG_TYPE.ACC_GREEN_FLAG
 								&& statPoint.session == AC_SESSION_TYPE.AC_RACE && currentSession != null
 								&& !currentSession.wasGreenFlag) {
-							// System.out.println(gson.toJson(currentSession));
 							LOGGER.info("GREEN FLAG, GREEN FLAG, GREEN, GREEN, GREEN!!!!!!!");
 							raceStartAt = statPoint.iCurrentTime;
 							LOGGER.info("Race start at [ms]: " + String.valueOf(raceStartAt));
@@ -145,6 +129,7 @@ public class PageFileStatistics implements Page {
 									prevLap.lapTime = statPoint.iLastTime;
 									prevLap.splitTimes.put(statPoint.car.sectorCount - 1, statPoint.iLastTime);
 									prevLap.lapTime = statPoint.iLastTime;
+									currentSession.calculateSessionStats();
 								}
 
 								long duration = 0;
@@ -157,6 +142,21 @@ public class PageFileStatistics implements Page {
 										LOGGER.info("Efficiency: " + df.format((float) duration / durationofLap * 100));
 										previous = Instant.now();
 									}
+									
+									ApplicationContext context = ApplicationContextAwareImpl.getApplicationContext();
+									if (context != null) {
+										ACCDataSaveService accDataSaveService = (ACCDataSaveService) context.getBean("accDataSaveService");
+										if (accDataSaveService != null) {
+											if (accDataSaveService.saveToGoogle(this)) {
+												sessions.forEach( (lp, session) -> {
+													session.laps.forEach( (id, l) -> {
+														l.saved = true;
+													});
+												});
+												googleSaved = true;
+											}
+										}
+									}
 								}
 
 								// init new lap, we don't have it in current session
@@ -164,6 +164,7 @@ public class PageFileStatistics implements Page {
 								lap.addStatPoint(statPoint);
 								currentSession.addStatLap(lap);
 								currentSession.addStatPoint(statPoint);
+
 							}
 						} else {
 							if (statPoint.currentSectorIndex > 0)
@@ -173,6 +174,7 @@ public class PageFileStatistics implements Page {
 
 						}
 						currentSession.currentLap = lap;
+
 					}
 				} else {
 					if (currentSession != null) {
@@ -181,8 +183,13 @@ public class PageFileStatistics implements Page {
 					}
 					if (Duration.between(lastChange, Instant.now()).getSeconds() > 5 && !saved) {
 						LOGGER.info("Finished? Save sessions.");
-						accDataSaveService.saveToXLS(this);
-						saved = true;
+						ApplicationContext context = ApplicationContextAwareImpl.getApplicationContext();
+						if (context != null) {
+							ACCDataSaveService accDataSaveService = (ACCDataSaveService) context.getBean("accDataSaveService");
+							if (accDataSaveService != null)
+								accDataSaveService.saveToXLS(this);
+							saved = true;
+						}
 					}
 				}
 			} else {
@@ -232,6 +239,7 @@ public class PageFileStatistics implements Page {
 	}
 	
 	private StatSession newSession(StatPoint statPoint) {
+		/*
 		List<Integer> sessionsToRemove = new ArrayList<>();
 		Iterator<Map.Entry<Integer, StatSession>> iterator = sessions.entrySet().iterator();
 		while (iterator.hasNext()) {
@@ -250,14 +258,17 @@ public class PageFileStatistics implements Page {
 				sessionsToRemove.add(entry.getKey());
 			}
 		}
+		*/
 		
+		/*
 		sessionsToRemove.forEach( key -> {
 			sessions.remove(key);
 		});
+		*/
 
 		//saveToXLSX();
 		saved = false;
-		Gson gson = new Gson();
+		//Gson gson = new Gson();
 		//System.out.println(gson.toJson(sessions));
 		sessionCounter++;
 		currentSession = new StatSession();

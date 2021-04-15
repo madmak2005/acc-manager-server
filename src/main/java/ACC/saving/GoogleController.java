@@ -22,6 +22,7 @@ import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
@@ -30,9 +31,16 @@ import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
+import org.springframework.http.RequestEntity.BodyBuilder;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
+import com.fasterxml.jackson.core.FormatSchema;
 // [START sheets_quickstart]
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
@@ -50,9 +58,12 @@ import com.google.api.services.sheets.v4.SheetsScopes;
 import com.google.api.services.sheets.v4.model.ValueRange;
 
 import ACC.ApplicationContextAwareImpl;
+import ACC.ApplicationPropertyService;
+import ACC.ApplicationPropertyServiceImpl;
 import ACC.model.OutputMessage;
 import ACC.model.PageFileStatistics;
 import ACC.sharedmemory.ACCSharedMemoryService;
+import lombok.Data;
 
 @Controller
 public class GoogleController {
@@ -62,6 +73,9 @@ public class GoogleController {
 	
 	private ACCDataSaveService accDataSaveService = (ACCDataSaveService) ApplicationContextAwareImpl
 			.getApplicationContext().getBean("accDataSaveService");
+	
+	private ApplicationPropertyService applicationPropertyService = (ApplicationPropertyService) ApplicationContextAwareImpl
+			.getApplicationContext().getBean("applicationPropertyService");
 	
     static final String APPLICATION_NAME = "ACC Server Manager";
     static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
@@ -81,7 +95,6 @@ public class GoogleController {
    
     @PostConstruct
 	public void init() throws Exception {
-        // Load client secrets.
         Resource resource = new ClassPathResource(CREDENTIALS_FILE_PATH);
         InputStream in = resource.getInputStream();
         if (in == null) {
@@ -105,9 +118,17 @@ public class GoogleController {
 			}
 			OutputMessage om = accSharedMemoryService.getPageFileMessage("statistics", new ArrayList<String>());
 			PageFileStatistics statistics = (PageFileStatistics) om.page;
-			accDataSaveService.saveToGoogle(statistics,spreadsheetId);
+			accDataSaveService.saveToGoogle(statistics);
 		}
 		return isUserAuthenticated ? "dashboard.html" : "index.html";
+	}
+    
+    @PostMapping(value = { "/setGoogleSheetID" })
+	public String setGoogleSheetID(@RequestBody SheetForm sheet) throws Exception {
+    	if (sheet != null){
+    		applicationPropertyService.setSheetID(sheet.sheetID);
+    	}
+    	return "dashboard.html";
 	}
     
 	@GetMapping(value = { "/googlesignin" })
@@ -134,10 +155,6 @@ public class GoogleController {
 
 	}
 
-    /**
-     * Prints the names and majors of students in a sample spreadsheet:
-     * https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit
-     */
     public void docsTest() throws IOException, GeneralSecurityException {
         // Build a new authorized API client service.
         final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
@@ -156,10 +173,22 @@ public class GoogleController {
         } else {
             System.out.println("Name, Major");
             for (List row : values) {
-                // Print columns A and E, which correspond to indices 0 and 4.
                 System.out.printf("%s, %s\n", row.get(0), row.get(4));
             }
         }
     }
+    
 }
 
+
+class SheetForm {
+	public String sheetID;
+
+	protected String getSheetID() {
+		return sheetID;
+	}
+
+	protected void setSheetID(String sheetID) {
+		this.sheetID = sheetID;
+	}
+}

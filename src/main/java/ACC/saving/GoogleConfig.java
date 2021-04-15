@@ -15,7 +15,6 @@ public class GoogleConfig implements WebMvcConfigurer {
     
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        //registry.addResourceHandler("/webjars/**").addResourceLocations("/webjars/");
         registry.addResourceHandler("/webjars/**").addResourceLocations("classpath:/META-INF/resources/webjars/");
     }
 }

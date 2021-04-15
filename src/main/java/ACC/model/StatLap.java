@@ -21,6 +21,7 @@ public class StatLap {
 
 	public Map<Integer, Integer> splitTimes = new HashMap<>();
 	protected List<StatPoint> statPoints = new ArrayList<>();
+	public int internalLapIndex = 0;
 
 	public float fuelAdded = 0;
 	public float fuelUsed = 0;
@@ -57,6 +58,8 @@ public class StatLap {
 	public float avgRainIntensity = 0;
 	public float avgTrackGripStatus = 0;
 	public String trackStatus = "";
+	
+	public boolean saved = false;
 
 	protected List<Float> pFL = new ArrayList<>(), pFR = new ArrayList<>(), pRL = new ArrayList<>(),
 			pRR = new ArrayList<>();
@@ -73,59 +76,88 @@ public class StatLap {
 	
 	protected boolean backToPit = false;
 	
+    public int mfdTyreSet = 0;
+    public float mfdFuelToAdd = 0;
+    public float mfdTyrePressureLF = 0;
+    public float mfdTyrePressureRF = 0;
+    public float mfdTyrePressureLR = 0;
+    public float mfdTyrePressureRR = 0;
+	public int rainIntensityIn10min = 0;
+	public int rainIntensityIn30min = 0;
+	public int currentTyreSet = 0;
+	public int strategyTyreSet = 0;
+	
 	StatPoint firstStatPoint = new StatPoint();
 
 	protected void addStatPoint(StatPoint currentStatPoint) {
-		statPoints.add(currentStatPoint);
-		lapTime = currentStatPoint.iCurrentTime;
-		isValidLap = !(currentStatPoint.isValidLap == 0); // zero == false
-		lapNo = currentStatPoint.lapNo;
-		distanceTraveled = currentStatPoint.distanceTraveled;
-		fuelLeftOnEnd = currentStatPoint.fuel;
-		sessionTimeLeft = currentStatPoint.sessionTimeLeft;
-		fuelXlap = currentStatPoint.fuelXlap;
-		trackStatus = currentStatPoint.trackStatus;
-		
-		airTemp.add(currentStatPoint.airTemp);
-		roadTemp.add(currentStatPoint.roadTemp);
-		rainIntensity.add(currentStatPoint.rainIntensity);
-		trackGripStatus.add(currentStatPoint.trackGripStatus);
-		
-		if (currentStatPoint.wheelsPressure != null) {
-			pFL.add(currentStatPoint.wheelsPressure[0]);
-			pFR.add(currentStatPoint.wheelsPressure[1]);
-			pRL.add(currentStatPoint.wheelsPressure[2]);
-			pRR.add(currentStatPoint.wheelsPressure[3]);
+		if (currentStatPoint.wheelsPressure[0] > 0 && currentStatPoint.tyreCoreTemperature[0] > 0
+				&& currentStatPoint.padLife[0] > 0 && currentStatPoint.discLife[0] > 0) {
+			statPoints.add(currentStatPoint);
+			lapTime = currentStatPoint.iCurrentTime;
+			isValidLap = !(currentStatPoint.isValidLap == 0); // zero == false
+			lapNo = currentStatPoint.lapNo;
+			distanceTraveled = currentStatPoint.distanceTraveled;
+			fuelLeftOnEnd = currentStatPoint.fuel;
+			sessionTimeLeft = currentStatPoint.sessionTimeLeft;
+			fuelXlap = currentStatPoint.fuelXlap;
+			trackStatus = currentStatPoint.trackStatus;
+
+		    mfdTyreSet = currentStatPoint.mfdTyreSet;             
+		    mfdFuelToAdd = currentStatPoint.mfdFuelToAdd;        
+		    mfdTyrePressureLF = currentStatPoint.mfdTyrePressureLF;   
+		    mfdTyrePressureRF = currentStatPoint. mfdTyrePressureRF;   
+		    mfdTyrePressureLR = currentStatPoint.mfdTyrePressureLR;   
+		    mfdTyrePressureRR = currentStatPoint.mfdTyrePressureRR;   
+			rainIntensityIn10min = currentStatPoint.rainIntensityIn10min;
+			rainIntensityIn30min = currentStatPoint.rainIntensityIn30min;
+			currentTyreSet = currentStatPoint.currentTyreSet;      
+			strategyTyreSet = currentStatPoint.strategyTyreSet;     
+			
+			if (currentStatPoint.airTemp > 0)
+				airTemp.add(currentStatPoint.airTemp);
+			if (currentStatPoint.roadTemp > 0)
+				roadTemp.add(currentStatPoint.roadTemp);
+			if (currentStatPoint.airTemp > 0)
+				rainIntensity.add(currentStatPoint.rainIntensity);
+			if (currentStatPoint.airTemp > 0)
+				trackGripStatus.add(currentStatPoint.trackGripStatus);
+
+			if (currentStatPoint.wheelsPressure != null) {
+				pFL.add(currentStatPoint.wheelsPressure[0]);
+				pFR.add(currentStatPoint.wheelsPressure[1]);
+				pRL.add(currentStatPoint.wheelsPressure[2]);
+				pRR.add(currentStatPoint.wheelsPressure[3]);
+			}
+			if (currentStatPoint.tyreCoreTemperature != null) {
+				tFL.add(currentStatPoint.tyreCoreTemperature[0]);
+				tFR.add(currentStatPoint.tyreCoreTemperature[1]);
+				tRL.add(currentStatPoint.tyreCoreTemperature[2]);
+				tRR.add(currentStatPoint.tyreCoreTemperature[3]);
+			}
+
+			if (currentStatPoint.tyreCoreTemperature != null) {
+				bpFL.add(currentStatPoint.padLife[0]);
+				bpFR.add(currentStatPoint.padLife[1]);
+				bpRL.add(currentStatPoint.padLife[2]);
+				bpRR.add(currentStatPoint.padLife[3]);
+			}
+
+			if (currentStatPoint.tyreCoreTemperature != null) {
+				bdFL.add(currentStatPoint.discLife[0]);
+				bdFR.add(currentStatPoint.discLife[1]);
+				bdRL.add(currentStatPoint.discLife[2]);
+				bdRR.add(currentStatPoint.discLife[3]);
+			}
+
+			Integer currentMapSteps = maps.get(currentStatPoint.currentMap);
+			if (currentMapSteps != null) {
+				maps.put(currentStatPoint.currentMap, currentMapSteps + 1);
+			} else {
+				maps.put(currentStatPoint.currentMap, 1);
+			}
+
+			calculateLapStats();
 		}
-		if (currentStatPoint.tyreCoreTemperature != null) {
-			tFL.add(currentStatPoint.tyreCoreTemperature[0]);
-			tFR.add(currentStatPoint.tyreCoreTemperature[1]);
-			tRL.add(currentStatPoint.tyreCoreTemperature[2]);
-			tRR.add(currentStatPoint.tyreCoreTemperature[3]);
-		}
-		
-		if (currentStatPoint.tyreCoreTemperature != null) {
-			bpFL.add(currentStatPoint.padLife[0]);
-			bpFR.add(currentStatPoint.padLife[1]);
-			bpRL.add(currentStatPoint.padLife[2]);
-			bpRR.add(currentStatPoint.padLife[3]);
-		}
-		
-		if (currentStatPoint.tyreCoreTemperature != null) {
-			bdFL.add(currentStatPoint.discLife[0]);         
-			bdFR.add(currentStatPoint.discLife[1]);         
-			bdRL.add(currentStatPoint.discLife[2]);         
-			bdRR.add(currentStatPoint.discLife[3]);         
-		}                                                  
-		
-		Integer currentMapSteps = maps.get(currentStatPoint.currentMap);
-		if (currentMapSteps != null) {
-			maps.put(currentStatPoint.currentMap, currentMapSteps+1);
-		}else {
-			maps.put(currentStatPoint.currentMap, 1);
-		}
-		
-		calculateLapStats();
 	}
 	
 	protected void calculateLapStats() {
@@ -148,7 +180,7 @@ public class StatLap {
 			if (currentStatPoint.fuel > prevStatPoint.fuel && currentStatPoint.clock > firstStatPoint.clock) {
 				fuelBeforePit = prevStatPoint.fuel;
 				fuelAfterPit = currentStatPoint.fuel;
-				fuelAdded = fuelAfterPit - fuelBeforePit;
+				fuelAdded = (float) Math.ceil(fuelAfterPit - fuelBeforePit);
 			}
 			
 			fuelUsed = firstStatPoint.fuel - (currentStatPoint.fuel - fuelAdded);

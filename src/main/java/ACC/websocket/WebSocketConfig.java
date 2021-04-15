@@ -11,13 +11,14 @@ import org.springframework.web.socket.server.standard.ServerEndpointExporter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
-
+public class WebSocketConfig {
+/*
 @Configuration
 @EnableWebSocket
 @ComponentScan("ACC")
 public class WebSocketConfig implements WebSocketConfigurer {
-	
-
+*/
+/*
     @Bean
     public ServerEndpointExporter serverEndpointExporter() {
         return new ServerEndpointExporter();
@@ -32,5 +33,5 @@ public class WebSocketConfig implements WebSocketConfigurer {
 	public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
 		
 	}
-
+*/
 }

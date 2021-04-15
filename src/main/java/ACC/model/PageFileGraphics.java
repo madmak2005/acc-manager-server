@@ -123,7 +123,8 @@ public class PageFileGraphics implements Page {
 	public int rainIntensity = 0;
 	public int rainIntensityIn10min = 0;
 	public int rainIntensityIn30min = 0;
-
+	public int currentTyreSet = 0;
+	public int strategyTyreSet = 0;
     
 	@Override
 	public String toJSON() {
