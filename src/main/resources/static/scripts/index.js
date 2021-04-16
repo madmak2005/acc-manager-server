@@ -12,7 +12,7 @@ $(document).ready(function(){
 			success: function(response) {
 				console.log(response);
 				var htmlData = '';
-                htmlData += 'SUCCESS';
+                htmlData += response;
                 htmlData += '';
                 infoModal.find('#modal-body')[0].innerHTML = htmlData;
                 infoModal.modal();
@@ -20,7 +20,23 @@ $(document).ready(function(){
 		});
 	});
 	
-	
+	$("#saveXLSX").click(function(){
+		var infoModal = $('#saveXLSX');
+		$.ajax({
+			type: "GET",
+			url:'/save',
+			success: function(response) {
+				console.log(response);
+				console.log(infoModal);
+				
+				var htmlData = '';
+                htmlData += response;
+                htmlData += '';
+                infoModal.find('#modal-body-xlsx').innerHTML = htmlData;
+                infoModal.modal();
+			}
+		});
+	});	
 	
 	$("#refreshFileButton").click(function(){
 		$.ajax({

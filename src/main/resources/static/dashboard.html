@@ -18,38 +18,57 @@
 <body>
 	<h1 class="display-4 text-center">ACC Manager Web</h1>
 
-	<div id="pages">
-		<div class="btn-group" role="group">
-			<button data-toggle="collapse" data-target="#saveXLSX"
-				class="btn btn-primary">Save to XLSX</button>
-		</div>
 
-		<div class="input-group mb-4">
+
+	<div id="main-content" class="container">
+		<label for="basic-url">Enter Google Sheet ID</label>
+		<div class="input-group mb-3">
 			<input type="text" class="form-control" id="sheetID"
-				placeholder="example: [...]XzC3t6bpwQ8IEffQafzOdUPIK3gvNbZVtGRb[...]"
+				placeholder="like: 1URXzC3t6bpwQ8IEffQafzOdUPIK3gvNbZVtGRb8XXXX"
 				aria-label="Google Sheet ID" aria-describedby="basic-addon2">
 			<div class="input-group-append">
 				<button class="btn btn-outline-secondary" type="button"
-					id="setGoogle">Send ID to ACC Mgr</button>
+					id="setGoogle">Save</button>
+			</div>
+		</div>
+	</div>
+
+	<div id="main-content" class="container">
+		<label for="basic-url">Save racing data to disk</label>
+		<div class="btn-group" role="group">
+			<button data-toggle="collapse" data-target="#saveXLSX"
+				class="btn btn-primary" id="saveXLSX">Save XLSX</button>
+		</div>
+		<div class="collapse" id="saveXLSX">
+			<div class="card card-body">
+				The name of saved file:
+				<div class="modal-body-xlsx" id="modal-body-xlsx"></div>
+				<button class="btn btn-primary" id="refreshFileButton">Close</button>
+				<ul class="list-group" id="fileListContainer">
+
+				</ul>
 			</div>
 		</div>
 
-<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-        <h4 class="modal-title" id="exampleModalLabel">Sending sheet ID to ACC Manager Server</h4>
-      </div>
-      <div class="modal-body" id="modal-body"></div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-      </div>
-    </div>
-  </div>
-</div>
-		
-		<!-- 
+	</div>
+
+	<div class="modal fade" id="myModal" tabindex="-1" role="dialog"
+		aria-labelledby="exampleModalLabel" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h4 class="modal-title" id="exampleModalLabel">Sending sheet
+						ID to ACC Manager</h4>
+				</div>
+				<div class="modal-body" id="modal-body"></div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- 
 		<div>
             <div class="form-group">
                <label>Enter Google Sheet ID:</label> 
@@ -58,17 +77,10 @@
             </div>
 		</div>
 -->
-		<div class="collapse" id="saveXLSX">
-			<div class="card card-body">
-				To list files press refresh button.
-				<button class="btn btn-primary" id="refreshFileButton">Refresh</button>
-				<ul class="list-group" id="fileListContainer">
 
-				</ul>
-			</div>
-		</div>
-	</div>
+
 	<div id="main-content" class="container">
+	<h2 class="display-4 text-center">Debugging window</h2>
 		<div class="row">
 			<div class="col-md-6">
 				<form class="form-inline">

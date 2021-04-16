@@ -8,11 +8,15 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.google.gson.Gson;
 
+import ACC.ApplicationContextAwareImpl;
+import ACC.ApplicationPropertyService;
 import ACC.model.OutputMessage;
 import ACC.model.PageFileStatistics;
 import ACC.saving.ACCDataSaveService;
@@ -27,7 +31,15 @@ public class RestControler {
 	
 	@Autowired
 	ACCDataSaveService accDataSaveService;
-
+	
+	@Autowired
+	ApplicationPropertyService applicationPropertyService;
+	
+	/*
+	private ApplicationPropertyService applicationPropertyService = (ApplicationPropertyService) ApplicationContextAwareImpl
+			.getApplicationContext().getBean("applicationPropertyService");
+	 */
+	
 	@GetMapping("/SPageFileStatic")
 	public String getStaticJson() {
 		return accSharedMemoryService.getPageFile("static").toJSON();
@@ -48,8 +60,7 @@ public class RestControler {
 		List<String> fieldsStatistics = new ArrayList<String>();
 		OutputMessage om = accSharedMemoryService.getPageFileMessage("statistics", fieldsStatistics);
 		PageFileStatistics statistics = (PageFileStatistics) om.page;
-		accDataSaveService.saveToXLS(statistics);
-		return statistics.toJSON();
+		return accDataSaveService.saveToXLS(statistics);
 	}
 
 	@GetMapping("/google")
@@ -62,6 +73,14 @@ public class RestControler {
 			return e.toString();
 		}
 		return "ok";
+	}
+	
+    @PostMapping(value = { "/setGoogleSheetID" })
+	public String setGoogleSheetID(@RequestBody SheetForm sheet) throws Exception {
+    	if (sheet != null){
+    		applicationPropertyService.setSheetID(sheet.sheetID);
+    	}
+    	return "ok";
 	}
 
 	@GetMapping("/getSession")
@@ -87,4 +106,16 @@ public class RestControler {
 		}
 	}
 
+}
+
+class SheetForm {
+	public String sheetID;
+
+	protected String getSheetID() {
+		return sheetID;
+	}
+
+	protected void setSheetID(String sheetID) {
+		this.sheetID = sheetID;
+	}
 }

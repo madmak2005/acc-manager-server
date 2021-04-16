@@ -63,7 +63,7 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 			.getApplicationContext().getBean("applicationPropertyService");
 	 */
 	@Override
-	public void saveToXLS(PageFileStatistics pageFileStatistics) {
+	public String saveToXLS(PageFileStatistics pageFileStatistics) {
 		Workbook workbook = new XSSFWorkbook();
 		Iterator<Map.Entry<Integer, StatSession>> iterator = pageFileStatistics.sessions.entrySet().iterator();
 		DecimalFormat df = new DecimalFormat("0.000");
@@ -478,10 +478,7 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
-		//sessionsToRemove.forEach(key -> {
-		//	pageFileStatistics.sessions.remove(key);
-		//});
+		return fileLocation;
 	}
 
 	@Override
@@ -663,9 +660,12 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 						int lapLoc = ii + 8;
 						range = tabName + "!A" + lapLoc + ":AL";
 						LOGGER.info("Values size: " + values.size());
-						result = service.spreadsheets().values().update(spreadsheetId, range, body)
+						if (values.size()>0) {
+							LOGGER.info("UPDATE SHEET");
+							result = service.spreadsheets().values().update(spreadsheetId, range, body)
 								.setValueInputOption("RAW").execute();
-						LOGGER.info("Result size: " + result.size());
+							LOGGER.info("Result size: " + result.size());
+						}
 						values.clear();
 					}
 				}

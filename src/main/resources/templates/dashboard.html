@@ -1,45 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="ISO-8859-1">
-<title>Dashboard</title>
-
-<link href="webjars/bootstrap/4.6.0-1/css/bootstrap.min.css" rel="stylesheet">
-<link href="css/style.css" rel="stylesheet">
-<script src="webjars/jquery/3.6.0/jquery.min.js"></script>
-<script src="webjars/bootstrap/4.6.0-1/js/bootstrap.min.js"></script>
-<script src="scripts/index.js"></script>
+<meta http-equiv="Refresh" content="0; url='http://localhost:8080/dashboard.html'" />
+<title>Dashboard redirect</title>
 </head>
 <body>
-	<h1 class="display-4 text-center text-white">Welcome!!!</h1>
-	<div class="text-center text-white">You are logged in via Google
-		OAuth</div>
-
-
-	<div id="pages">
-		<div class="btn-group" role="group">
-			<button data-toggle="collapse" data-target="#saveXLSX"
-				class="btn btn-primary">Save to XLSX</button>
-		</div>
-		
-		<div>
-            <div class="form-group">
-               <label>Enter Google Sheet ID:</label> 
-               <input class="form-control" type="text" id="sheetID" />
-               <button class="btn btn-secondary" id="setGoogle">Click to set google sheet ID</button>
-            </div>
-
-		</div>
-		
-		<div class="collapse" id="saveXLSX">
-			<div class="card card-body">
-				To list files press refresh button.
-				<button class="btn btn-primary" id="refreshFileButton">Refresh</button>
-				<ul class="list-group" id="fileListContainer">
-
-				</ul>
-			</div>
-		</div>
-	</div>
+	
 </body>
 </html>

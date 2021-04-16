@@ -74,9 +74,6 @@ public class GoogleController {
 	private ACCDataSaveService accDataSaveService = (ACCDataSaveService) ApplicationContextAwareImpl
 			.getApplicationContext().getBean("accDataSaveService");
 	
-	private ApplicationPropertyService applicationPropertyService = (ApplicationPropertyService) ApplicationContextAwareImpl
-			.getApplicationContext().getBean("applicationPropertyService");
-	
     static final String APPLICATION_NAME = "ACC Server Manager";
     static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
     private static HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
@@ -86,7 +83,7 @@ public class GoogleController {
     private static final String CREDENTIALS_FOLDER_PATH = "credentialsFolder";
     static final String USER_IDENTIFIER_KEY = "MY_DUMMY_USER";
 
-    String spreadsheetId = "1URXzC3t6bpwQ8IEffQafzOdUPIK3gvNbZVtGRb8SX54";
+    String spreadsheetId = "";
     
     static GoogleAuthorizationCodeFlow flow;
     
@@ -123,14 +120,7 @@ public class GoogleController {
 		return isUserAuthenticated ? "dashboard.html" : "index.html";
 	}
     
-    @PostMapping(value = { "/setGoogleSheetID" })
-	public String setGoogleSheetID(@RequestBody SheetForm sheet) throws Exception {
-    	if (sheet != null){
-    		applicationPropertyService.setSheetID(sheet.sheetID);
-    	}
-    	return "dashboard.html";
-	}
-    
+   
 	@GetMapping(value = { "/googlesignin" })
 	public void doGoogleSignIn(HttpServletResponse response) throws Exception {
 		GoogleAuthorizationCodeRequestUrl url = flow.newAuthorizationUrl();
@@ -181,14 +171,3 @@ public class GoogleController {
 }
 
 
-class SheetForm {
-	public String sheetID;
-
-	protected String getSheetID() {
-		return sheetID;
-	}
-
-	protected void setSheetID(String sheetID) {
-		this.sheetID = sheetID;
-	}
-}
