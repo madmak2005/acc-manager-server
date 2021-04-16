@@ -26,14 +26,10 @@ $(document).ready(function(){
 			type: "GET",
 			url:'/save',
 			success: function(response) {
-				console.log(response);
-				console.log(infoModal);
-				
-				var htmlData = '';
+				var htmlData = '<li class="list-group-item">';
                 htmlData += response;
-                htmlData += '';
-                infoModal.find('#modal-body-xlsx').innerHTML = htmlData;
-                infoModal.modal();
+                htmlData += '</li>';
+				$("#fileList").append(htmlData);
 			}
 		});
 	});	
