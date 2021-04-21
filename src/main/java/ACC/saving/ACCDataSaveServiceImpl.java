@@ -50,6 +50,7 @@ import ACC.model.AC_SESSION_TYPE;
 import ACC.model.PageFileStatistics;
 import ACC.model.StatLap;
 import ACC.model.StatSession;
+import lombok.Data;
 
 @ComponentScan("ACC")
 @Service
@@ -495,104 +496,21 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 				Sheets service = new Sheets.Builder(HTTP_TRANSPORT, GoogleController.JSON_FACTORY, credential)
 						.setApplicationName(GoogleController.APPLICATION_NAME).build();
 
-				Spreadsheet sp = service.spreadsheets().get(spreadsheetId).execute();
-				List<com.google.api.services.sheets.v4.model.Sheet> sheets = sp.getSheets();
-
-				boolean tabForDriverExists = false;
-				Iterator<com.google.api.services.sheets.v4.model.Sheet> i = sheets.iterator();
-				com.google.api.services.sheets.v4.model.Sheet ourTab = null;
-				String tabName=LocalDate.now().toString()+ "_" + pageFileStatistics.currentSession.internalSessionIndex + "_" + pageFileStatistics.currentSession.car.playerNick;
-				if (i.hasNext()) {
-					do {
-						com.google.api.services.sheets.v4.model.Sheet sh = i.next();
-						if (sh.getProperties().getTitle().equals(tabName)) {
-							ourTab = sh;
-							tabForDriverExists = true;
-						}
-					} while (i.hasNext());
-				} 
-
-				if (!tabForDriverExists) {
-					sheets.add(ourTab);
-					sp.setSheets(sheets);
-					List<Request> requests = new ArrayList<>();
-					requests.add(new Request().setAddSheet(new AddSheetRequest().setProperties(
-							new SheetProperties().setTitle(tabName))));
-					BatchUpdateSpreadsheetRequest body = new BatchUpdateSpreadsheetRequest().setRequests(requests);
-					BatchUpdateSpreadsheetResponse response = service.spreadsheets().batchUpdate(spreadsheetId, body)
-							.execute();
-					System.out.println(response.toPrettyString());
-					pageFileStatistics.googleSaved = false;
-				}
+				TabInfo tabInfo = getTab(service, pageFileStatistics);
+				String tabName = tabInfo.tabName;
+				pageFileStatistics.googleSaved = tabInfo.googleSaved;
 				
+				//saveHeaderToGoogle(pageFileStatistics);
 				
 				Iterator<Map.Entry<Integer, StatSession>> iterator = pageFileStatistics.sessions.entrySet().iterator();
-				DecimalFormat df = new DecimalFormat("0.000");
 				
 				List<List<Object>> values = new ArrayList<>();
 				while (iterator.hasNext()) {
-					int rowNo = 0;
+
 					Map.Entry<Integer, StatSession> entry = iterator.next();
 
-					StatSession session = entry.getValue();
 					Iterator<Map.Entry<Integer, StatLap>> iteratorLap = entry.getValue().laps.entrySet().iterator();
 					int ii = 1;
-					
-					List<Object> sessionHeader = Arrays.asList("Car", "Track", "Current time in game");
-					values.add(sessionHeader);
-					int seconds = (int) Math.floor(session.currentLap.clockAtStart);
-					long hours = TimeUnit.SECONDS.toHours(seconds);
-					long min = TimeUnit.SECONDS.toMinutes(seconds) - 60 * hours;
-					long sec = seconds - (60 * 60 * hours) - (60 * min);
-					String clockAtStart = String.format("%02d:%02d:%02d", hours,min,sec
-					  );
-					List<Object> sessionValues = Arrays.asList(
-							session.car.carModel, session.car.track, clockAtStart);					
-					values.add(sessionValues);
-					ValueRange body = new ValueRange().setValues(values);
-					range = tabName + "!A" + 1 + ":AL";
-					UpdateValuesResponse result = service.spreadsheets().values().update(spreadsheetId, range, body)
-							.setValueInputOption("RAW").execute();
-					values.clear();
-					
-					if (!pageFileStatistics.googleSaved) {
-						List<Object> headerMFD = Arrays.asList(
-						"mfdTyreSet",
-						"mfdFuelToAdd",
-						"mfdTyrePressureLF",
-						"mfdTyrePressureRF",
-						"mfdTyrePressureLR",
-						"mfdTyrePressureRR",
-						"ACC_RAIN_INTENSITY",
-						"ACC_RAIN_INTENSITY",
-						"currentTyreSet",
-						"strategyTyreSet"
-						);
-						values.add(headerMFD);
-						range = tabName + "!A" + 4 + ":AL";
-						body = new ValueRange().setValues(values);
-						result = service.spreadsheets().values().update(spreadsheetId, range, body)
-								.setValueInputOption("RAW").execute();
-						values.clear();
-					}
-					List<Object> valuesMFD = Arrays.asList(
-					session.currentLap.mfdTyreSet,          
-					session.currentLap.mfdFuelToAdd,      
-					new BigDecimal(session.currentLap.mfdTyrePressureLF).setScale(1, RoundingMode.HALF_UP).doubleValue(),
-					new BigDecimal(session.currentLap.mfdTyrePressureRF).setScale(1, RoundingMode.HALF_UP).doubleValue(),
-					new BigDecimal(session.currentLap.mfdTyrePressureLR).setScale(1, RoundingMode.HALF_UP).doubleValue(),
-					new BigDecimal(session.currentLap.mfdTyrePressureRR).setScale(1, RoundingMode.HALF_UP).doubleValue(),
-					session.currentLap.rainIntensityIn10min,
-					session.currentLap.rainIntensityIn30min,
-					session.currentLap.currentTyreSet,      
-					session.currentLap.strategyTyreSet);     
-					values.add(valuesMFD);
-					
-					range = tabName + "!A" + 5 + ":AL";
-					body = new ValueRange().setValues(values);
-					result = service.spreadsheets().values().update(spreadsheetId, range, body)
-							.setValueInputOption("RAW").execute();
-					values.clear();
 					
 					if (!pageFileStatistics.googleSaved) {
 						List<Object> header = Arrays.asList("internalLapIndex", "Lap time", "Split 1", "Split 2", "Split 3",
@@ -605,8 +523,8 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 						values.add(header);
 					}
 					range = tabName + "!A" + 7 + ":AL";
-					body = new ValueRange().setValues(values);
-					result = service.spreadsheets().values().update(spreadsheetId, range, body)
+					ValueRange body = new ValueRange().setValues(values);
+					UpdateValuesResponse result = service.spreadsheets().values().update(spreadsheetId, range, body)
 							.setValueInputOption("RAW").execute();
 					values.clear();
 					
@@ -722,4 +640,149 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 		return String.format("%02d:%02d:%02d:%03d", hour, minute, second, millis);
 	}
 
+	@Override
+	public boolean saveHeaderToGoogle(PageFileStatistics pageFileStatistics) {
+		String spreadsheetId = applicationPropertyService.getSheetID();
+		if (spreadsheetId != null && !spreadsheetId.isEmpty()) {
+			try {
+				final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+				String range = "Class Data!A2:E";
+				Credential credential;
+
+				credential = GoogleController.flow.loadCredential(GoogleController.USER_IDENTIFIER_KEY);
+
+				Sheets service = new Sheets.Builder(HTTP_TRANSPORT, GoogleController.JSON_FACTORY, credential)
+						.setApplicationName(GoogleController.APPLICATION_NAME).build();
+				
+				TabInfo tabInfo = getTab(service, pageFileStatistics);
+				String tabName = tabInfo.tabName;
+				pageFileStatistics.googleSaved = tabInfo.googleSaved;
+				
+				
+				Iterator<Map.Entry<Integer, StatSession>> iterator = pageFileStatistics.sessions.entrySet().iterator();
+				
+				List<List<Object>> values = new ArrayList<>();
+				while (iterator.hasNext()) {
+
+					Map.Entry<Integer, StatSession> entry = iterator.next();
+
+					StatSession session = entry.getValue();
+
+					List<Object> sessionHeader = Arrays.asList("Car", "Track", "Current time in game");
+					values.add(sessionHeader);
+					int seconds = (int) Math.floor(session.currentLap.clockAtStart);
+					long hours = TimeUnit.SECONDS.toHours(seconds);
+					long min = TimeUnit.SECONDS.toMinutes(seconds) - 60 * hours;
+					long sec = seconds - (60 * 60 * hours) - (60 * min);
+					String clockAtStart = String.format("%02d:%02d:%02d", hours,min,sec
+					  );
+					List<Object> sessionValues = Arrays.asList(
+							session.car.carModel, session.car.track, clockAtStart);					
+					values.add(sessionValues);
+					ValueRange body = new ValueRange().setValues(values);
+					range = tabName + "!A" + 1 + ":AL";
+					UpdateValuesResponse result = service.spreadsheets().values().update(spreadsheetId, range, body)
+							.setValueInputOption("RAW").execute();
+					values.clear();
+					
+					if (!pageFileStatistics.googleSaved) {
+						List<Object> headerMFD = Arrays.asList(
+						"mfdTyreSet",
+						"mfdFuelToAdd",
+						"mfdTyrePressureLF",
+						"mfdTyrePressureRF",
+						"mfdTyrePressureLR",
+						"mfdTyrePressureRR",
+						"ACC_RAIN_INTENSITY",
+						"ACC_RAIN_INTENSITY",
+						"currentTyreSet",
+						"strategyTyreSet"
+						);
+						values.add(headerMFD);
+						range = tabName + "!A" + 4 + ":AL";
+						body = new ValueRange().setValues(values);
+						result = service.spreadsheets().values().update(spreadsheetId, range, body)
+								.setValueInputOption("RAW").execute();
+						values.clear();
+					}
+					List<Object> valuesMFD = Arrays.asList(
+					session.currentLap.mfdTyreSet,          
+					session.currentLap.mfdFuelToAdd,      
+					new BigDecimal(session.currentLap.mfdTyrePressureLF).setScale(1, RoundingMode.HALF_UP).doubleValue(),
+					new BigDecimal(session.currentLap.mfdTyrePressureRF).setScale(1, RoundingMode.HALF_UP).doubleValue(),
+					new BigDecimal(session.currentLap.mfdTyrePressureLR).setScale(1, RoundingMode.HALF_UP).doubleValue(),
+					new BigDecimal(session.currentLap.mfdTyrePressureRR).setScale(1, RoundingMode.HALF_UP).doubleValue(),
+					session.currentLap.rainIntensityIn10min,
+					session.currentLap.rainIntensityIn30min,
+					session.currentLap.currentTyreSet,      
+					session.currentLap.strategyTyreSet);     
+					values.add(valuesMFD);
+					
+					range = tabName + "!A" + 5 + ":AL";
+					body = new ValueRange().setValues(values);
+					result = service.spreadsheets().values().update(spreadsheetId, range, body)
+							.setValueInputOption("RAW").execute();
+					values.clear();
+				}
+			} catch (IOException | GeneralSecurityException e) {
+				LOGGER.info(e.toString());
+				return false;
+			}
+		} else {
+			LOGGER.info("Google service not yet configured.");
+			return false;
+		}
+		return true;
+	}
+	
+	private TabInfo getTab(Sheets service, PageFileStatistics pageFileStatistics) {
+		TabInfo tabInfo = new TabInfo();
+		String spreadsheetId = applicationPropertyService.getSheetID();
+		Spreadsheet sp;
+		try {
+			sp = service.spreadsheets().get(spreadsheetId).execute();
+
+		List<com.google.api.services.sheets.v4.model.Sheet> sheets = sp.getSheets();
+		boolean tabForDriverExists = false;
+		Iterator<com.google.api.services.sheets.v4.model.Sheet> i = sheets.iterator();
+		com.google.api.services.sheets.v4.model.Sheet ourTab = null;
+		String tabName=LocalDate.now().toString()+ "_" + pageFileStatistics.currentSession.internalSessionIndex + "_" + pageFileStatistics.currentSession.car.playerNick;
+		tabInfo.tabName = tabName;
+		
+		if (i.hasNext()) {
+			do {
+				com.google.api.services.sheets.v4.model.Sheet sh = i.next();
+				if (sh.getProperties().getTitle().equals(tabName)) {
+					ourTab = sh;
+					tabForDriverExists = true;
+				}
+			} while (i.hasNext());
+		} 
+
+		if (!tabForDriverExists) {
+			sheets.add(ourTab);
+			sp.setSheets(sheets);
+			List<Request> requests = new ArrayList<>();
+			requests.add(new Request().setAddSheet(new AddSheetRequest().setProperties(
+					new SheetProperties().setTitle(tabName))));
+			BatchUpdateSpreadsheetRequest body = new BatchUpdateSpreadsheetRequest().setRequests(requests);
+			BatchUpdateSpreadsheetResponse response = service.spreadsheets().batchUpdate(spreadsheetId, body)
+					.execute();
+			System.out.println(response.toPrettyString());
+			tabInfo.googleSaved = false;
+		}
+		
+		} catch (IOException e) {
+			LOGGER.info(e.toString());
+		}
+		
+		return tabInfo;
+	}
+	
+	@Data
+	private class TabInfo{
+		boolean googleSaved;
+		String tabName;
+	}
 }
+

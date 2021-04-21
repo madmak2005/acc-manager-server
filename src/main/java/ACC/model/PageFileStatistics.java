@@ -38,40 +38,42 @@ public class PageFileStatistics implements Page {
 		setPageName("statistics");
 		previous = Instant.now();
 	}
-	
+
 	@JsonIgnore
 	private static final Logger LOGGER = LoggerFactory.getLogger(PageFileStatistics.class);
 	@JsonIgnore
 	public Map<Integer, StatSession> sessions = new HashMap<>();
-	
+
 	public StatSession currentSession = new StatSession();
 	private String pageName;
 	@JsonIgnore
 	protected LocalDateTime currentDateAndTime = LocalDateTime.now();
 	@JsonIgnore
 	protected Instant previous, current;
-	
+
 	protected int raceStartAt = 0;
 	@JsonIgnore
 	protected Integer sessionCounter = 0;
 	@JsonIgnore
 	protected Instant lastChange = Instant.now();
-	
+	@JsonIgnore
+	protected Instant lastMFDtry = Instant.now();
+
 	@JsonIgnore
 	private boolean saved = false;
-	
+
 	@JsonIgnore
 	public boolean googleSaved = false;
-	
+
 	public static String mstoStr(long durationInMillis) {
 		long millis = durationInMillis % 1000;
 		long second = (durationInMillis / 1000) % 60;
 		long minute = (durationInMillis / (1000 * 60)) % 60;
 		long hour = (durationInMillis / (1000 * 60 * 60)) % 24;
 
-		return String.format("%02d:%02d:%02d:%03d",hour, minute, second, millis);
+		return String.format("%02d:%02d:%02d:%03d", hour, minute, second, millis);
 	}
-	
+
 	public void addStatPoint(StatPoint statPoint) {
 		StatPoint prevStatPoint = null;
 		currentSession = sessions.get(sessionCounter);
@@ -98,7 +100,8 @@ public class PageFileStatistics implements Page {
 							LOGGER.info("Finished? Save sessions.");
 							ApplicationContext context = ApplicationContextAwareImpl.getApplicationContext();
 							if (context != null) {
-								ACCDataSaveService accDataSaveService = (ACCDataSaveService) context.getBean("accDataSaveService");
+								ACCDataSaveService accDataSaveService = (ACCDataSaveService) context
+										.getBean("accDataSaveService");
 								accDataSaveService.saveToXLS(this);
 								saved = true;
 							}
@@ -106,6 +109,8 @@ public class PageFileStatistics implements Page {
 
 						if (newSessionStarted(prevStatPoint, statPoint))
 							currentSession = newSession(statPoint);
+
+						saveMFD(prevStatPoint, statPoint);
 
 						if (statPoint.flag == AC_FLAG_TYPE.ACC_GREEN_FLAG
 								&& statPoint.session == AC_SESSION_TYPE.AC_RACE && currentSession != null
@@ -142,14 +147,15 @@ public class PageFileStatistics implements Page {
 										LOGGER.info("Efficiency: " + df.format((float) duration / durationofLap * 100));
 										previous = Instant.now();
 									}
-									
+
 									ApplicationContext context = ApplicationContextAwareImpl.getApplicationContext();
 									if (context != null) {
-										ACCDataSaveService accDataSaveService = (ACCDataSaveService) context.getBean("accDataSaveService");
+										ACCDataSaveService accDataSaveService = (ACCDataSaveService) context
+												.getBean("accDataSaveService");
 										if (accDataSaveService != null) {
 											if (accDataSaveService.saveToGoogle(this)) {
-												sessions.forEach( (lp, session) -> {
-													session.laps.forEach( (id, l) -> {
+												sessions.forEach((lp, session) -> {
+													session.laps.forEach((id, l) -> {
 														l.saved = true;
 													});
 												});
@@ -185,7 +191,8 @@ public class PageFileStatistics implements Page {
 						LOGGER.info("Finished? Save sessions.");
 						ApplicationContext context = ApplicationContextAwareImpl.getApplicationContext();
 						if (context != null) {
-							ACCDataSaveService accDataSaveService = (ACCDataSaveService) context.getBean("accDataSaveService");
+							ACCDataSaveService accDataSaveService = (ACCDataSaveService) context
+									.getBean("accDataSaveService");
 							if (accDataSaveService != null)
 								accDataSaveService.saveToXLS(this);
 							saved = true;
@@ -196,9 +203,35 @@ public class PageFileStatistics implements Page {
 				LOGGER.info("let's get the party started!");
 				if (currentSession.currentLap.statPoints.size() == 0)
 					currentSession.currentLap.addStatPoint(statPoint);
-				else
-					if (currentSession.currentLap.statPoints.get(currentSession.currentLap.statPoints.size()-1).normalizedCarPosition > statPoint.normalizedCarPosition )
-						currentSession.currentLap.addStatPoint(statPoint);
+				else if (currentSession.currentLap.statPoints.get(currentSession.currentLap.statPoints.size()
+						- 1).normalizedCarPosition > statPoint.normalizedCarPosition)
+					currentSession.currentLap.addStatPoint(statPoint);
+			}
+		}
+	}
+
+	private void saveMFD(StatPoint prevStatPoint, StatPoint statPoint) {
+		ApplicationContext context = ApplicationContextAwareImpl.getApplicationContext();
+		if (context != null) {
+			ACCDataSaveService accDataSaveService = (ACCDataSaveService) context.getBean("accDataSaveService");
+			if (accDataSaveService != null) {
+				if (!googleSaved) {
+					if (Duration.between(lastMFDtry, Instant.now()).getSeconds() > 5) {
+						lastMFDtry = Instant.now();
+						if (accDataSaveService.saveHeaderToGoogle(this)) {
+							googleSaved = true;
+						}
+					}
+				} else {
+					if (prevStatPoint.mfdFuelToAdd != statPoint.mfdFuelToAdd
+							|| prevStatPoint.mfdTyrePressureLF != statPoint.mfdTyrePressureLF
+							|| prevStatPoint.mfdTyrePressureLR != statPoint.mfdTyrePressureLR
+							|| prevStatPoint.mfdTyrePressureRF != statPoint.mfdTyrePressureRF
+							|| prevStatPoint.mfdTyrePressureRR != statPoint.mfdTyrePressureRR
+							|| prevStatPoint.mfdTyreSet != prevStatPoint.mfdTyreSet) {
+						accDataSaveService.saveHeaderToGoogle(this);
+					}
+				}
 			}
 		}
 	}
@@ -229,47 +262,40 @@ public class PageFileStatistics implements Page {
 			LOGGER.info("New session");
 			newSession = true;
 		}
-		
-		if (prevStatPoint.distanceTraveled > currentStatPoint.distanceTraveled && prevStatPoint.lapNo > currentStatPoint.lapNo) {
+
+		if (prevStatPoint.distanceTraveled > currentStatPoint.distanceTraveled
+				&& prevStatPoint.lapNo > currentStatPoint.lapNo) {
 			LOGGER.info("Distance traveled is lower: IT IS A NEW SESSION");
 			newSession = true;
 		}
-		
+
 		return newSession;
 	}
-	
+
 	private StatSession newSession(StatPoint statPoint) {
 		/*
-		List<Integer> sessionsToRemove = new ArrayList<>();
-		Iterator<Map.Entry<Integer, StatSession>> iterator = sessions.entrySet().iterator();
-		while (iterator.hasNext()) {
-			Map.Entry<Integer, StatSession> entry = iterator.next();
-			if (entry.getValue().laps != null) {
-				Iterator<Map.Entry<Integer, StatLap>> iteratorLap = entry.getValue().laps.entrySet().iterator();
-				int i = 0;
-				while (iteratorLap.hasNext()) {
-					Map.Entry<Integer, StatLap> lap = iteratorLap.next();
-					if (lap.getValue().splitTimes.size() != entry.getValue().car.sectorCount) {
-						entry.getValue().laps.remove(lap.getKey());
-					}
-				}
-			}
-			if (entry.getValue().laps.size() == 0) {
-				sessionsToRemove.add(entry.getKey());
-			}
-		}
-		*/
-		
-		/*
-		sessionsToRemove.forEach( key -> {
-			sessions.remove(key);
-		});
-		*/
+		 * List<Integer> sessionsToRemove = new ArrayList<>();
+		 * Iterator<Map.Entry<Integer, StatSession>> iterator =
+		 * sessions.entrySet().iterator(); while (iterator.hasNext()) {
+		 * Map.Entry<Integer, StatSession> entry = iterator.next(); if
+		 * (entry.getValue().laps != null) { Iterator<Map.Entry<Integer, StatLap>>
+		 * iteratorLap = entry.getValue().laps.entrySet().iterator(); int i = 0; while
+		 * (iteratorLap.hasNext()) { Map.Entry<Integer, StatLap> lap =
+		 * iteratorLap.next(); if (lap.getValue().splitTimes.size() !=
+		 * entry.getValue().car.sectorCount) {
+		 * entry.getValue().laps.remove(lap.getKey()); } } } if
+		 * (entry.getValue().laps.size() == 0) { sessionsToRemove.add(entry.getKey()); }
+		 * }
+		 */
 
-		//saveToXLSX();
+		/*
+		 * sessionsToRemove.forEach( key -> { sessions.remove(key); });
+		 */
+
+		// saveToXLSX();
 		saved = false;
-		//Gson gson = new Gson();
-		//System.out.println(gson.toJson(sessions));
+		// Gson gson = new Gson();
+		// System.out.println(gson.toJson(sessions));
 		sessionCounter++;
 		currentSession = new StatSession();
 		currentSession.internalSessionIndex = sessionCounter;
@@ -300,9 +326,6 @@ public class PageFileStatistics implements Page {
 		return currentSession;
 	}
 
-	
-
-
 	@Override
 	public String getPageName() {
 		return pageName;
@@ -330,8 +353,6 @@ public class PageFileStatistics implements Page {
 		return response;
 	}
 
-
-	
 	@Override
 	public String toJSON(List<String> fields) {
 		String response = "";
