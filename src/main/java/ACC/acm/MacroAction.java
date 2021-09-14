@@ -35,6 +35,16 @@ public class MacroAction {
 		this.keyToDecrease = keytoDecrease;
 		this.keyToDecreaseTime = keyToDecreaseTime;
 		this.active = active;
+	}
+
+	public int getOrder() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	public boolean isActive() {
+		// TODO Auto-generated method stub
+		return false;
 	}	
 }
 

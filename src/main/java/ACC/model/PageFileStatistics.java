@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.exc.InvalidDefinitionException;
 import com.fasterxml.jackson.databind.ser.FilterProvider;
 import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
 import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
@@ -28,6 +29,7 @@ import com.google.gson.Gson;
 
 import ACC.ApplicationContextAwareImpl;
 import ACC.saving.ACCDataSaveService;
+import ACC.websocket.WebSocketControllerPage;
 import app.Application;
 
 @JsonFilter("filter1")
@@ -124,9 +126,9 @@ public class PageFileStatistics implements Page {
 						}
 
 						StatLap lap = currentSession.laps.get(statPoint.lapNo);
-
+						ApplicationContext context = ApplicationContextAwareImpl.getApplicationContext();
 						if (lap == null) {
-							if (statPoint.normalizedCarPosition <= 1) {
+							if (statPoint.normalizedCarPosition < 1) {
 								LOGGER.info("New lap started: [" + statPoint.lapNo + "]");
 								LOGGER.info("Car position: [" + statPoint.normalizedCarPosition + "]");
 								StatLap prevLap = currentSession.laps.get(statPoint.lapNo - 1);
@@ -135,6 +137,14 @@ public class PageFileStatistics implements Page {
 									prevLap.splitTimes.put(statPoint.car.sectorCount - 1, statPoint.iLastTime);
 									prevLap.lapTime = statPoint.iLastTime;
 									currentSession.calculateSessionStats();
+									
+									LOGGER.info("send websocket");
+									WebSocketControllerPage webSocketControllerPage = (WebSocketControllerPage) context
+											.getBean("webSocketControllerPage");
+									if (webSocketControllerPage != null) {
+										LOGGER.info("send statistics");
+										webSocketControllerPage.sendTextMobileStats(prevLap);
+									}
 								}
 
 								long duration = 0;
@@ -148,7 +158,7 @@ public class PageFileStatistics implements Page {
 										previous = Instant.now();
 									}
 
-									ApplicationContext context = ApplicationContextAwareImpl.getApplicationContext();
+									
 									if (context != null) {
 										ACCDataSaveService accDataSaveService = (ACCDataSaveService) context
 												.getBean("accDataSaveService");
@@ -271,6 +281,30 @@ public class PageFileStatistics implements Page {
 
 		return newSession;
 	}
+	
+	public void clearStatData() {
+		currentSession.currentLap.airTemp = null;
+		currentSession.currentLap.bdFL = null;
+		currentSession.currentLap.bdFR = null;
+		currentSession.currentLap.bdRL = null;
+		currentSession.currentLap.bdRR = null;
+		currentSession.currentLap.bpFL = null;
+		currentSession.currentLap.bpFR = null;
+		currentSession.currentLap.bpRL = null;
+		currentSession.currentLap.bpRR = null;
+		currentSession.currentLap.pFL = null;
+		currentSession.currentLap.pFR = null;
+		currentSession.currentLap.pRL = null;
+		currentSession.currentLap.pRR = null;
+		currentSession.currentLap.rainIntensity = null;
+		currentSession.currentLap.roadTemp = null;
+		currentSession.currentLap.statPoints = null;
+		currentSession.currentLap.tFL = null;
+		currentSession.currentLap.tFR = null;
+		currentSession.currentLap.tRL = null;
+		currentSession.currentLap.tRR = null;
+		currentSession.currentLap.trackGripStatus =null;
+	}
 
 	private StatSession newSession(StatPoint statPoint) {
 		/*
@@ -343,8 +377,9 @@ public class PageFileStatistics implements Page {
 		String response = "";
 		Page page = this;
 		try {
+			Set<String> fieldsFilter = new HashSet<String>();
 			FilterProvider filters = new SimpleFilterProvider().addFilter("filter1",
-					SimpleBeanPropertyFilter.serializeAllExcept(""));
+					SimpleBeanPropertyFilter.serializeAllExcept(fieldsFilter));
 			ObjectMapper mapper = new ObjectMapper().setFilterProvider(filters);
 			response = mapper.writeValueAsString(page);
 		} catch (JsonProcessingException e) {

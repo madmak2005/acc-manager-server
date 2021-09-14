@@ -20,6 +20,7 @@ import org.apache.commons.compress.archivers.sevenz.SevenZOutputFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.exc.InvalidDefinitionException;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -58,6 +59,7 @@ public class OutputMessage {
 					savePage(page);
 				}
 		}
+		/*
 		if (!pageName.equals("statistics")) {
 			if (fields == null || fields.size() == 0)
 				this.content = page.toJSON();
@@ -76,6 +78,12 @@ public class OutputMessage {
 			
 			this.content = gson.toJson(stat.toJSON());
 		}
+		*/
+		if (fields == null || fields.size() == 0)
+			this.content = page.toJSON();
+		else
+			this.content = page.toJSON(fields);
+
 
 	}
 

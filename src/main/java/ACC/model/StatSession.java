@@ -60,8 +60,11 @@ public class StatSession {
 		internalLapIndex++;
 		lap.internalLapIndex = internalLapIndex; 
 		laps.put(lap.lapNo, lap);
-		if (laps.size() > 1) {
-			lastLap = laps.get(laps.size() - 2);
+		Integer size =  laps.size();
+		
+		if (size >= 2) {
+			//lastLap = laps.get(size - 2);
+			lastLap = (StatLap) laps.values().toArray()[size - 2];
 			if (lastLap != null && lastLap.statPoints != null && lastLap.statPoints.size() > 1) {
 				StatPoint lastLapLastStatPoint = lastLap.statPoints.get(lastLap.statPoints.size() - 1);
 				if (lastLapLastStatPoint.lapNo < lap.lapNo) {
@@ -99,7 +102,7 @@ public class StatSession {
 		distanceTraveled = currentStatPoint.distanceTraveled;
 	}
 	
-	protected void calculateSessionStats() {
+	public void calculateSessionStats() {
 		
 		float lavg = 0;
 		int avgMS = 0;
@@ -135,8 +138,10 @@ public class StatSession {
 		if (currentLap.lapTime > 0)
 			currentLap.fuelAVGPerMinute = perminutes;
 		
-		
-		currentLap.fuelNTFOnEnd = currentLap.lapTime * currentLap.fuelUsed == 0 ? 0 : ((avgLapTime3 + sessionTimeLeft) / avgLapTime5) * fuelAVG5Laps;
+		if (avgLapTime5 != 0)
+			currentLap.fuelNTFOnEnd = currentLap.lapTime * currentLap.fuelUsed == 0 ? 0 : ((avgLapTime3 + sessionTimeLeft) / avgLapTime5) * fuelAVG5Laps;
+		else
+			currentLap.fuelNTFOnEnd = 0;
 		
 		if ((minutes * perminutes) > 0)
 			currentLap.fuelEFNLapsOnEnd = (float) (currentLap.fuelLeftOnEnd) / (minutes * perminutes);

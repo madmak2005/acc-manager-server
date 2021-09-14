@@ -58,6 +58,7 @@ public class StatLap {
 	public float avgRainIntensity = 0;
 	public float avgTrackGripStatus = 0;
 	public String trackStatus = "";
+	public String driverName = "";
 	
 	public boolean saved = false;
 
@@ -88,6 +89,30 @@ public class StatLap {
 	public int strategyTyreSet = 0;
 	
 	StatPoint firstStatPoint = new StatPoint();
+	
+	public void clearStatData() {
+		airTemp = null;
+		bdFL = null;
+		bdFR = null;
+		bdRL = null;
+		bdRR = null;
+		bpFL = null;
+		bpFR = null;
+		bpRL = null;
+		bpRR = null;
+		pFL = null;
+		pFR = null;
+		pRL = null;
+		pRR = null;
+		rainIntensity = null;
+		roadTemp = null;
+		statPoints = null;
+		tFL = null;
+		tFR = null;
+		tRL = null;
+		tRR = null;
+		trackGripStatus =null;
+	}
 
 	protected void addStatPoint(StatPoint currentStatPoint) {
 		if (currentStatPoint.wheelsPressure[0] > 0 && currentStatPoint.tyreCoreTemperature[0] > 0
@@ -101,7 +126,7 @@ public class StatLap {
 			sessionTimeLeft = currentStatPoint.sessionTimeLeft;
 			fuelXlap = currentStatPoint.fuelXlap;
 			trackStatus = currentStatPoint.trackStatus;
-
+			driverName = currentStatPoint.car.playerNick + " [" +currentStatPoint.car.playerName + " " + currentStatPoint.car.playerSurname + "]";
 		    mfdTyreSet = currentStatPoint.mfdTyreSet;             
 		    mfdFuelToAdd = currentStatPoint.mfdFuelToAdd;        
 		    mfdTyrePressureLF = currentStatPoint.mfdTyrePressureLF;   

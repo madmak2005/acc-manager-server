@@ -1,8 +1,12 @@
 package ACC.websocket;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.websocket.OnClose;
@@ -16,10 +20,15 @@ import javax.websocket.server.ServerEndpoint;
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.SerializationUtils;
 
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ser.FilterProvider;
+import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
+import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -29,7 +38,10 @@ import ACC.acm.MacroAction;
 import ACC.acm.MacroManagement;
 import ACC.model.Message;
 import ACC.model.OutputMessage;
+import ACC.model.Page;
 import ACC.model.PageFileStatistics;
+import ACC.model.StatLap;
+import ACC.model.StatPoint;
 import ACC.saving.ACCDataSaveService;
 import ACC.sharedmemory.ACCSharedMemoryService;
 import app.Application;
@@ -59,7 +71,7 @@ public class WebSocketControllerPage {
 			.getApplicationContext().getBean("accDataSaveService");
 
 	private static Map<String, Session> livingSessions = new ConcurrentHashMap<String, Session>();
-	private static Session sessionGraphics, sessionPhysics, sessionStatic, sessionMacro, sessionStatistics;
+	private static Session sessionGraphics, sessionPhysics, sessionStatic, sessionMacro, sessionStatistics, sessionMobileStats;
 	private static List<String> fieldsGraphics;
 	private static List<String> fieldsPhysics;
 	private static List<String> fieldsStatic;
@@ -97,7 +109,11 @@ public class WebSocketControllerPage {
 			break;
 		case "statistics":
 			sessionStatistics = session;
-			//sendTextStatistics();
+			sendTextStatistics();
+			break;
+		case "mobileStats":
+			sessionMobileStats = session;
+			sendAllTextMobileStats();
 			break;
 		}
 	}
@@ -204,34 +220,145 @@ public class WebSocketControllerPage {
 	
 	
 	@Scheduled(fixedRateString = "#{@applicationPropertyService.getStatisticsInterval()}")
-	private void sendTextStatistics() {
+	private void runTextStatistics() {
 		OutputMessage om = accSharedMemoryService.getPageFileMessage("statistics", fieldsStatistics);
 		if (sessionStatistics != null && om != null) {
 			PageFileStatistics stat = (PageFileStatistics) om.page;
 			//stat.currentSession.last3Laps = new CircularFifoQueue<>(3);
 			//stat.currentSession.last5Laps = new CircularFifoQueue<>(5);
-			/*
-			Gson gson = new GsonBuilder()
-	                .setPrettyPrinting()
-	                .serializeSpecialFloatingPointValues() // This is the key
-	                .create();
-	        */
-			sendText(sessionStatistics, stat.currentSession.toJSON());
+			
+			//Gson gson = new GsonBuilder()
+	        //        .setPrettyPrinting()
+	        //        .serializeSpecialFloatingPointValues() // This is the key
+	        //        .create();
+			String response = "";
+			try {
+				Set<String> fieldsFilter = new HashSet<String>();
+				FilterProvider filters = new SimpleFilterProvider().addFilter("filter1",
+						SimpleBeanPropertyFilter.serializeAllExcept(fieldsFilter));
+				ObjectMapper mapper = new ObjectMapper().setFilterProvider(filters);
+				mapper.setSerializationInclusion(Include.NON_NULL);
+				response = mapper.writeValueAsString(stat.currentSession);
+			} catch (JsonProcessingException e) {
+				Application.LOGGER.error(e.toString());
+			}
+			sendText(sessionStatistics, response);
+			
 		}
 			
 	}
+	
+	public void sendTextStatistics() {
+		OutputMessage om = accSharedMemoryService.getPageFileMessage("statistics", fieldsStatistics);
+		if (sessionStatistics != null && om != null) {
+			PageFileStatistics stat = (PageFileStatistics) om.page;
+			//stat.currentSession.last3Laps = new CircularFifoQueue<>(3);
+			//stat.currentSession.last5Laps = new CircularFifoQueue<>(5);
+			String response = "";
+			try {
+				ObjectMapper mapper = new ObjectMapper();
+				response = mapper.writeValueAsString(stat);
+			} catch (JsonProcessingException e) {
+				Application.LOGGER.error(e.toString());
+			}
+			
+			sendText(sessionStatistics, response);
+		}
+	}
+	
+	public void sendTextMobileStats(StatLap prevLap) {
+		if (sessionMobileStats != null) {
+			Gson gson = new GsonBuilder()
+			                //.setPrettyPrinting()
+			                .serializeSpecialFloatingPointValues() // This is the key
+			                .create();
+			StatLap deepCopy = gson.fromJson(gson.toJson(prevLap), StatLap.class);
+			deepCopy.clearStatData();
+			String response = "";
+			try {
+				ObjectMapper mapper = new ObjectMapper();
+				response = mapper.writeValueAsString(deepCopy);
+			} catch (JsonProcessingException e) {
+				Application.LOGGER.debug(e.toString());
+			}
+			sendText(sessionMobileStats, response);
+		}
+	}
+	
+	private void sendAllTextMobileStats() {
+		/*
+		 * Send all laps from current session onConnection
+		 */
+		OutputMessage om = accSharedMemoryService.getPageFileMessage("statistics", fieldsStatistics);
+		if (sessionMobileStats != null  && om != null) {
+			PageFileStatistics stat = (PageFileStatistics) om.page;
+			int currentLapNo = 0;
+			Map<Integer, StatLap> lapsToSend = stat.currentSession.laps;
+			Iterator<StatLap> it = lapsToSend.values().iterator();
+			if (it.hasNext()) {
+			while(it.hasNext()) {
+				StatLap lap = it.next();
+				Gson gson = new GsonBuilder()
+		                .serializeSpecialFloatingPointValues()
+		                .serializeNulls()
+		                .create();
+				StatLap deepCopy = gson.fromJson(gson.toJson(lap), StatLap.class);
+				deepCopy.clearStatData();
+				String response = "";
+				try {
+					ObjectMapper mapper = new ObjectMapper();
+					mapper.setSerializationInclusion(Include.NON_NULL);
+					response = mapper.writeValueAsString(deepCopy);
+				} catch (JsonProcessingException e) {
+					Application.LOGGER.debug(e.toString());
+				}
+				if (lap.lapNo > currentLapNo) {
+					currentLapNo = lap.lapNo;
+					sendText(sessionMobileStats, response);
+					try {
+						Thread.sleep(333);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			}
+			} else {
+				StatLap emptyLap = new StatLap();
+				Gson gson = new GsonBuilder()
+		                .serializeSpecialFloatingPointValues()
+		                .serializeNulls()
+		                .create();
+				StatLap deepCopy = gson.fromJson(gson.toJson(emptyLap), StatLap.class);
+				deepCopy.clearStatData();
+				String response = "";
+				try {
+					ObjectMapper mapper = new ObjectMapper();
+					mapper.setSerializationInclusion(Include.NON_NULL);
+					response = mapper.writeValueAsString(deepCopy);
+				} catch (JsonProcessingException e) {
+					Application.LOGGER.debug(e.toString());
+				}
+				sendText(sessionMobileStats, response);
+			}
+		}
+	}
+	
+	
 	
 	//private void saveStatistics() {
 //		statistics.saveToXLSX();
 //	}
 
 	private void sendText(Session session, String message) {
-		RemoteEndpoint.Basic basic = session.getBasicRemote();
-		try {
-			// System.out.println(message);
-			basic.sendText(message);
-		} catch (IOException e) {
-			e.printStackTrace();
+		if (session.isOpen()) {
+			RemoteEndpoint.Basic basic = session.getBasicRemote();
+			try {
+				// System.out.println(message);
+				basic.sendText(message);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 	
