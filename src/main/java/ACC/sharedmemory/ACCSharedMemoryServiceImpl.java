@@ -86,6 +86,7 @@ public class ACCSharedMemoryServiceImpl implements ACCSharedMemoryService {
 		statPoint.normalizedCarPosition = g.normalizedCarPosition;
 		statPoint.currentSectorIndex = g.currentSectorIndex;
 		statPoint.iCurrentTime = g.iCurrentTime;
+		statPoint.iBestTime = g.iBestTime;
 		statPoint.iLastTime = g.iLastTime;
 		statPoint.iSplit = g.iSplit;
 		statPoint.lastSectorTime = g.lastSectorTime;

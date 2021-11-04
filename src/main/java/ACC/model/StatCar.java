@@ -1,6 +1,12 @@
 package ACC.model;
 
-public class StatCar {
+import java.io.Serializable;
+
+public class StatCar implements Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	public float maxFuel = 0; //Maximum fuel tank capacity
 	public String carModel= "";
 	public String track= ""; 

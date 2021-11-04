@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -26,8 +27,10 @@ import com.fasterxml.jackson.databind.ser.FilterProvider;
 import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
 import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import ACC.ApplicationContextAwareImpl;
+import ACC.ApplicationPropertyService;
 import ACC.saving.ACCDataSaveService;
 import ACC.websocket.WebSocketControllerPage;
 import app.Application;
@@ -45,8 +48,12 @@ public class PageFileStatistics implements Page {
 	private static final Logger LOGGER = LoggerFactory.getLogger(PageFileStatistics.class);
 	@JsonIgnore
 	public Map<Integer, StatSession> sessions = new HashMap<>();
+	@JsonIgnore
+	public List<StatSession> mobileSessions = new ArrayList<>();
 
-	public StatSession currentSession = new StatSession();
+	public StatSession currentSession;
+	private StatSession currentMobileSession;
+	
 	private String pageName;
 	@JsonIgnore
 	protected LocalDateTime currentDateAndTime = LocalDateTime.now();
@@ -75,6 +82,22 @@ public class PageFileStatistics implements Page {
 
 		return String.format("%02d:%02d:%02d:%03d", hour, minute, second, millis);
 	}
+	
+	private void statSessionUpdateMobileSession(StatSession ms, StatSession session) {
+		ms.setSession_TYPE(session.getSession_TYPE()); 
+		ms.car =                   session.car;                  
+		ms.sessionIndex =          session.sessionIndex;         
+		ms.internalSessionIndex =  session.internalSessionIndex; 
+		ms.internalLapIndex =      session.internalLapIndex;
+		ms.sessionTimeLeft =       session.sessionTimeLeft;
+		ms.distanceTraveled =      session.distanceTraveled;
+		ms.fuelAVG3Laps =          session.fuelAVG3Laps;
+		ms.fuelAVG5Laps =          session.fuelAVG5Laps;
+		ms.avgLapTime3 =           session.avgLapTime3;
+		ms.avgLapTime5 =           session.avgLapTime5;
+		ms.iBestTime =             session.iBestTime;
+		ms.fuelXLap =              session.fuelXLap;
+	}
 
 	public void addStatPoint(StatPoint statPoint) {
 		StatPoint prevStatPoint = null;
@@ -83,6 +106,9 @@ public class PageFileStatistics implements Page {
 		if (currentSession == null) {
 			LOGGER.info("New session");
 			currentSession = newSession(statPoint);
+			currentMobileSession = new StatSession();
+			currentMobileSession.clearStatData();
+			statSessionUpdateMobileSession(currentMobileSession, currentSession);
 		}
 
 		if (statPoint.iCurrentTime != 0) {
@@ -109,8 +135,10 @@ public class PageFileStatistics implements Page {
 							}
 						}
 
-						if (newSessionStarted(prevStatPoint, statPoint))
+						if (newSessionStarted(prevStatPoint, statPoint)) {
+							statSessionUpdateMobileSession(currentMobileSession, currentSession);
 							currentSession = newSession(statPoint);
+						}
 
 						saveMFD(prevStatPoint, statPoint);
 
@@ -134,16 +162,33 @@ public class PageFileStatistics implements Page {
 								StatLap prevLap = currentSession.laps.get(statPoint.lapNo - 1);
 								if (prevLap != null) {
 									prevLap.lapTime = statPoint.iLastTime;
-									prevLap.splitTimes.put(statPoint.car.sectorCount - 1, statPoint.iLastTime);
-									prevLap.lapTime = statPoint.iLastTime;
+									prevLap.splitTimes.put(prevLap.splitTimes.size(), statPoint.iLastTime);
+									prevLap.splitTimes.remove(0);
 									currentSession.calculateSessionStats();
-									
+									statSessionUpdateMobileSession(currentMobileSession, currentSession);
+									ApplicationPropertyService applicationPropertyService = (ApplicationPropertyService) context
+											.getBean("applicationPropertyService");
+									if (applicationPropertyService != null) {
+										applicationPropertyService.addMobileSessionLap(prevLap);
+									}
 									LOGGER.info("send websocket");
 									WebSocketControllerPage webSocketControllerPage = (WebSocketControllerPage) context
 											.getBean("webSocketControllerPage");
 									if (webSocketControllerPage != null) {
 										LOGGER.info("send statistics");
 										webSocketControllerPage.sendTextMobileStats(prevLap);
+										
+									}
+								}else {
+									/*first lap of session was finished*/
+									ApplicationPropertyService applicationPropertyService = (ApplicationPropertyService) context.getBean("applicationPropertyService");
+									if (applicationPropertyService != null) {
+										if(applicationPropertyService.getMobileSessionList().size() == 0) {
+											//currentMobileSession = new StatSession();
+											statSessionUpdateMobileSession(currentMobileSession,currentSession);
+											currentMobileSession.clearStatData();
+											applicationPropertyService.addMobileSession(currentMobileSession);
+										}
 									}
 								}
 
@@ -177,20 +222,42 @@ public class PageFileStatistics implements Page {
 
 								// init new lap, we don't have it in current session
 								lap = new StatLap();
+								
 								lap.addStatPoint(statPoint);
+								lap.clockAtStart = statPoint.clock;
 								currentSession.addStatLap(lap);
 								currentSession.addStatPoint(statPoint);
+								
+								
 
 							}
 						} else {
-							if (statPoint.currentSectorIndex > 0)
-								lap.splitTimes.put(statPoint.currentSectorIndex - 1, statPoint.lastSectorTime);
+							
+							lap.splitTimes.put(statPoint.currentSectorIndex, statPoint.lastSectorTime);
 							if (lap.fuelLeftOnStart == 0 && statPoint.fuel != 0 && lap.lapNo == statPoint.lapNo)
 								lap.fuelLeftOnStart = statPoint.fuel;
-
+							lap.internalSessionIndex = currentSession.internalSessionIndex;
+							
+							ApplicationPropertyService applicationPropertyService = (ApplicationPropertyService) context.getBean("applicationPropertyService");
+							if (applicationPropertyService != null) {
+								if(applicationPropertyService.getMobileSessionList().size() == 0) {
+									currentMobileSession = new StatSession();
+									statSessionUpdateMobileSession(currentMobileSession,currentSession);
+									currentMobileSession.clearStatData();
+									applicationPropertyService.addMobileSession(currentMobileSession);
+								}
+							}
 						}
 						currentSession.currentLap = lap;
-
+						currentSession.iBestTime = statPoint.iBestTime;
+						currentSession.fuelXLap = statPoint.fuelXlap;
+						
+						
+						ApplicationPropertyService applicationPropertyService = (ApplicationPropertyService) context.getBean("applicationPropertyService");
+						if (applicationPropertyService != null) {
+							StatSession x = applicationPropertyService.getMobileSessionList().get(applicationPropertyService.getMobileSessionList().size()-1);
+							statSessionUpdateMobileSession(x, currentSession);	
+						}
 					}
 				} else {
 					if (currentSession != null) {
@@ -307,26 +374,6 @@ public class PageFileStatistics implements Page {
 	}
 
 	private StatSession newSession(StatPoint statPoint) {
-		/*
-		 * List<Integer> sessionsToRemove = new ArrayList<>();
-		 * Iterator<Map.Entry<Integer, StatSession>> iterator =
-		 * sessions.entrySet().iterator(); while (iterator.hasNext()) {
-		 * Map.Entry<Integer, StatSession> entry = iterator.next(); if
-		 * (entry.getValue().laps != null) { Iterator<Map.Entry<Integer, StatLap>>
-		 * iteratorLap = entry.getValue().laps.entrySet().iterator(); int i = 0; while
-		 * (iteratorLap.hasNext()) { Map.Entry<Integer, StatLap> lap =
-		 * iteratorLap.next(); if (lap.getValue().splitTimes.size() !=
-		 * entry.getValue().car.sectorCount) {
-		 * entry.getValue().laps.remove(lap.getKey()); } } } if
-		 * (entry.getValue().laps.size() == 0) { sessionsToRemove.add(entry.getKey()); }
-		 * }
-		 */
-
-		/*
-		 * sessionsToRemove.forEach( key -> { sessions.remove(key); });
-		 */
-
-		// saveToXLSX();
 		saved = false;
 		// Gson gson = new Gson();
 		// System.out.println(gson.toJson(sessions));
@@ -334,22 +381,9 @@ public class PageFileStatistics implements Page {
 		currentSession = new StatSession();
 		currentSession.internalSessionIndex = sessionCounter;
 		currentSession.sessionIndex = statPoint.sessionIndex;
-		currentSession.session_TYPE = statPoint.session;
+		currentSession.setSession_TYPE(statPoint.session);
+		currentSession.sessionTimeLeft = statPoint.sessionTimeLeft;
 
-		switch (statPoint.session) {
-		case AC_SESSION_TYPE.AC_QUALIFY:
-			LOGGER.info("Session type: QUALIFY");
-			break;
-		case AC_SESSION_TYPE.AC_PRACTICE:
-			LOGGER.info("Session type: PRACTICE");
-			break;
-		case AC_SESSION_TYPE.AC_RACE:
-			LOGGER.info("Session type: RACE");
-			break;
-		case AC_SESSION_TYPE.AC_HOTLAP:
-			LOGGER.info("Session type: HOTLAP");
-			break;
-		}
 
 		currentSession.car = statPoint.car;
 		LOGGER.info(currentSession.car.carModel + " max tank: [" + currentSession.car.maxFuel + "]");
@@ -357,6 +391,16 @@ public class PageFileStatistics implements Page {
 		LOGGER.info(currentSession.car.playerName);
 
 		sessions.put(sessionCounter, currentSession);
+		
+		ApplicationContext context = ApplicationContextAwareImpl.getApplicationContext();
+		ApplicationPropertyService applicationPropertyService = (ApplicationPropertyService) context.getBean("applicationPropertyService");
+		
+		currentMobileSession = new StatSession();
+		statSessionUpdateMobileSession(currentMobileSession,currentSession);
+		currentMobileSession.clearStatData();
+		if (applicationPropertyService != null) {
+			applicationPropertyService.addMobileSession(currentMobileSession);
+		}
 		return currentSession;
 	}
 

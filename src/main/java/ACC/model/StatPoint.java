@@ -1,12 +1,21 @@
 package ACC.model;
 
-public class StatPoint {
+import java.io.Serializable;
+
+public class StatPoint implements Serializable{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
 	public int 		lapNo = 0;
+	public int 		internalSessionIndex = 0;
 	public int 		sessionIndex = 0;
 	public int 		session = 0;
 	public float 	normalizedCarPosition = 0;       //Current player position
 	public int   	iCurrentTime = 0;   //Current lap time in milliseconds
 	public int   	iLastTime = 0;   //Current lap time in milliseconds
+	public int   	iBestTime = 0;   //Best lap time in milliseconds
 	public int   	iSplit = 0;
 	public int		flag = 0;
 	

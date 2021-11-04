@@ -18,9 +18,11 @@ import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 
 import org.apache.commons.collections4.queue.CircularFifoQueue;
+import org.apache.commons.lang3.SerializationUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Controller;
-import org.springframework.util.SerializationUtils;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -33,6 +35,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import ACC.ApplicationContextAwareImpl;
+import ACC.ApplicationPropertyService;
 import ACC.acm.AutomaticCarManagementService;
 import ACC.acm.MacroAction;
 import ACC.acm.MacroManagement;
@@ -70,6 +73,10 @@ public class WebSocketControllerPage {
 	private ACCDataSaveService accDataSaveService = (ACCDataSaveService) ApplicationContextAwareImpl
 			.getApplicationContext().getBean("accDataSaveService");
 
+	@Autowired
+	private ApplicationPropertyService applicationPropertyService = (ApplicationPropertyService) ApplicationContextAwareImpl
+	.getApplicationContext().getBean("applicationPropertyService");;
+	
 	private static Map<String, Session> livingSessions = new ConcurrentHashMap<String, Session>();
 	private static Session sessionGraphics, sessionPhysics, sessionStatic, sessionMacro, sessionStatistics, sessionMobileStats;
 	private static List<String> fieldsGraphics;
@@ -224,13 +231,6 @@ public class WebSocketControllerPage {
 		OutputMessage om = accSharedMemoryService.getPageFileMessage("statistics", fieldsStatistics);
 		if (sessionStatistics != null && om != null) {
 			PageFileStatistics stat = (PageFileStatistics) om.page;
-			//stat.currentSession.last3Laps = new CircularFifoQueue<>(3);
-			//stat.currentSession.last5Laps = new CircularFifoQueue<>(5);
-			
-			//Gson gson = new GsonBuilder()
-	        //        .setPrettyPrinting()
-	        //        .serializeSpecialFloatingPointValues() // This is the key
-	        //        .create();
 			String response = "";
 			try {
 				Set<String> fieldsFilter = new HashSet<String>();
@@ -252,8 +252,6 @@ public class WebSocketControllerPage {
 		OutputMessage om = accSharedMemoryService.getPageFileMessage("statistics", fieldsStatistics);
 		if (sessionStatistics != null && om != null) {
 			PageFileStatistics stat = (PageFileStatistics) om.page;
-			//stat.currentSession.last3Laps = new CircularFifoQueue<>(3);
-			//stat.currentSession.last5Laps = new CircularFifoQueue<>(5);
 			String response = "";
 			try {
 				ObjectMapper mapper = new ObjectMapper();
@@ -278,10 +276,11 @@ public class WebSocketControllerPage {
 			try {
 				ObjectMapper mapper = new ObjectMapper();
 				response = mapper.writeValueAsString(deepCopy);
+				sendText(sessionMobileStats, response);
 			} catch (JsonProcessingException e) {
 				Application.LOGGER.debug(e.toString());
 			}
-			sendText(sessionMobileStats, response);
+			
 		}
 	}
 	
@@ -289,72 +288,87 @@ public class WebSocketControllerPage {
 		/*
 		 * Send all laps from current session onConnection
 		 */
-		OutputMessage om = accSharedMemoryService.getPageFileMessage("statistics", fieldsStatistics);
-		if (sessionMobileStats != null  && om != null) {
-			PageFileStatistics stat = (PageFileStatistics) om.page;
-			int currentLapNo = 0;
-			Map<Integer, StatLap> lapsToSend = stat.currentSession.laps;
-			Iterator<StatLap> it = lapsToSend.values().iterator();
-			if (it.hasNext()) {
-			while(it.hasNext()) {
-				StatLap lap = it.next();
-				Gson gson = new GsonBuilder()
-		                .serializeSpecialFloatingPointValues()
-		                .serializeNulls()
-		                .create();
-				StatLap deepCopy = gson.fromJson(gson.toJson(lap), StatLap.class);
-				deepCopy.clearStatData();
-				String response = "";
-				try {
-					ObjectMapper mapper = new ObjectMapper();
-					mapper.setSerializationInclusion(Include.NON_NULL);
-					response = mapper.writeValueAsString(deepCopy);
-				} catch (JsonProcessingException e) {
-					Application.LOGGER.debug(e.toString());
-				}
-				if (lap.lapNo > currentLapNo) {
-					currentLapNo = lap.lapNo;
-					sendText(sessionMobileStats, response);
+		// ApplicationPropertyService applicationPropertyService =
+		// (ApplicationPropertyService) context
+		// .getBean("applicationPropertyService");
+		if (applicationPropertyService != null) {
+			OutputMessage om = accSharedMemoryService.getPageFileMessage("statistics", fieldsStatistics);
+			if (sessionMobileStats != null && om != null) {
+				PageFileStatistics stat = (PageFileStatistics) om.page;
+				if (stat != null) {
+					int internalSessionIndex = stat.currentSession.internalSessionIndex;
+					List<StatLap> sessionLaps = applicationPropertyService
+							.getMobileSessionLapList(internalSessionIndex);
+					sessionLaps.forEach(lap -> {
+					
+						String response = "";
+						try {
+							ObjectMapper mapper = new ObjectMapper();
+							mapper.setSerializationInclusion(Include.NON_NULL);
+							response = mapper.writeValueAsString(lap);
+							sendText(sessionMobileStats, response);
+							try {
+								Thread.sleep(50);
+							} catch (InterruptedException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+						} catch (JsonProcessingException e) {
+							Application.LOGGER.debug(e.toString());
+						}
+					});
+				} else {
+					StatLap emptyLap = new StatLap();
+					Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().serializeNulls().create();
+					StatLap deepCopy = gson.fromJson(gson.toJson(emptyLap), StatLap.class);
+					deepCopy.clearStatData();
+					String response = "";
 					try {
-						Thread.sleep(333);
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						ObjectMapper mapper = new ObjectMapper();
+						mapper.setSerializationInclusion(Include.NON_NULL);
+						response = mapper.writeValueAsString(deepCopy);
+					} catch (JsonProcessingException e) {
+						Application.LOGGER.debug(e.toString());
 					}
+					sendText(sessionMobileStats, response);
 				}
-			}
-			} else {
-				StatLap emptyLap = new StatLap();
-				Gson gson = new GsonBuilder()
-		                .serializeSpecialFloatingPointValues()
-		                .serializeNulls()
-		                .create();
-				StatLap deepCopy = gson.fromJson(gson.toJson(emptyLap), StatLap.class);
-				deepCopy.clearStatData();
-				String response = "";
-				try {
-					ObjectMapper mapper = new ObjectMapper();
-					mapper.setSerializationInclusion(Include.NON_NULL);
-					response = mapper.writeValueAsString(deepCopy);
-				} catch (JsonProcessingException e) {
-					Application.LOGGER.debug(e.toString());
-				}
-				sendText(sessionMobileStats, response);
 			}
 		}
+		/*
+		 * OutputMessage om = accSharedMemoryService.getPageFileMessage("statistics",
+		 * fieldsStatistics); if (sessionMobileStats != null && om != null) {
+		 * PageFileStatistics stat = (PageFileStatistics) om.page; int currentLapNo = 0;
+		 * if (stat.currentSession != null && stat.currentSession.laps != null) {
+		 * Map<Integer, StatLap> lapsToSend = stat.currentSession.laps;
+		 * Iterator<StatLap> it = lapsToSend.values().iterator(); if (it.hasNext()) {
+		 * while (it.hasNext()) { StatLap lap = it.next(); //Gson gson = new
+		 * GsonBuilder().serializeSpecialFloatingPointValues().serializeNulls().create()
+		 * ; //StatLap deepCopy = gson.fromJson(gson.toJson(lap), StatLap.class);
+		 * StatLap deepCopy = null; synchronized(this){ deepCopy = (StatLap)
+		 * SerializationUtils.clone(lap); } deepCopy.clearStatData(); String response =
+		 * ""; try { ObjectMapper mapper = new ObjectMapper();
+		 * mapper.setSerializationInclusion(Include.NON_NULL); response =
+		 * mapper.writeValueAsString(deepCopy); } catch (JsonProcessingException e) {
+		 * Application.LOGGER.debug(e.toString()); } if (lap.lapNo > currentLapNo) {
+		 * currentLapNo = lap.lapNo; sendText(sessionMobileStats, response); try {
+		 * Thread.sleep(50); } catch (InterruptedException e) { // TODO Auto-generated
+		 * catch block e.printStackTrace(); } } } } else { StatLap emptyLap = new
+		 * StatLap(); Gson gson = new
+		 * GsonBuilder().serializeSpecialFloatingPointValues().serializeNulls().create()
+		 * ; StatLap deepCopy = gson.fromJson(gson.toJson(emptyLap), StatLap.class);
+		 * deepCopy.clearStatData(); String response = ""; try { ObjectMapper mapper =
+		 * new ObjectMapper(); mapper.setSerializationInclusion(Include.NON_NULL);
+		 * response = mapper.writeValueAsString(deepCopy); } catch
+		 * (JsonProcessingException e) { Application.LOGGER.debug(e.toString()); }
+		 * sendText(sessionMobileStats, response); } } }
+		 */
 	}
 	
-	
-	
-	//private void saveStatistics() {
-//		statistics.saveToXLSX();
-//	}
 
 	private void sendText(Session session, String message) {
 		if (session.isOpen()) {
 			RemoteEndpoint.Basic basic = session.getBasicRemote();
 			try {
-				// System.out.println(message);
 				basic.sendText(message);
 			} catch (IOException e) {
 				e.printStackTrace();

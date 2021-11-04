@@ -1,5 +1,6 @@
 package ACC.model;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -22,10 +23,42 @@ import com.google.gson.Gson;
 
 import app.Application;
 
-public class StatSession {
+public class StatSession implements Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
 	private static final Logger LOGGER = LoggerFactory.getLogger(StatSession.class);
 	
-	public int session_TYPE = AC_SESSION_TYPE.AC_UNKNOWN; 
+	private int session_TYPE = AC_SESSION_TYPE.AC_UNKNOWN;
+	
+	public int getSession_TYPE() {
+		return session_TYPE;
+	}
+
+	protected void setSession_TYPE(int session_TYPE) {
+		this.session_TYPE = session_TYPE;
+		switch (session_TYPE) {
+			case AC_SESSION_TYPE.AC_QUALIFY:
+				session_TYPENAME ="QUALIFY";
+				break;
+			case AC_SESSION_TYPE.AC_PRACTICE:
+				session_TYPENAME ="PRACTICE";
+				break;
+			case AC_SESSION_TYPE.AC_RACE:
+				session_TYPENAME ="RACE";
+				break;
+			case AC_SESSION_TYPE.AC_HOTLAP:
+				session_TYPENAME ="HOTLAP";
+				break;
+			default: 
+				session_TYPENAME ="UNKNOWN";
+				break;
+			}
+	}
+
+	public String session_TYPENAME = "UNKNOWN";
 	public Map<Integer,StatLap> laps = new HashMap<>();
 
 	public CircularFifoQueue<StatLap> last3Laps = new CircularFifoQueue<>(3);
@@ -43,28 +76,33 @@ public class StatSession {
 	
 	public boolean wasGreenFlag = false; 
 	
-	public int bestTime = 999999999;
-	
 	public float sessionTimeLeft = 0;
 	
 	public float distanceTraveled = 0;
 	public float fuelAVG3Laps = 0;
 	public float fuelAVG5Laps = 0;
+	public float fuelXLap = 0;
 	
 	public int avgLapTime3 = 0;
 	public int avgLapTime5 = 0;
 	
 	public int packetDelta = 0;
+
+	public int iBestTime;
+	
+	//public int size = 0;
 	
 	protected void addStatLap(StatLap lap) {
 		internalLapIndex++;
 		lap.internalLapIndex = internalLapIndex; 
 		laps.put(lap.lapNo, lap);
-		Integer size =  laps.size();
+		//size =  laps.size();
 		
-		if (size >= 2) {
+		
+		if (internalLapIndex >= 2) {
 			//lastLap = laps.get(size - 2);
-			lastLap = (StatLap) laps.values().toArray()[size - 2];
+			lastLap = (StatLap) laps.values().toArray()[internalLapIndex - 2];
+			fuelXLap = lastLap.statPoints.get(lastLap.statPoints.size()-1).fuelXlap;
 			if (lastLap != null && lastLap.statPoints != null && lastLap.statPoints.size() > 1) {
 				StatPoint lastLapLastStatPoint = lastLap.statPoints.get(lastLap.statPoints.size() - 1);
 				if (lastLapLastStatPoint.lapNo < lap.lapNo) {
@@ -74,13 +112,9 @@ public class StatSession {
 				if (lap.isValidLap) {
 					last3Laps.add(lap);
 					last5Laps.add(lap);
-					bestTime = lap.lapTime;
 					bestLap = lap;
 					laps.forEach((i, l) -> {
-						if (l.lapTime > 0 && l.distanceTraveled > 500) {
-							bestTime = bestTime > l.lapTime ? l.lapTime : bestTime;
-							bestLap = bestTime > l.lapTime ? l : bestLap;
-						}
+							bestLap = bestLap.lapTime > l.lapTime ? l : bestLap;
 					});
 				}
 				LOGGER.info("Start pos " + lastLap.firstStatPoint.normalizedCarPosition);
@@ -91,7 +125,7 @@ public class StatSession {
 		}
 		
 		LOGGER.info(String.valueOf(currentLap.lapNo));
-		LOGGER.info(String.valueOf(currentLap.lapTime));
+		LOGGER.info(String.valueOf("Lap time:" + PageFileStatistics.mstoStr(Math.round(currentLap.lapTime))));
 		LOGGER.info(String.valueOf("Fuel [l]:" + currentLap.fuelLeftOnEnd));
 		LOGGER.info("Enough fuel for next:" + PageFileStatistics.mstoStr(Math.round(currentLap.fuelEstForNextMiliseconds)));
 	}
@@ -114,10 +148,10 @@ public class StatSession {
 			lavg += l.fuelUsed;
 			avgMS += l.lapTime;
 		}
-		
-		fuelAVG3Laps = i == 0? 0 : lavg / i;
-		avgLapTime3 = i == 0 ? 0 : Math.round(avgMS / i);
-		
+		if (last3Laps.size() == 3) {
+			fuelAVG3Laps = i == 0? 0 : lavg / i;
+			avgLapTime3 = i == 0 ? 0 : Math.round(avgMS / i);
+		}
 		
 		lavg = 0;
 		avgMS = 0;
@@ -129,27 +163,57 @@ public class StatSession {
 			lavg += l.fuelUsed;
 			avgMS += l.lapTime;
 		}
-		fuelAVG5Laps = i == 0? 0 : lavg / i;
-		avgLapTime5 = i == 0? 0 : Math.round(avgMS / i);
+		
+		if (last5Laps.size() == 5) {
+			fuelAVG5Laps = i == 0? 0 : lavg / i;
+			avgLapTime5 = i == 0? 0 : Math.round(avgMS / i);
+		}
 		currentLap.fuelAVGPerLap = currentLap.fuelXlap;
 		
-		float minutes = (float) avgLapTime5 / (1000 * 60);
-		float perminutes = minutes == 0 ? 0 : (currentLap.fuelUsed) / minutes;
-		if (currentLap.lapTime > 0)
+		if (avgLapTime5 != 0) {
+			float minutes = (float) avgLapTime5 / (1000 * 60);
+			float perminutes = minutes == 0 ? 0 : (currentLap.fuelUsed) / minutes;
+			if (currentLap.lapTime > 0)
+				currentLap.fuelAVGPerMinute = perminutes;
+			
+			currentLap.fuelNTFOnEnd = currentLap.lapTime * currentLap.fuelUsed == 0 ? 0 : ((avgLapTime5 + sessionTimeLeft) / avgLapTime5) * fuelAVG5Laps;
+			
+			if ((minutes * perminutes) > 0)
+				currentLap.fuelEFNLapsOnEnd = (float) (currentLap.fuelLeftOnEnd) / (minutes * perminutes);
+			else 
+				currentLap.fuelEFNLapsOnEnd = 0;
+			
+			currentLap.fuelEstForNextMiliseconds =  (currentLap.fuelEFNLapsOnEnd * avgLapTime5);
+		} else if (avgLapTime3 != 0){
+			float minutes = (float) avgLapTime3 / (1000 * 60);
+			float perminutes = minutes == 0 ? 0 : (currentLap.fuelUsed) / minutes;
+			if (currentLap.lapTime > 0)
+				currentLap.fuelAVGPerMinute = perminutes;
+			
+				currentLap.fuelNTFOnEnd = currentLap.lapTime * currentLap.fuelUsed == 0 ? 0 : ((avgLapTime3 + sessionTimeLeft) / avgLapTime3) * fuelAVG3Laps;
+			
+			if ((minutes * perminutes) > 0)
+				currentLap.fuelEFNLapsOnEnd = (float) (currentLap.fuelLeftOnEnd) / (minutes * perminutes);
+			else 
+				currentLap.fuelEFNLapsOnEnd = 0;
+			
+			currentLap.fuelEstForNextMiliseconds =  (currentLap.fuelEFNLapsOnEnd * avgLapTime3);
+		} else if (currentLap.lapTime > 0){
+			float minutes = (float) currentLap.lapTime / (1000 * 60);
+			float perminutes = minutes == 0 ? 0 : (currentLap.fuelUsed) / minutes;
 			currentLap.fuelAVGPerMinute = perminutes;
-		
-		if (avgLapTime5 != 0)
-			currentLap.fuelNTFOnEnd = currentLap.lapTime * currentLap.fuelUsed == 0 ? 0 : ((avgLapTime3 + sessionTimeLeft) / avgLapTime5) * fuelAVG5Laps;
-		else
+			currentLap.fuelNTFOnEnd = currentLap.lapTime * currentLap.fuelUsed == 0 ? 0 : ((currentLap.lapTime + sessionTimeLeft) / currentLap.lapTime) * currentLap.fuelUsed;
+			
+			if ((minutes * perminutes) > 0)
+				currentLap.fuelEFNLapsOnEnd = (float) (currentLap.fuelLeftOnEnd) / (minutes * perminutes);
+			else 
+				currentLap.fuelEFNLapsOnEnd = 0;
+			
+			currentLap.fuelEstForNextMiliseconds =  (currentLap.fuelEFNLapsOnEnd * currentLap.lapTime);
+		} else {
 			currentLap.fuelNTFOnEnd = 0;
-		
-		if ((minutes * perminutes) > 0)
-			currentLap.fuelEFNLapsOnEnd = (float) (currentLap.fuelLeftOnEnd) / (minutes * perminutes);
-		else 
 			currentLap.fuelEFNLapsOnEnd = 0;
-		
-		currentLap.fuelEstForNextMiliseconds =  (currentLap.fuelEFNLapsOnEnd * avgLapTime5);
-	
+		}
 	}
 	
 	public String toJSON() {
@@ -161,5 +225,14 @@ public class StatSession {
 			Application.LOGGER.debug(e.toString());
 		}
 		return response;
+	}
+
+	public void clearStatData() {
+		this.bestLap = null;
+		this.currentLap = null;
+		this.laps = null;
+		this.last3Laps = null;
+		this.last5Laps = null;
+		this.lastLap = null;
 	}
 }

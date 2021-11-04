@@ -130,7 +130,7 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 			cell.setCellStyle(style);
 
 			cell = row.createCell(3);
-			switch (entry.getValue().session_TYPE) {
+			switch (entry.getValue().getSession_TYPE()) {
 			case AC_SESSION_TYPE.AC_QUALIFY:
 				cell.setCellValue("QUALIFY");
 				break;
@@ -328,19 +328,19 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 				cell.setCellValue(mstoStr(lap.getValue().lapTime));
 				cell.setCellStyle(style);
 
-				if (lap.getValue().splitTimes.get(0) != null) {
-					cell = row.createCell(2);
-					cell.setCellValue(mstoStr(lap.getValue().splitTimes.get(0)));
-					cell.setCellStyle(style);
-				}
 				if (lap.getValue().splitTimes.get(1) != null) {
-					cell = row.createCell(3);
-					cell.setCellValue(mstoStr(lap.getValue().splitTimes.get(1) - lap.getValue().splitTimes.get(0)));
+					cell = row.createCell(2);
+					cell.setCellValue(mstoStr(lap.getValue().splitTimes.get(1)));
 					cell.setCellStyle(style);
 				}
 				if (lap.getValue().splitTimes.get(2) != null) {
-					cell = row.createCell(4);
+					cell = row.createCell(3);
 					cell.setCellValue(mstoStr(lap.getValue().splitTimes.get(2) - lap.getValue().splitTimes.get(1)));
+					cell.setCellStyle(style);
+				}
+				if (lap.getValue().splitTimes.get(3) != null) {
+					cell = row.createCell(4);
+					cell.setCellValue(mstoStr(lap.getValue().splitTimes.get(3) - lap.getValue().splitTimes.get(2)));
 					cell.setCellStyle(style);
 				}
 
@@ -593,7 +593,7 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 				return false;
 			}
 		} else {
-			LOGGER.info("Google service not yet configured.");
+			//LOGGER.info("Google service not yet configured.");
 			return false;
 		}
 		return true;
@@ -729,7 +729,7 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 				return false;
 			}
 		} else {
-			LOGGER.info("Google service not yet configured.");
+			//LOGGER.info("Google service not yet configured.");
 			return false;
 		}
 		return true;

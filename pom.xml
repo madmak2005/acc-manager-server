@@ -11,7 +11,7 @@
 	</parent>
 	<groupId>acc_manager</groupId>
 	<artifactId>ACCManager</artifactId>
-	<version>2.0.2</version>
+	<version>2.0.3</version>
 	<name>ACCMAnager</name>
 	<packaging>jar</packaging>
 	<description>Rest and WebSocket ACC Manager</description>
@@ -151,6 +151,13 @@
 			<artifactId>commons-collections4</artifactId>
 			<version>4.4</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
+		<dependency>
+    	<groupId>org.apache.commons</groupId>
+    		<artifactId>commons-lang3</artifactId>
+	    	<version>3.12.0</version>
+		</dependency>
+		
 		<!-- https://mvnrepository.com/artifact/org.tukaani/xz -->
 		<dependency>
 			<groupId>org.tukaani</groupId>
@@ -166,7 +173,7 @@
 		<dependency>
 			<groupId>org.apache.maven.plugins</groupId>
 			<artifactId>maven-compiler-plugin</artifactId>
-			<version>3.8.1</version>
+			<version>3.8.0</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-jar-plugin -->
 		<dependency>

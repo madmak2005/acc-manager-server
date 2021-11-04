@@ -1,5 +1,6 @@
 package ACC.model;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -10,7 +11,12 @@ import java.util.OptionalDouble;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class StatLap {
+public class StatLap implements Serializable{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
 	private static final Logger LOGGER = LoggerFactory.getLogger(StatLap.class);
 	
 	public int lapNo = 0;
@@ -37,6 +43,9 @@ public class StatLap {
 	public boolean isValidLap = true;
 	public boolean first, last = false;
 	public float sessionTimeLeft = 0;
+	public String session_TYPE = "UNKNOWN"; 
+	public int sessionIndex = 0;
+	public int internalSessionIndex = 0;
 
 	public float avgpFL, avgpFR, avgpRL, avgpRR = 0;
 	public float avgtFL, avgtFR, avgtRL, avgtRR = 0;
@@ -114,7 +123,7 @@ public class StatLap {
 		trackGripStatus =null;
 	}
 
-	protected void addStatPoint(StatPoint currentStatPoint) {
+	protected synchronized void addStatPoint(StatPoint currentStatPoint) {
 		if (currentStatPoint.wheelsPressure[0] > 0 && currentStatPoint.tyreCoreTemperature[0] > 0
 				&& currentStatPoint.padLife[0] > 0 && currentStatPoint.discLife[0] > 0) {
 			statPoints.add(currentStatPoint);
@@ -124,6 +133,28 @@ public class StatLap {
 			distanceTraveled = currentStatPoint.distanceTraveled;
 			fuelLeftOnEnd = currentStatPoint.fuel;
 			sessionTimeLeft = currentStatPoint.sessionTimeLeft;
+			session_TYPE = "UNKNOWN";
+			
+			switch (currentStatPoint.session) {
+				case AC_SESSION_TYPE.AC_QUALIFY:
+					session_TYPE = "QUALIFY";
+					break;
+				case AC_SESSION_TYPE.AC_PRACTICE:
+					session_TYPE = "PRACTICE";
+					break;
+				case AC_SESSION_TYPE.AC_RACE:
+					session_TYPE = "RACE";
+					break;
+				case AC_SESSION_TYPE.AC_HOTLAP:
+					session_TYPE = "HOTLAP";
+					break;
+				default: 
+					session_TYPE = "UNKNOWN";
+					break;
+			};
+
+			sessionIndex =currentStatPoint.sessionIndex;
+			
 			fuelXlap = currentStatPoint.fuelXlap;
 			trackStatus = currentStatPoint.trackStatus;
 			driverName = currentStatPoint.car.playerNick + " [" +currentStatPoint.car.playerName + " " + currentStatPoint.car.playerSurname + "]";
@@ -202,7 +233,7 @@ public class StatLap {
 				LOGGER.info("BACK TO PIT??");
 			}
 			
-			if (currentStatPoint.fuel > prevStatPoint.fuel && currentStatPoint.clock > firstStatPoint.clock) {
+			if (currentStatPoint.fuel > prevStatPoint.fuel && ( (currentStatPoint.clock > firstStatPoint.clock) || (currentStatPoint.clock == firstStatPoint.clock) )) {
 				fuelBeforePit = prevStatPoint.fuel;
 				fuelAfterPit = currentStatPoint.fuel;
 				fuelAdded = (float) Math.ceil(fuelAfterPit - fuelBeforePit);
