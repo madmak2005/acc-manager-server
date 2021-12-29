@@ -483,7 +483,8 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 	}
 
 	@Override
-	public boolean saveToGoogle(PageFileStatistics pageFileStatistics) {
+	public synchronized boolean saveToGoogle(PageFileStatistics pageFileStatistics) {
+		
 		String spreadsheetId = applicationPropertyService.getSheetID();
 		if (spreadsheetId != null && !spreadsheetId.isEmpty()) {
 			try {
@@ -536,16 +537,17 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 									ii = lap.getValue().internalLapIndex;
 									firstLapToSave = false;
 								}
+								LOGGER.info(lap.getValue().splitTimes.toString());
 								List<Object> v = Arrays.asList(
 										lap.getValue().internalLapIndex,
 										mstoStr(lap.getValue().lapTime),
-										lap.getValue().splitTimes.get(0) != null ? mstoStr(lap.getValue().splitTimes.get(0))
+										lap.getValue().splitTimes.get(1) != null ? mstoStr(lap.getValue().splitTimes.get(1))
 												: 0,
-										lap.getValue().splitTimes.get(1) != null
-												? mstoStr(lap.getValue().splitTimes.get(1) - lap.getValue().splitTimes.get(0))
-												: 0,
-										lap.getValue().splitTimes.get(2) != null
+										lap.getValue().splitTimes.get(2) != null && lap.getValue().splitTimes.get(1) != null
 												? mstoStr(lap.getValue().splitTimes.get(2) - lap.getValue().splitTimes.get(1))
+												: 0,
+										lap.getValue().splitTimes.get(3) != null
+												? mstoStr(lap.getValue().splitTimes.get(3) - lap.getValue().splitTimes.get(2))
 												: 0,
 										new BigDecimal(lap.getValue().fuelLeftOnStart).setScale(3, RoundingMode.HALF_UP).doubleValue(), 
 										new BigDecimal(lap.getValue().fuelLeftOnEnd).setScale(3, RoundingMode.HALF_UP).doubleValue(),
@@ -573,18 +575,43 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 								);
 								
 								values.add(v);
+								
 							}
-						body = new ValueRange().setValues(values);
-						int lapLoc = ii + 8;
-						range = tabName + "!A" + lapLoc + ":AL";
-						LOGGER.info("Values size: " + values.size());
-						if (values.size()>0) {
-							LOGGER.info("UPDATE SHEET");
-							result = service.spreadsheets().values().update(spreadsheetId, range, body)
-								.setValueInputOption("RAW").execute();
-							LOGGER.info("Result size: " + result.size());
+						if (values.size() > 1) {
+							for (List<Object> o : values) {
+								List<List<Object>> lo = new ArrayList<>();
+								lo.add(o);
+								body = new ValueRange().setValues(lo);
+								int lapLoc = ii + 8;
+								range = tabName + "!A" + lapLoc + ":AL";
+								LOGGER.info("Values size: " + lo.size());
+								if (lo.size()>0) {
+									LOGGER.info("UPDATE SHEET");
+									result = service.spreadsheets().values().update(spreadsheetId, range, body)
+										.setValueInputOption("RAW").execute();
+									LOGGER.info("Result size: " + result.size());
+									try {
+										Thread.sleep(3*1000);
+									} catch (InterruptedException e) {
+										LOGGER.error(e.toString());
+									}
+								}
+								lo.clear();
+							}
+						}else {
+							body = new ValueRange().setValues(values);
+							int lapLoc = ii + 8;
+							range = tabName + "!A" + lapLoc + ":AL";
+							LOGGER.info("Values size: " + values.size());
+							if (values.size()>0) {
+								LOGGER.info("UPDATE SHEET");
+								result = service.spreadsheets().values().update(spreadsheetId, range, body)
+									.setValueInputOption("RAW").execute();
+								LOGGER.info("Result size: " + result.size());
+							}
+							values.clear();
+
 						}
-						values.clear();
 					}
 				}
 

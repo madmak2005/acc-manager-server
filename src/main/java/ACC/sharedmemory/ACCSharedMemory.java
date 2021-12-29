@@ -80,7 +80,7 @@ public class ACCSharedMemory {
 
 	private void initGraphics() {
 		hGraphics = myKernel32.OpenFileMapping(ACCESS_TYPE.PAGE_READWRITE.value, true, "Local\\acpmf_graphics");
-		dGraphics = Kernel32.INSTANCE.MapViewOfFile(hGraphics, 0x4, 0, 0, 1572);
+		dGraphics = Kernel32.INSTANCE.MapViewOfFile(hGraphics, 0x4, 0, 0, 1580);
 	}
 
 	private void initPhysics() {

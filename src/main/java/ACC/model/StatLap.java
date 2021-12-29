@@ -128,7 +128,8 @@ public class StatLap implements Serializable{
 				&& currentStatPoint.padLife[0] > 0 && currentStatPoint.discLife[0] > 0) {
 			statPoints.add(currentStatPoint);
 			lapTime = currentStatPoint.iCurrentTime;
-			isValidLap = !(currentStatPoint.isValidLap == 0); // zero == false
+			if (isValidLap) //change only from true to false
+				isValidLap = !(currentStatPoint.isValidLap == 0); // zero == false
 			lapNo = currentStatPoint.lapNo;
 			distanceTraveled = currentStatPoint.distanceTraveled;
 			fuelLeftOnEnd = currentStatPoint.fuel;

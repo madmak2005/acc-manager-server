@@ -295,7 +295,7 @@ public class WebSocketControllerPage {
 			OutputMessage om = accSharedMemoryService.getPageFileMessage("statistics", fieldsStatistics);
 			if (sessionMobileStats != null && om != null) {
 				PageFileStatistics stat = (PageFileStatistics) om.page;
-				if (stat != null) {
+				if (stat != null && stat.currentSession != null) {
 					int internalSessionIndex = stat.currentSession.internalSessionIndex;
 					List<StatLap> sessionLaps = applicationPropertyService
 							.getMobileSessionLapList(internalSessionIndex);

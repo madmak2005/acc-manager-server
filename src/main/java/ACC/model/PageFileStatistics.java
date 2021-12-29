@@ -12,6 +12,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.slf4j.Logger;
@@ -37,7 +42,8 @@ import app.Application;
 
 @JsonFilter("filter1")
 public class PageFileStatistics implements Page {
-
+	boolean googleSaving = false;
+	
 	public PageFileStatistics() {
 		super();
 		setPageName("statistics");
@@ -207,15 +213,37 @@ public class PageFileStatistics implements Page {
 									if (context != null) {
 										ACCDataSaveService accDataSaveService = (ACCDataSaveService) context
 												.getBean("accDataSaveService");
-										if (accDataSaveService != null) {
-											if (accDataSaveService.saveToGoogle(this)) {
-												sessions.forEach((lp, session) -> {
-													session.laps.forEach((id, l) -> {
-														l.saved = true;
+										
+										if (accDataSaveService != null && !googleSaving) {
+											int iCount = 1, iDelay = 1_000;
+									        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+									        LOGGER.info("Start ...");
+									        List<Future<Integer>> futures = new ArrayList<>(iCount);
+									        
+									        for (int i =0; i< iCount; i++) {
+									            int j = i;
+									            futures.add(scheduler.schedule(() -> j, iDelay, TimeUnit.MILLISECONDS));
+									        }
+									        for (Future<Integer> e : futures) {
+									        	googleSaving = true;
+									        	if (accDataSaveService.saveToGoogle(this)) {
+													sessions.forEach((lp, session) -> {
+														session.laps.forEach((id, l) -> {
+															l.saved = true;
+														});
 													});
-												});
-												googleSaved = true;
-											}
+													googleSaved = true;
+												}
+									        	googleSaving = false;
+									        	try {
+													e.get();
+												} catch (InterruptedException | ExecutionException e1) {
+													// TODO Auto-generated catch block
+													e1.printStackTrace();
+												}
+									        }
+									        LOGGER.info("Complete");
+
 										}
 									}
 								}

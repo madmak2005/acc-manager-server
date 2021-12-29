@@ -152,6 +152,8 @@ public class PageFilePhysics implements Page {
 		public float slipVibrations = 0;
 		public float gVibrations = 0;
 		public float absVibrations = 0;
+		public int gapAhead = 0;
+	    public int gapBehind = 0;
 	   
 		public void fillFieldsHelper(Object source) {
 			List<Field> sourceFields = Arrays.asList(source.getClass().getDeclaredFields());

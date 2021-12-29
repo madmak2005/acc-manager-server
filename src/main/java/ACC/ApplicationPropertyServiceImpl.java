@@ -29,12 +29,12 @@ public class ApplicationPropertyServiceImpl implements ApplicationPropertyServic
 	
 	@Override
     public int getApplicationProperty(){
-        return (Application.useDebug ? 10 : 100);
+        return (Application.useDebug ? 100 : 100);
     }
     
 	@Override
     public int getStatisticsInterval(){
-        return (Application.useDebug ? 33: 333);
+        return (Application.useDebug ? 333: 333);
     }
     
 	@Override
