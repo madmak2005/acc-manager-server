@@ -125,6 +125,8 @@ public class PageFileGraphics implements Page {
 	public int rainIntensityIn30min = 0;
 	public int currentTyreSet = 0;
 	public int strategyTyreSet = 0;
+	public int gapAhead = 0;
+    public int gapBehind = 0;
     
 	@Override
 	public String toJSON() {
