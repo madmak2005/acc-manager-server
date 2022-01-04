@@ -1,15 +1,19 @@
 package ACC.saving;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     public void configure(HttpSecurity httpSecurity) throws Exception {
-        httpSecurity.csrf().disable().antMatcher("/**").authorizeRequests()
+        httpSecurity.cors().and().csrf().disable().antMatcher("/**").authorizeRequests()
                 .antMatchers("/save").permitAll()
                 .antMatchers("/send").permitAll()
                 .antMatchers("/getMobileSession").permitAll()
@@ -22,5 +26,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and().
                 logout().logoutSuccessUrl("/");
         
+    }
+    
+    @Bean
+    CorsConfigurationSource corsConfigurationSource() {
+       UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+       source.registerCorsConfiguration("/**", new CorsConfiguration().applyPermitDefaultValues());
+       return source;
     }
 }

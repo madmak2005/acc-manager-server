@@ -399,6 +399,11 @@ public class WebSocketControllerPage {
 			System.out.println("onClose sessionStatistics");
 			sessionStatistics = null;
 		}
+		if (sessionMobileStats != null && sessionMobileStats.getId() == session.getId()) {
+			System.out.println("onClose sessionMobileStats");
+			sessionMobileStats = null;
+		}
+		
 
 		livingSessions.remove(sessionId);
 
