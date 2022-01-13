@@ -92,42 +92,75 @@ public class StatSession implements Serializable {
 	
 	//public int size = 0;
 	
+	public boolean importStatLap(StatLap lap) {
+		boolean lapExists = false;
+		if (laps != null) {
+			for (Map.Entry<Integer, StatLap> ml : laps.entrySet()) {
+				StatLap l = ml.getValue();
+				if (l.internalLapIndex == lap.internalLapIndex && l.sessionIndex == lap.sessionIndex) lapExists = true;
+			}
+		
+			if (!lapExists) {
+				internalLapIndex++;
+				lap.internalLapIndex = internalLapIndex; 
+				laps.put(lap.lapNo, lap);
+				
+				if (internalLapIndex >= 2) {
+						if (lap.isValidLap) {
+							last3Laps.add(lap);
+							last5Laps.add(lap);
+							bestLap = lap;
+							laps.forEach((i, l) -> {
+									bestLap = bestLap.lapTime > l.lapTime ? l : bestLap;
+							});
+						}
+				}
+				//currentLap = lap;
+			}
+		}
+		return lapExists;
+	}
+	
 	protected void addStatLap(StatLap lap) {
 		internalLapIndex++;
-		lap.internalLapIndex = internalLapIndex; 
+		lap.internalLapIndex = internalLapIndex;
 		laps.put(lap.lapNo, lap);
-		//size =  laps.size();
-		
-		
+
 		if (internalLapIndex >= 2) {
-			//lastLap = laps.get(size - 2);
-			lastLap = (StatLap) laps.values().toArray()[internalLapIndex - 2];
-			fuelXLap = lastLap.statPoints.get(lastLap.statPoints.size()-1).fuelXlap;
-			if (lastLap != null && lastLap.statPoints != null && lastLap.statPoints.size() > 1) {
-				StatPoint lastLapLastStatPoint = lastLap.statPoints.get(lastLap.statPoints.size() - 1);
-				if (lastLapLastStatPoint.lapNo < lap.lapNo) {
-					lastLap.lapTime = lastLapLastStatPoint.iLastTime;
-					lastLap.splitTimes.put(lastLapLastStatPoint.currentSectorIndex, lastLapLastStatPoint.iLastTime);
-				}
+			lastLap = (StatLap) laps.values().toArray()[laps.size() - 2];
+			if (lastLap != null) {
 				if (lap.isValidLap) {
 					last3Laps.add(lap);
 					last5Laps.add(lap);
 					bestLap = lap;
 					laps.forEach((i, l) -> {
-							bestLap = bestLap.lapTime > l.lapTime ? l : bestLap;
+						bestLap = bestLap.lapTime > l.lapTime ? l : bestLap;
 					});
 				}
-				LOGGER.info("Start pos " + lastLap.firstStatPoint.normalizedCarPosition);
+				if (lastLap.statPoints != null) {
+					fuelXLap = lastLap.statPoints.get(lastLap.statPoints.size() - 1).fuelXlap;
+					if (lastLap.statPoints.size() > 1) {
+						StatPoint lastLapLastStatPoint = lastLap.statPoints.get(lastLap.statPoints.size() - 1);
+						if (lastLapLastStatPoint.lapNo < lap.lapNo) {
+							lastLap.lapTime = lastLapLastStatPoint.iLastTime;
+							lastLap.splitTimes.put(lastLapLastStatPoint.currentSectorIndex,
+									lastLapLastStatPoint.iLastTime);
+						}
 
-				LOGGER.info("End pos " + lastLap.statPoints.get(currentLap.statPoints.size()-1).normalizedCarPosition);
-				lastLap.calculateLapStats();
+						LOGGER.info("Start pos " + lastLap.firstStatPoint.normalizedCarPosition);
+						// LOGGER.info("End pos " +
+						// lastLap.statPoints.get(currentLap.statPoints.size()-1).normalizedCarPosition);
+						lastLap.calculateLapStats();
+					}
+				}
 			}
 		}
-		
+
 		LOGGER.info(String.valueOf(currentLap.lapNo));
 		LOGGER.info(String.valueOf("Lap time:" + PageFileStatistics.mstoStr(Math.round(currentLap.lapTime))));
 		LOGGER.info(String.valueOf("Fuel [l]:" + currentLap.fuelLeftOnEnd));
-		LOGGER.info("Enough fuel for next:" + PageFileStatistics.mstoStr(Math.round(currentLap.fuelEstForNextMiliseconds)));
+		LOGGER.info(
+				"Enough fuel for next:" + PageFileStatistics.mstoStr(Math.round(currentLap.fuelEstForNextMiliseconds)));
 	}
 	
 	protected void addStatPoint(StatPoint currentStatPoint) {

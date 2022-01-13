@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -26,6 +27,7 @@ import ACC.model.StatSession;
 import ACC.saving.ACCDataSaveService;
 import ACC.saving.GoogleController;
 import ACC.sharedmemory.ACCSharedMemoryService;
+import ACC.websocket.WebSocketControllerPage;
 
 @RestController
 public class RestControler {
@@ -110,6 +112,29 @@ public class RestControler {
 		} else {
 			System.out.println(om.content);
 			return om.content;
+		}
+	}
+	
+	@PutMapping("/importTeamLap")
+	public void importTeamLap(@RequestBody String lap) {
+		System.out.println("RECEIVED DATA");
+		System.out.println(lap);
+		if (!lap.isEmpty()) {
+			OutputMessage om = accSharedMemoryService.getPageFileMessage("statistics", null);
+			PageFileStatistics stat = (PageFileStatistics) om.page;
+			if (stat != null && stat.currentSession != null) {
+				Gson gson = new Gson();
+				StatLap statlap = gson.fromJson(lap, StatLap.class);
+				boolean lapExists = stat.currentSession.importStatLap(statlap);
+				if (!lapExists) {
+					WebSocketControllerPage webSocketControllerPage = (WebSocketControllerPage) context
+							.getBean("webSocketControllerPage");
+					if (webSocketControllerPage != null) {
+						webSocketControllerPage.sendTextMobileStats(statlap);
+					}
+					applicationPropertyService.importLap(statlap);
+				}
+			}
 		}
 	}
 	

@@ -2,6 +2,7 @@ package ACC;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map.Entry;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
@@ -80,6 +81,37 @@ public class ApplicationPropertyServiceImpl implements ApplicationPropertyServic
 	@Override
 	public void addMobileSession(StatSession session) {
 		sessions.add(session);
+		
+	}
+
+	@Override
+	public void importLap(StatLap lap) {
+		if (sessions.size() == 0) {
+			StatSession session = new StatSession();
+			session.sessionIndex = lap.sessionIndex;
+			sessions.add(session);
+		}
+		for (StatSession session : sessions) {
+			if (session.sessionIndex == lap.sessionIndex) {
+				boolean lapExists = false;
+				if (session.laps != null) {
+					for (Entry<Integer,StatLap> lapEntry : session.laps.entrySet()) {
+						StatLap tmpLap =  lapEntry.getValue();
+						if (tmpLap.lapNo == lap.lapNo) lapExists = true;
+					}
+				}
+				
+				if (!lapExists) {
+					session.importStatLap(lap);
+					Gson gson = new GsonBuilder()
+		                .serializeSpecialFloatingPointValues()
+		                .create();
+					StatLap deepCopy = gson.fromJson(gson.toJson(lap), StatLap.class);
+					deepCopy.clearStatData();
+					allLaps.add(deepCopy);
+				}
+			}
+		}
 		
 	}
     

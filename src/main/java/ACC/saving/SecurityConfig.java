@@ -18,6 +18,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/send").permitAll()
                 .antMatchers("/getMobileSession").permitAll()
                 .antMatchers("/getMobileSessionList").permitAll()
+                .antMatchers("/importTeamLap").permitAll()
                 .antMatchers("/acc/*").permitAll()
                 .antMatchers("/", "/login.html").authenticated()
                 .anyRequest().authenticated()

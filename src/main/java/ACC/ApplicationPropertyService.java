@@ -17,4 +17,6 @@ public interface ApplicationPropertyService {
     
     public List<StatSession> getMobileSessionList();
     public void addMobileSession(StatSession session);
+    
+    public void importLap(StatLap lap);
 }

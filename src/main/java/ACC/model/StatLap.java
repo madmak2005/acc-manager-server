@@ -96,6 +96,8 @@ public class StatLap implements Serializable{
 	public int rainIntensityIn30min = 0;
 	public int currentTyreSet = 0;
 	public int strategyTyreSet = 0;
+	public String carModel ="";
+	public String track ="";
 	
 	StatPoint firstStatPoint = new StatPoint();
 	
@@ -169,6 +171,8 @@ public class StatLap implements Serializable{
 			rainIntensityIn30min = currentStatPoint.rainIntensityIn30min;
 			currentTyreSet = currentStatPoint.currentTyreSet;      
 			strategyTyreSet = currentStatPoint.strategyTyreSet;     
+			track = currentStatPoint.car.track;
+			carModel = currentStatPoint.car.carModel;
 			
 			if (currentStatPoint.airTemp > 0)
 				airTemp.add(currentStatPoint.airTemp);

@@ -1,6 +1,7 @@
 package ACC.websocket;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -10,6 +11,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.websocket.OnClose;
+import javax.websocket.OnError;
 import javax.websocket.OnMessage;
 import javax.websocket.OnOpen;
 import javax.websocket.RemoteEndpoint;
@@ -78,7 +80,9 @@ public class WebSocketControllerPage {
 	.getApplicationContext().getBean("applicationPropertyService");;
 	
 	private static Map<String, Session> livingSessions = new ConcurrentHashMap<String, Session>();
-	private static Session sessionGraphics, sessionPhysics, sessionStatic, sessionMacro, sessionStatistics, sessionMobileStats;
+	private static Session sessionGraphics, sessionPhysics, sessionStatic, sessionMacro, sessionStatistics;
+	private static List<Session> sessionMobileStatsList = new ArrayList<Session>();
+	
 	private static List<String> fieldsGraphics;
 	private static List<String> fieldsPhysics;
 	private static List<String> fieldsStatic;
@@ -119,7 +123,8 @@ public class WebSocketControllerPage {
 			sendTextStatistics();
 			break;
 		case "mobileStats":
-			sessionMobileStats = session;
+			//sessionMobileStats = session;
+			sessionMobileStatsList.add(session);
 			sendAllTextMobileStats();
 			break;
 		}
@@ -265,7 +270,7 @@ public class WebSocketControllerPage {
 	}
 	
 	public void sendTextMobileStats(StatLap prevLap) {
-		if (sessionMobileStats != null) {
+		if (!sessionMobileStatsList.isEmpty()) {
 			Gson gson = new GsonBuilder()
 			                //.setPrettyPrinting()
 			                .serializeSpecialFloatingPointValues() // This is the key
@@ -276,7 +281,7 @@ public class WebSocketControllerPage {
 			try {
 				ObjectMapper mapper = new ObjectMapper();
 				response = mapper.writeValueAsString(deepCopy);
-				sendText(sessionMobileStats, response);
+				sendText(sessionMobileStatsList, response);
 			} catch (JsonProcessingException e) {
 				Application.LOGGER.debug(e.toString());
 			}
@@ -293,7 +298,7 @@ public class WebSocketControllerPage {
 		// .getBean("applicationPropertyService");
 		if (applicationPropertyService != null) {
 			OutputMessage om = accSharedMemoryService.getPageFileMessage("statistics", fieldsStatistics);
-			if (sessionMobileStats != null && om != null) {
+			if (!sessionMobileStatsList.isEmpty() && om != null) {
 				PageFileStatistics stat = (PageFileStatistics) om.page;
 				if (stat != null && stat.currentSession != null) {
 					int internalSessionIndex = stat.currentSession.internalSessionIndex;
@@ -306,9 +311,9 @@ public class WebSocketControllerPage {
 							ObjectMapper mapper = new ObjectMapper();
 							mapper.setSerializationInclusion(Include.NON_NULL);
 							response = mapper.writeValueAsString(lap);
-							sendText(sessionMobileStats, response);
+							sendText(sessionMobileStatsList, response);
 							try {
-								Thread.sleep(50);
+								Thread.sleep(100);
 							} catch (InterruptedException e) {
 								// TODO Auto-generated catch block
 								e.printStackTrace();
@@ -330,7 +335,7 @@ public class WebSocketControllerPage {
 					} catch (JsonProcessingException e) {
 						Application.LOGGER.debug(e.toString());
 					}
-					sendText(sessionMobileStats, response);
+					sendText(sessionMobileStatsList, response);
 				}
 			}
 		}
@@ -376,7 +381,24 @@ public class WebSocketControllerPage {
 		}
 	}
 	
+	private void sendText(List<Session> sessions, String message) {
+		for (Session session : sessions) {
+			if (session.isOpen()) {
+				RemoteEndpoint.Basic basic = session.getBasicRemote();
+				try {
+					basic.sendText(message);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+	
 
+	@OnError
+	public void onError(Session session, Throwable thr) {
+		System.out.println("Connection terminated");
+	}
 
 	@OnClose
 	public void onClose(@PathParam("page") String page, Session session) {
@@ -399,10 +421,9 @@ public class WebSocketControllerPage {
 			System.out.println("onClose sessionStatistics");
 			sessionStatistics = null;
 		}
-		if (sessionMobileStats != null && sessionMobileStats.getId() == session.getId()) {
-			System.out.println("onClose sessionMobileStats");
-			sessionMobileStats = null;
-		}
+		
+		
+		sessionMobileStatsList.remove(session);
 		
 
 		livingSessions.remove(sessionId);
