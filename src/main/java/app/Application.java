@@ -53,6 +53,8 @@ public class Application {
 			  LOGGER.info("=========================================");
 			  LOGGER.info("In webbrowser: http://localhost:" + port);
 			  LOGGER.info("=========================================");
+			  
+			  LOGGER.info("Now waiting for data from ACC. You need to start the race in the game.");
 
 			} catch (SocketException | UnknownHostException e) {
 				LOGGER.error(e.toString());

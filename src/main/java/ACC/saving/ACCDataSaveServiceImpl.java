@@ -77,7 +77,7 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 		// List<Integer> sessionsToRemove = new ArrayList<>();
 		boolean write = false;
 		if (sessions != null)
-			for (Entry<Integer,StatSession> session : pageFileStatistics.sessions.entrySet()) {
+			for (Entry<Integer, StatSession> session : pageFileStatistics.sessions.entrySet()) {
 				if (session.getValue().laps != null && session.getValue().laps.size() > 0) {
 					sessionToSheet(workbook, session.getValue(), "own");
 					write = true;
@@ -85,35 +85,36 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 			}
 		if (enduSession != null && enduSession.laps.size() > 0) {
 			sessionToSheet(workbook, enduSession, "endu");
+			write = true;
 		}
 		if (write) {
 
-		// SAVE
-		String pattern = "yyyy_MM_dd_HH_mm_ss";
-		DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
-		LocalDateTime now = LocalDateTime.now();
-		String nowDate = now.format(formatter);
+			// SAVE
+			String pattern = "yyyy_MM_dd_HH_mm_ss";
+			DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
+			LocalDateTime now = LocalDateTime.now();
+			String nowDate = now.format(formatter);
 
-		// Writing to a file
+			// Writing to a file
 
-		File currDir = new File(".");
-		String path = currDir.getAbsolutePath();
-		String fileLocation = path.substring(0, path.length() - 1) + nowDate + ".xlsx";
-		LOGGER.info(fileLocation);
+			File currDir = new File(".");
+			String path = currDir.getAbsolutePath();
+			String fileLocation = path.substring(0, path.length() - 1) + nowDate + ".xlsx";
+			LOGGER.info(fileLocation);
 
-		FileOutputStream outputStream;
-		try {
-			outputStream = new FileOutputStream(fileLocation);
-			workbook.write(outputStream);
-			workbook.close();
-			outputStream.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return fileLocation;
+			FileOutputStream outputStream;
+			try {
+				outputStream = new FileOutputStream(fileLocation);
+				workbook.write(outputStream);
+				workbook.close();
+				outputStream.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return fileLocation;
 		}
 		return "no data to write";
-		
+
 	}
 	
 	private void sessionToSheet(Workbook workbook, StatSession session, String tabName) {
@@ -360,7 +361,27 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 			headerCell = header.createCell(headerNo++);
 			headerCell.setCellValue("disksRR");
 			headerCell.setCellStyle(headerStyle);
+			
+			headerCell = header.createCell(headerNo++);
+			headerCell.setCellValue("strategyTyreSet");
+			headerCell.setCellStyle(headerStyle);
 
+			headerCell = header.createCell(headerNo++);
+			headerCell.setCellValue("currentTyreSet");
+			headerCell.setCellStyle(headerStyle);
+
+			headerCell = header.createCell(headerNo++);
+			headerCell.setCellValue("position");
+			headerCell.setCellStyle(headerStyle);
+			
+			headerCell = header.createCell(headerNo++);
+			headerCell.setCellValue("driverStintTotalTimeLeft");
+			headerCell.setCellStyle(headerStyle);
+			
+			headerCell = header.createCell(headerNo++);
+			headerCell.setCellValue("driverStintTimeLeft");
+			headerCell.setCellStyle(headerStyle);
+			
 			Iterator<Map.Entry<Integer, StatLap>> iteratorLap = session.laps.entrySet().iterator();
 			int i = 0;
 
@@ -536,7 +557,21 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 					cell = row.createCell(cellNo++);
 					cell.setCellValue(df.format(lap.getValue().avgBDRR));
 					cell.setCellStyle(style);
-
+					cell = row.createCell(cellNo++);
+					cell.setCellValue(df.format(lap.getValue().strategyTyreSet));
+					cell.setCellStyle(style);
+					cell = row.createCell(cellNo++);
+					cell.setCellValue(df.format(lap.getValue().currentTyreSet));
+					cell.setCellStyle(style);
+					cell = row.createCell(cellNo++);
+					cell.setCellValue(df.format(lap.getValue().position));
+					cell.setCellStyle(style);
+					cell = row.createCell(cellNo++);
+					cell.setCellValue(df.format(lap.getValue().driverStintTotalTimeLeft));
+					cell.setCellStyle(style);
+					cell = row.createCell(cellNo++);
+					cell.setCellValue(df.format(lap.getValue().driverStintTimeLeft));
+					cell.setCellStyle(style);
 				}
 			}
 		}

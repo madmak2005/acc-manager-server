@@ -11,7 +11,7 @@
 	</parent>
 	<groupId>acc_manager</groupId>
 	<artifactId>ACCManager</artifactId>
-	<version>3.0.2</version>
+	<version>3.0.3</version>
 	<name>ACCMAnager</name>
 	<packaging>jar</packaging>
 	<description>Rest and WebSocket ACC Manager</description>

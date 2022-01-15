@@ -87,8 +87,8 @@ public class PageFileGraphics implements Page {
 	public int lightsStage = 0;
 	public float exhaustTemperature = 0.0f;
 	public int wiperLV = 0;
-	public int DriverStintTotalTimeLeft = 0;
-	public int DriverStintTimeLeft = 0;
+	public int driverStintTotalTimeLeft = 0;
+	public int driverStintTimeLeft = 0;
 	public int rainTyres = 0;
 	public int sessionIndex = 0;
 	public float usedFuel = 0.0f;

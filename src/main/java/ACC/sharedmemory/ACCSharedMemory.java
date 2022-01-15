@@ -116,7 +116,7 @@ public class ACCSharedMemory {
 			SPageFileStatic sPageFileStatic = new SPageFileStatic(dStatic);
 			PageFileStatic staticPage = new PageFileStatic(sPageFileStatic);
 			if (staticPage.acVersion.equals("") && Duration.between(startS, Instant.now()).getSeconds() > seconds) {
-				LOGGER.info("Is ACC running? Trying to open static file again");
+				//LOGGER.info("Is ACC running? Trying to open static file again");
 				initStatic();
 				startS = Instant.now();
 			}
@@ -138,7 +138,7 @@ public class ACCSharedMemory {
 			SPageFilePhysics sPageFilePhysics = new SPageFilePhysics(dPhysics);
 			PageFilePhysics physicsPage = new PageFilePhysics(sPageFilePhysics);
 			if (physicsPage.packetId == 0 && Duration.between(startP, Instant.now()).getSeconds() > seconds) {
-				LOGGER.info("Is ACC running? Trying to open physics file again");
+				//LOGGER.info("Is ACC running? Trying to open physics file again");
 				initPhysics();
 				startP = Instant.now();
 			}
@@ -162,7 +162,7 @@ public class ACCSharedMemory {
 			SPageFileGraphics sPageFileGraphics = new SPageFileGraphics(dGraphics);
 			PageFileGraphics graphicsPage = new PageFileGraphics(sPageFileGraphics);
 			if (graphicsPage.packetId == 0 && Duration.between(startG, Instant.now()).getSeconds() > seconds) {
-				LOGGER.info("Is ACC running? Trying to open graphics file again");
+				//LOGGER.info("Is ACC running? Trying to open graphics file again");
 				initGraphics();
 				startG = Instant.now();
 			}

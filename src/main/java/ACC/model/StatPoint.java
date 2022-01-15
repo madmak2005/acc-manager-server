@@ -69,6 +69,9 @@ public class StatPoint implements Serializable{
 	public int rainIntensityIn30min = 0;
 	public int currentTyreSet = 0;
 	public int strategyTyreSet = 0;    
+	public int position = 0;
+	public int driverStintTotalTimeLeft = 0;
+	public int driverStintTimeLeft = 0;
 	
 	public StatCar  car = new StatCar();
 	

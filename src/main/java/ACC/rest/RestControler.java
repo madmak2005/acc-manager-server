@@ -117,8 +117,8 @@ public class RestControler {
 	
 	@PutMapping("/importTeamLap")
 	public void importTeamLap(@RequestBody String lap) {
-		System.out.println("RECEIVED DATA");
-		System.out.println(lap);
+		//System.out.println("RECEIVED DATA");
+		//System.out.println(lap);
 		if (lap!=null && !lap.isEmpty()) {
 				Gson gson = new Gson();
 				StatLap statlap = gson.fromJson(lap, StatLap.class);

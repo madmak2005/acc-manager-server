@@ -97,16 +97,18 @@ public class ApplicationPropertyServiceImpl implements ApplicationPropertyServic
 		enduSession.teamCode = lap.teamCode;
 		enduSession.pin = lap.pin;
 		
+		/*
 		if (enduSession.laps.size() > 0) {
 			for (Entry<Integer,StatLap> lapEntry : enduSession.laps.entrySet()) {
 				StatLap tmpLap =  lapEntry.getValue();
 				if (tmpLap.lapNo == lap.lapNo && tmpLap.teamCode == lap.teamCode && tmpLap.pin == lap.pin) lapExists = true;
 			}
 		} 
+		*/
 		
 		if (!lapExists) {
-			System.out.println ("importig: " + lap.teamCode); 
-			enduSession.laps.put(lap.lapNo, lap); // importStatLap(lap);
+			//System.out.println ("importig: " + lap.teamCode); 
+			enduSession.laps.put(enduSession.laps.size(), lap); // importStatLap(lap);
 		}
 	}
 

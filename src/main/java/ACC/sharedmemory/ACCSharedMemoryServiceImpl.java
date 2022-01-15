@@ -117,6 +117,9 @@ public class ACCSharedMemoryServiceImpl implements ACCSharedMemoryService {
 		statPoint.rainIntensityIn30min =    g.rainIntensityIn30min;
 		statPoint.currentTyreSet =          g.currentTyreSet;
 		statPoint.strategyTyreSet =         g.strategyTyreSet;
+		statPoint.position = g.position;
+		statPoint.driverStintTimeLeft = g.driverStintTimeLeft;
+		statPoint.driverStintTotalTimeLeft = g.driverStintTimeLeft;
 		
 		statPoint.airTemp = p.airTemp;
 		statPoint.brakeTemp = p.brakeTemp;
