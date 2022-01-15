@@ -15,6 +15,7 @@ import com.google.gson.GsonBuilder;
 import ACC.model.StatLap;
 import ACC.model.StatSession;
 import app.Application;
+import ch.qos.logback.classic.Logger;
 import lombok.Data;
 
 @ComponentScan("ACC")
@@ -23,19 +24,21 @@ public class ApplicationPropertyServiceImpl implements ApplicationPropertyServic
 	
 	private String sheetID = "";
 	List<StatLap> allLaps = new ArrayList<StatLap>();
-	List<StatSession> sessions = new ArrayList<StatSession>(); 
+	List<StatSession> sessions = new ArrayList<StatSession>();
+	List<StatSession> enduSessions = new ArrayList<StatSession>(); 
+	StatSession enduSession = new StatSession(); 
 	
 	@Autowired
 	private ServerProperties serverProperties;
 	
 	@Override
     public int getApplicationProperty(){
-        return (Application.useDebug ? 100 : 100);
+        return (Application.useDebug ? 10 : 100);
     }
     
 	@Override
     public int getStatisticsInterval(){
-        return (Application.useDebug ? 333: 333);
+        return (Application.useDebug ? 33: 333);
     }
     
 	@Override
@@ -86,33 +89,30 @@ public class ApplicationPropertyServiceImpl implements ApplicationPropertyServic
 
 	@Override
 	public void importLap(StatLap lap) {
-		if (sessions.size() == 0) {
-			StatSession session = new StatSession();
-			session.sessionIndex = lap.sessionIndex;
-			sessions.add(session);
-		}
-		for (StatSession session : sessions) {
-			if (session.sessionIndex == lap.sessionIndex) {
-				boolean lapExists = false;
-				if (session.laps != null) {
-					for (Entry<Integer,StatLap> lapEntry : session.laps.entrySet()) {
-						StatLap tmpLap =  lapEntry.getValue();
-						if (tmpLap.lapNo == lap.lapNo) lapExists = true;
-					}
-				}
-				
-				if (!lapExists) {
-					session.importStatLap(lap);
-					Gson gson = new GsonBuilder()
-		                .serializeSpecialFloatingPointValues()
-		                .create();
-					StatLap deepCopy = gson.fromJson(gson.toJson(lap), StatLap.class);
-					deepCopy.clearStatData();
-					allLaps.add(deepCopy);
-				}
-			}
-		}
+		boolean lapExists = false;
+		if (enduSessions.isEmpty())
+			enduSessions.add(enduSession);
 		
+		
+		enduSession.teamCode = lap.teamCode;
+		enduSession.pin = lap.pin;
+		
+		if (enduSession.laps.size() > 0) {
+			for (Entry<Integer,StatLap> lapEntry : enduSession.laps.entrySet()) {
+				StatLap tmpLap =  lapEntry.getValue();
+				if (tmpLap.lapNo == lap.lapNo && tmpLap.teamCode == lap.teamCode && tmpLap.pin == lap.pin) lapExists = true;
+			}
+		} 
+		
+		if (!lapExists) {
+			System.out.println ("importig: " + lap.teamCode); 
+			enduSession.laps.put(lap.lapNo, lap); // importStatLap(lap);
+		}
+	}
+
+	@Override
+	public StatSession getEnduSession() {
+		return enduSession;
 	}
     
     

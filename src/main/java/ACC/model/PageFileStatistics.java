@@ -165,104 +165,100 @@ public class PageFileStatistics implements Page {
 							StatLap lap = currentSession.laps.get(statPoint.lapNo);
 							ApplicationContext context = ApplicationContextAwareImpl.getApplicationContext();
 							if (lap == null) {
-								if (statPoint.normalizedCarPosition < 1) {
-									LOGGER.info("New lap started: [" + statPoint.lapNo + "]");
-									LOGGER.info("Car position: [" + statPoint.normalizedCarPosition + "]");
-									StatLap prevLap = currentSession.laps.get(statPoint.lapNo - 1);
-									if (prevLap != null) {
-										prevLap.lapTime = statPoint.iLastTime;
-										prevLap.splitTimes.put(prevLap.splitTimes.size(), statPoint.iLastTime);
-										prevLap.splitTimes.remove(0);
-										currentSession.calculateSessionStats();
-										statSessionUpdateMobileSession(currentMobileSession, currentSession);
-										ApplicationPropertyService applicationPropertyService = (ApplicationPropertyService) context
-												.getBean("applicationPropertyService");
-										if (applicationPropertyService != null) {
-											applicationPropertyService.addMobileSessionLap(prevLap);
-										}
-										LOGGER.info("send websocket");
-										WebSocketControllerPage webSocketControllerPage = (WebSocketControllerPage) context
-												.getBean("webSocketControllerPage");
-										if (webSocketControllerPage != null) {
-											LOGGER.info("send statistics");
-											webSocketControllerPage.sendTextMobileStats(prevLap);
+								LOGGER.info("New lap started: [" + statPoint.lapNo + "]");
+								LOGGER.info("Car position: [" + statPoint.normalizedCarPosition + "]");
+								StatLap prevLap = currentSession.laps.get(statPoint.lapNo - 1);
+								if (prevLap != null) {
+									prevLap.lapTime = statPoint.iLastTime;
+									prevLap.splitTimes.put(prevLap.splitTimes.size(), statPoint.iLastTime);
+									prevLap.splitTimes.remove(0);
+									currentSession.calculateSessionStats();
+									statSessionUpdateMobileSession(currentMobileSession, currentSession);
+									ApplicationPropertyService applicationPropertyService = (ApplicationPropertyService) context
+											.getBean("applicationPropertyService");
+									if (applicationPropertyService != null) {
+										applicationPropertyService.addMobileSessionLap(prevLap);
+									}
+									LOGGER.info("send websocket");
+									WebSocketControllerPage webSocketControllerPage = (WebSocketControllerPage) context
+											.getBean("webSocketControllerPage");
+									if (webSocketControllerPage != null) {
+										LOGGER.info("send statistics");
+										webSocketControllerPage.sendTextMobileStats(prevLap);
 
-										}
-									} else {
-										/* first lap of session was finished */
-										ApplicationPropertyService applicationPropertyService = (ApplicationPropertyService) context
-												.getBean("applicationPropertyService");
-										if (applicationPropertyService != null) {
-											if (applicationPropertyService.getMobileSessionList().size() == 0) {
-												// currentMobileSession = new StatSession();
-												statSessionUpdateMobileSession(currentMobileSession, currentSession);
-												currentMobileSession.clearStatData();
-												applicationPropertyService.addMobileSession(currentMobileSession);
-											}
+									}
+								} else {
+									/* first lap of session was finished */
+									ApplicationPropertyService applicationPropertyService = (ApplicationPropertyService) context
+											.getBean("applicationPropertyService");
+									if (applicationPropertyService != null) {
+										if (applicationPropertyService.getMobileSessionList().size() == 0) {
+											// currentMobileSession = new StatSession();
+											statSessionUpdateMobileSession(currentMobileSession, currentSession);
+											currentMobileSession.clearStatData();
+											applicationPropertyService.addMobileSession(currentMobileSession);
 										}
 									}
-
-									long duration = 0;
-									current = Instant.now();
-									if (previous != null) {
-										duration = ChronoUnit.MILLIS.between(previous, current);
-										long durationofLap = statPoint.iLastTime;
-										if (durationofLap != 0) {
-											DecimalFormat df = new DecimalFormat("#.##");
-											LOGGER.info(
-													"Efficiency: " + df.format((float) duration / durationofLap * 100));
-											previous = Instant.now();
-										}
-
-										if (context != null) {
-											ACCDataSaveService accDataSaveService = (ACCDataSaveService) context
-													.getBean("accDataSaveService");
-
-											if (accDataSaveService != null && !googleSaving) {
-												int iCount = 1, iDelay = 1_000;
-												ScheduledExecutorService scheduler = Executors
-														.newSingleThreadScheduledExecutor();
-												LOGGER.info("Start ...");
-												List<Future<Integer>> futures = new ArrayList<>(iCount);
-
-												for (int i = 0; i < iCount; i++) {
-													int j = i;
-													futures.add(
-															scheduler.schedule(() -> j, iDelay, TimeUnit.MILLISECONDS));
-												}
-												for (Future<Integer> e : futures) {
-													googleSaving = true;
-													if (accDataSaveService.saveToGoogle(this)) {
-														sessions.forEach((lp, session) -> {
-															session.laps.forEach((id, l) -> {
-																l.saved = true;
-															});
-														});
-														googleSaved = true;
-													}
-													googleSaving = false;
-													try {
-														e.get();
-													} catch (InterruptedException | ExecutionException e1) {
-														// TODO Auto-generated catch block
-														e1.printStackTrace();
-													}
-												}
-												LOGGER.info("Complete");
-
-											}
-										}
-									}
-
-									// init new lap, we don't have it in current session
-									lap = new StatLap();
-
-									lap.addStatPoint(statPoint);
-									lap.clockAtStart = statPoint.clock;
-									currentSession.addStatLap(lap);
-									currentSession.addStatPoint(statPoint);
-
 								}
+
+								long duration = 0;
+								current = Instant.now();
+								if (previous != null) {
+									duration = ChronoUnit.MILLIS.between(previous, current);
+									long durationofLap = statPoint.iLastTime;
+									if (durationofLap != 0) {
+										DecimalFormat df = new DecimalFormat("#.##");
+										LOGGER.info("Efficiency: " + df.format((float) duration / durationofLap * 100));
+										previous = Instant.now();
+									}
+
+									if (context != null) {
+										ACCDataSaveService accDataSaveService = (ACCDataSaveService) context
+												.getBean("accDataSaveService");
+
+										if (accDataSaveService != null && !googleSaving) {
+											int iCount = 1, iDelay = 1_000;
+											ScheduledExecutorService scheduler = Executors
+													.newSingleThreadScheduledExecutor();
+											LOGGER.info("Start ...");
+											List<Future<Integer>> futures = new ArrayList<>(iCount);
+
+											for (int i = 0; i < iCount; i++) {
+												int j = i;
+												futures.add(scheduler.schedule(() -> j, iDelay, TimeUnit.MILLISECONDS));
+											}
+											for (Future<Integer> e : futures) {
+												googleSaving = true;
+												if (accDataSaveService.saveToGoogle(this)) {
+													sessions.forEach((lp, session) -> {
+														session.laps.forEach((id, l) -> {
+															l.saved = true;
+														});
+													});
+													googleSaved = true;
+												}
+												googleSaving = false;
+												try {
+													e.get();
+												} catch (InterruptedException | ExecutionException e1) {
+													// TODO Auto-generated catch block
+													e1.printStackTrace();
+												}
+											}
+											LOGGER.info("Complete");
+
+										}
+									}
+								}
+
+								// init new lap, we don't have it in current session
+								lap = new StatLap();
+								if (statPoint.normalizedCarPosition > 0.1) lap.isValidLap = false;
+								lap.addStatPoint(statPoint);
+								lap.clockAtStart = statPoint.clock;
+								currentSession.addStatLap(lap);
+								currentSession.addStatPoint(statPoint);
+
 							} else {
 
 								lap.splitTimes.put(statPoint.currentSectorIndex, statPoint.lastSectorTime);

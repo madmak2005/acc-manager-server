@@ -57,6 +57,9 @@ public class StatSession implements Serializable {
 				break;
 			}
 	}
+	
+	public String teamCode = "";
+	public String pin = "";
 
 	public String session_TYPENAME = "UNKNOWN";
 	public Map<Integer,StatLap> laps = new HashMap<>();
@@ -91,13 +94,13 @@ public class StatSession implements Serializable {
 	public int iBestTime;
 	
 	//public int size = 0;
-	
+	/*
 	public boolean importStatLap(StatLap lap) {
 		boolean lapExists = false;
 		if (laps != null) {
 			for (Map.Entry<Integer, StatLap> ml : laps.entrySet()) {
 				StatLap l = ml.getValue();
-				if (l.internalLapIndex == lap.internalLapIndex && l.sessionIndex == lap.sessionIndex) lapExists = true;
+				if (l.lapNo == lap.lapNo) lapExists = true;
 			}
 		
 			if (!lapExists) {
@@ -115,21 +118,22 @@ public class StatSession implements Serializable {
 							});
 						}
 				}
-				//currentLap = lap;
 			}
 		}
 		return lapExists;
 	}
+	*/
 	
 	protected void addStatLap(StatLap lap) {
 		internalLapIndex++;
 		lap.internalLapIndex = internalLapIndex;
 		laps.put(lap.lapNo, lap);
-
+		LOGGER.info("ADD_STAT_LAP:" + lap.lapNo + ": " + PageFileStatistics.mstoStr(Math.round(lap.lapTime)));
 		if (internalLapIndex >= 2) {
 			lastLap = (StatLap) laps.values().toArray()[laps.size() - 2];
 			if (lastLap != null) {
 				if (lap.isValidLap) {
+					LOGGER.info("ADDING LAP:" + lap.lapNo + ": " + PageFileStatistics.mstoStr(Math.round(lap.lapTime)));
 					last3Laps.add(lap);
 					last5Laps.add(lap);
 					bestLap = lap;
@@ -180,10 +184,13 @@ public class StatSession implements Serializable {
 			StatLap l = i3laps.next();
 			lavg += l.fuelUsed;
 			avgMS += l.lapTime;
+			LOGGER.info("CALC AVG 3LAP:" + l.lapNo + ": " + PageFileStatistics.mstoStr(Math.round(l.lapTime)));
 		}
+		
 		if (last3Laps.size() == 3) {
-			fuelAVG3Laps = i == 0? 0 : lavg / i;
-			avgLapTime3 = i == 0 ? 0 : Math.round(avgMS / i);
+			fuelAVG3Laps = lavg / 3;
+			avgLapTime3 = Math.round(avgMS / 3);
+			//currentLap.fuelAVGPerLap = fuelAVG5Laps/3;
 		}
 		
 		lavg = 0;
@@ -195,13 +202,20 @@ public class StatSession implements Serializable {
 			StatLap l = i5laps.next();
 			lavg += l.fuelUsed;
 			avgMS += l.lapTime;
+			LOGGER.info("CALC AVG 5LAP:" + l.lapNo + ": " + PageFileStatistics.mstoStr(Math.round(l.lapTime)));
+			
 		}
 		
+		if (i>0)
+			currentLap.fuelAVGPerLap = lavg/i; //next override if we have our calculations
+		else
+			currentLap.fuelAVGPerLap = currentLap.fuelUsed > 0 ? currentLap.fuelUsed : currentLap.fuelXlap;
+		
 		if (last5Laps.size() == 5) {
-			fuelAVG5Laps = i == 0? 0 : lavg / i;
-			avgLapTime5 = i == 0? 0 : Math.round(avgMS / i);
+			fuelAVG5Laps = lavg / 5;
+			avgLapTime5 = Math.round(avgMS / 5);
 		}
-		currentLap.fuelAVGPerLap = currentLap.fuelXlap;
+		
 		
 		if (avgLapTime5 != 0) {
 			float minutes = (float) avgLapTime5 / (1000 * 60);
@@ -217,6 +231,8 @@ public class StatSession implements Serializable {
 				currentLap.fuelEFNLapsOnEnd = 0;
 			
 			currentLap.fuelEstForNextMiliseconds =  (currentLap.fuelEFNLapsOnEnd * avgLapTime5);
+			//currentLap.fuelAVGPerLap = currentLap.fuelXlap;
+			
 		} else if (avgLapTime3 != 0){
 			float minutes = (float) avgLapTime3 / (1000 * 60);
 			float perminutes = minutes == 0 ? 0 : (currentLap.fuelUsed) / minutes;

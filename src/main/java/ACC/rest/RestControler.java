@@ -119,12 +119,11 @@ public class RestControler {
 	public void importTeamLap(@RequestBody String lap) {
 		System.out.println("RECEIVED DATA");
 		System.out.println(lap);
-		if (!lap.isEmpty()) {
-			OutputMessage om = accSharedMemoryService.getPageFileMessage("statistics", null);
-			PageFileStatistics stat = (PageFileStatistics) om.page;
-			if (stat != null && stat.currentSession != null) {
+		if (lap!=null && !lap.isEmpty()) {
 				Gson gson = new Gson();
 				StatLap statlap = gson.fromJson(lap, StatLap.class);
+				applicationPropertyService.importLap(statlap);
+				/*
 				boolean lapExists = stat.currentSession.importStatLap(statlap);
 				if (!lapExists) {
 					WebSocketControllerPage webSocketControllerPage = (WebSocketControllerPage) context
@@ -134,7 +133,7 @@ public class RestControler {
 					}
 					applicationPropertyService.importLap(statlap);
 				}
-			}
+				*/
 		}
 	}
 	

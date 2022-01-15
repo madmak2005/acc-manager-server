@@ -19,6 +19,8 @@ public class StatLap implements Serializable{
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(StatLap.class);
 	
+	public String teamCode = "";
+	public String pin = "";
 	public int lapNo = 0;
 	public boolean fromPit = false;
 	public boolean toPit = false;
