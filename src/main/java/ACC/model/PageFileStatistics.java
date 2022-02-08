@@ -79,6 +79,10 @@ public class PageFileStatistics implements Page {
 
 	@JsonIgnore
 	public boolean googleSaved = false;
+	
+	@JsonIgnore
+	public boolean connected = false;
+
 
 	public static String mstoStr(long durationInMillis) {
 		long millis = durationInMillis % 1000;
@@ -307,7 +311,10 @@ public class PageFileStatistics implements Page {
 						}
 					}
 				} else {
-					LOGGER.info("let's get the party started!");
+					if (!connected) {
+						LOGGER.info("Ok, we are connected. Let's get the party started!");
+						connected = true;
+					}
 					if (currentSession.currentLap.statPoints.size() == 0)
 						currentSession.currentLap.addStatPoint(statPoint);
 					else if (currentSession.currentLap.statPoints.get(currentSession.currentLap.statPoints.size()

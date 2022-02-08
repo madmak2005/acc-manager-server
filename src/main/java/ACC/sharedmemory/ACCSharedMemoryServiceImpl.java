@@ -1,5 +1,6 @@
 package ACC.sharedmemory;
 
+import java.util.EnumMap;
 import java.util.List;
 
 import org.joda.time.LocalDateTime;
@@ -27,8 +28,92 @@ public class ACCSharedMemoryServiceImpl implements ACCSharedMemoryService {
 	PageFileGraphics lastpg;
 	PageFileStatic   lastps;
 	
+	public enum CarModel {
+		 amr_v12_vantage_gt3
+		,audi_r8_lms
+		,bentley_continental_gt3_2016
+		,bentley_continental_gt3_2018
+		,bmw_m6_gt3
+		,jaguar_g3
+		,ferrari_488_gt3
+		,honda_nsx_gt3
+		,lamborghini_gallardo_rex
+		,lamborghini_huracan_gt3
+		,lamborghini_huracan_st
+		,lexus_rc_f_gt3
+		,mclaren_650s_gt3
+		,mercedes_amg_gt3
+		,nissan_gt_r_gt3_2017
+		,nissan_gt_r_gt3_2018
+		,porsche_991_gt3_r
+		,porsche_991ii_gt3_cup
+		,amr_v8_vantage_gt3
+		,audi_r8_lms_evo
+		,honda_nsx_gt3_evo
+		,lamborghini_huracan_gt3_evo
+		,mclaren_720s_gt3
+		,porsche_991ii_gt3_r
+		,alpine_a110_gt4
+		,amr_v8_vantage_gt4
+		,audi_r8_gt4
+		,bmw_m4_gt4
+		,chevrolet_camaro_gt4r
+		,ginetta_g55_gt4
+		,ktm_xbow_gt4
+		,maserati_mc_gt4
+		,mclaren_570s_gt4
+		,mercedes_amg_gt4
+		,porsche_718_cayman_gt4_mr
+		,ferrari_488_gt3_evo
+		,mercedes_amg_gt3_evo
+		,bmw_m4_gt3
+		
+	}
+	
+	EnumMap<CarModel, Integer> brakeBiasMap = new EnumMap<>(CarModel.class);
+	
+	
 	@Override
 	public OutputMessage getPageFileMessage(String pageTyp, List<String> fieldsFilter) {
+		brakeBiasMap.put(CarModel.amr_v12_vantage_gt3, -7);
+		brakeBiasMap.put(CarModel.audi_r8_lms, -14);
+		brakeBiasMap.put(CarModel.bentley_continental_gt3_2016, -7);
+		brakeBiasMap.put(CarModel.bentley_continental_gt3_2018, -7);
+		brakeBiasMap.put(CarModel.bmw_m6_gt3, -15);
+		brakeBiasMap.put(CarModel.jaguar_g3, -7);
+		brakeBiasMap.put(CarModel.ferrari_488_gt3, -17);
+		brakeBiasMap.put(CarModel.honda_nsx_gt3, -14);
+		brakeBiasMap.put(CarModel.lamborghini_gallardo_rex, -14);
+		brakeBiasMap.put(CarModel.lamborghini_huracan_gt3, -14);
+		brakeBiasMap.put(CarModel.lamborghini_huracan_st, -14);
+		brakeBiasMap.put(CarModel.lexus_rc_f_gt3, -14);
+		brakeBiasMap.put(CarModel.mclaren_650s_gt3, -17);
+		brakeBiasMap.put(CarModel.mercedes_amg_gt3, -14);
+		brakeBiasMap.put(CarModel.nissan_gt_r_gt3_2017, -15);
+		brakeBiasMap.put(CarModel.nissan_gt_r_gt3_2018, -15);
+		brakeBiasMap.put(CarModel.porsche_991_gt3_r, -21);
+		brakeBiasMap.put(CarModel.porsche_991ii_gt3_cup, -5);
+		brakeBiasMap.put(CarModel.amr_v8_vantage_gt3, -7);
+		brakeBiasMap.put(CarModel.audi_r8_lms_evo, -14);
+		brakeBiasMap.put(CarModel.honda_nsx_gt3_evo, -14);
+		brakeBiasMap.put(CarModel.lamborghini_huracan_gt3_evo, -14);
+		brakeBiasMap.put(CarModel.mclaren_720s_gt3, -17);
+		brakeBiasMap.put(CarModel.porsche_991ii_gt3_r, -21);
+		brakeBiasMap.put(CarModel.alpine_a110_gt4, -15);
+		brakeBiasMap.put(CarModel.amr_v8_vantage_gt4, -20);
+		brakeBiasMap.put(CarModel.audi_r8_gt4, -15);
+		brakeBiasMap.put(CarModel.bmw_m4_gt4, -22);
+		brakeBiasMap.put(CarModel.chevrolet_camaro_gt4r, -18);
+		brakeBiasMap.put(CarModel.ginetta_g55_gt4, -18);
+		brakeBiasMap.put(CarModel.ktm_xbow_gt4, -20);
+		brakeBiasMap.put(CarModel.maserati_mc_gt4, -15);
+		brakeBiasMap.put(CarModel.mclaren_570s_gt4, -9);
+		brakeBiasMap.put(CarModel.mercedes_amg_gt4, -20);
+		brakeBiasMap.put(CarModel.porsche_718_cayman_gt4_mr, -20);
+		brakeBiasMap.put(CarModel.ferrari_488_gt3_evo, -17);
+		brakeBiasMap.put(CarModel.mercedes_amg_gt3_evo, -14);
+		brakeBiasMap.put(CarModel.bmw_m4_gt3 , -14);
+		
 		Page page = getPageFile(pageTyp);
 		return new OutputMessage(page, fieldsFilter);
 	}
@@ -40,6 +125,9 @@ public class ACCSharedMemoryServiceImpl implements ACCSharedMemoryService {
 		switch(pageTyp) {
 		case "physics" : 
 			PageFilePhysics  p = sh.getPageFilePhysics();
+			int x = recalculateBrakeBias(p);
+			if (p.brakeBias > 0)
+				p.brakeBias += Integer.valueOf(x).doubleValue()/100.00;
 			lastpp = p;
 			page = p;
 			break;
@@ -62,6 +150,52 @@ public class ACCSharedMemoryServiceImpl implements ACCSharedMemoryService {
 			break;
 		};
 		return page;
+		
+	}
+
+	private int recalculateBrakeBias(PageFilePhysics p) {
+		int offset = 0;
+		if (lastps != null && !lastps.carModel.isEmpty()) {
+			if (lastps.carModel.equals("amr_v12_vantage_gt3"         )) return brakeBiasMap.get(CarModel.amr_v12_vantage_gt3);
+			if (lastps.carModel.equals("audi_r8_lms"                 )) return brakeBiasMap.get(CarModel.audi_r8_lms);
+			if (lastps.carModel.equals("bentley_continental_gt3_2016")) return brakeBiasMap.get(CarModel.bentley_continental_gt3_2016);
+			if (lastps.carModel.equals("bentley_continental_gt3_2018")) return brakeBiasMap.get(CarModel.bentley_continental_gt3_2018);
+			if (lastps.carModel.equals("bmw_m6_gt3"                  )) return brakeBiasMap.get(CarModel.bmw_m6_gt3);
+			if (lastps.carModel.equals("jaguar_g3"                   )) return brakeBiasMap.get(CarModel.jaguar_g3);
+			if (lastps.carModel.equals("ferrari_488_gt3"             )) return brakeBiasMap.get(CarModel.ferrari_488_gt3);
+			if (lastps.carModel.equals("honda_nsx_gt3"               )) return brakeBiasMap.get(CarModel.honda_nsx_gt3);
+			if (lastps.carModel.equals("lamborghini_gallardo_rex"    )) return brakeBiasMap.get(CarModel.lamborghini_gallardo_rex);
+			if (lastps.carModel.equals("lamborghini_huracan_gt3"     )) return brakeBiasMap.get(CarModel.lamborghini_huracan_gt3);
+			if (lastps.carModel.equals("lamborghini_huracan_st"      )) return brakeBiasMap.get(CarModel.lamborghini_huracan_st);
+			if (lastps.carModel.equals("lexus_rc_f_gt3"              )) return brakeBiasMap.get(CarModel.lexus_rc_f_gt3);
+			if (lastps.carModel.equals("mclaren_650s_gt3"            )) return brakeBiasMap.get(CarModel.mclaren_650s_gt3);
+			if (lastps.carModel.equals("mercedes_amg_gt3"            )) return brakeBiasMap.get(CarModel.mercedes_amg_gt3);
+			if (lastps.carModel.equals("nissan_gt_r_gt3_2017"        )) return brakeBiasMap.get(CarModel.nissan_gt_r_gt3_2017);
+			if (lastps.carModel.equals("nissan_gt_r_gt3_2018"        )) return brakeBiasMap.get(CarModel.nissan_gt_r_gt3_2018);
+			if (lastps.carModel.equals("porsche_991_gt3_r"           )) return brakeBiasMap.get(CarModel.porsche_991_gt3_r);
+			if (lastps.carModel.equals("porsche_991ii_gt3_cup"       )) return brakeBiasMap.get(CarModel.porsche_991ii_gt3_cup);
+			if (lastps.carModel.equals("amr_v8_vantage_gt3"          )) return brakeBiasMap.get(CarModel.amr_v8_vantage_gt3);
+			if (lastps.carModel.equals("audi_r8_lms_evo"             )) return brakeBiasMap.get(CarModel.audi_r8_lms_evo);
+			if (lastps.carModel.equals("honda_nsx_gt3_evo"           )) return brakeBiasMap.get(CarModel.honda_nsx_gt3_evo);
+			if (lastps.carModel.equals("lamborghini_huracan_gt3_evo" )) return brakeBiasMap.get(CarModel.lamborghini_huracan_gt3_evo);
+			if (lastps.carModel.equals("mclaren_720s_gt3"            )) return brakeBiasMap.get(CarModel.mclaren_720s_gt3);
+			if (lastps.carModel.equals("porsche_991ii_gt3_r"         )) return brakeBiasMap.get(CarModel.porsche_991ii_gt3_r);
+			if (lastps.carModel.equals("alpine_a110_gt4"             )) return brakeBiasMap.get(CarModel.alpine_a110_gt4);
+			if (lastps.carModel.equals("amr_v8_vantage_gt4"          )) return brakeBiasMap.get(CarModel.amr_v8_vantage_gt4);
+			if (lastps.carModel.equals("audi_r8_gt4"                 )) return brakeBiasMap.get(CarModel.audi_r8_gt4);
+			if (lastps.carModel.equals("bmw_m4_gt4"                  )) return brakeBiasMap.get(CarModel.bmw_m4_gt4);
+			if (lastps.carModel.equals("chevrolet_camaro_gt4r"       )) return brakeBiasMap.get(CarModel.chevrolet_camaro_gt4r);
+			if (lastps.carModel.equals("ginetta_g55_gt4"             )) return brakeBiasMap.get(CarModel.ginetta_g55_gt4);
+			if (lastps.carModel.equals("ktm_xbow_gt4"                )) return brakeBiasMap.get(CarModel.ktm_xbow_gt4);
+			if (lastps.carModel.equals("maserati_mc_gt4"             )) return brakeBiasMap.get(CarModel.maserati_mc_gt4);
+			if (lastps.carModel.equals("mclaren_570s_gt4"            )) return brakeBiasMap.get(CarModel.mclaren_570s_gt4);
+			if (lastps.carModel.equals("mercedes_amg_gt4"            )) return brakeBiasMap.get(CarModel.mercedes_amg_gt4);
+			if (lastps.carModel.equals("porsche_718_cayman_gt4_mr"   )) return brakeBiasMap.get(CarModel.porsche_718_cayman_gt4_mr);
+			if (lastps.carModel.equals("ferrari_488_gt3_evo"         )) return brakeBiasMap.get(CarModel.ferrari_488_gt3_evo);
+			if (lastps.carModel.equals("mercedes_amg_gt3_evo"        )) return brakeBiasMap.get(CarModel.mercedes_amg_gt3_evo);
+			if (lastps.carModel.equals("bmw_m4_gt3 "                 )) return brakeBiasMap.get(CarModel.bmw_m4_gt3 );
+		}
+		return offset;
 		
 	}
 

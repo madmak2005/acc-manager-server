@@ -17,9 +17,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.poi.hssf.util.HSSFColor;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.CreationHelper;
+import org.apache.poi.ss.usermodel.DataFormat;
 import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -130,11 +135,12 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 			sheet.setColumnWidth(2, 6000);
 			sheet.setColumnWidth(3, 3000);
 			sheet.setColumnWidth(4, 2000);
-			sheet.setColumnWidth(5, 3000);
-			sheet.setColumnWidth(6, 3000);
-			sheet.setColumnWidth(7, 3000);
-			sheet.setColumnWidth(8, 3000);
+			sheet.setColumnWidth(5, 3500);
+			sheet.setColumnWidth(6, 3500);
+			sheet.setColumnWidth(7, 3500);
+			sheet.setColumnWidth(8, 3500);
 			sheet.setColumnWidth(25, 3000);
+			sheet.setColumnWidth(26, 5000);
 			sheet.setColumnWidth(30, 3000);
 			sheet.setColumnWidth(31, 3000);
 
@@ -150,52 +156,9 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 			font.setBold(true);
 			headerStyle.setFont(font);
 
-			/*
-			 * Cell headerCell = header.createCell(0); headerCell.setCellValue("Track");
-			 * headerCell.setCellStyle(headerStyle);
-			 * 
-			 * headerCell = header.createCell(1); headerCell.setCellValue("Car");
-			 * headerCell.setCellStyle(headerStyle);
-			 * 
-			 * headerCell = header.createCell(2); headerCell.setCellValue("Driver name");
-			 * headerCell.setCellStyle(headerStyle);
-			 * 
-			 * headerCell = header.createCell(3); headerCell.setCellValue("Session type");
-			 * headerCell.setCellStyle(headerStyle);
-			 * 
-			 * // DATA CellStyle style = workbook.createCellStyle();
-			 * style.setWrapText(true);
-			 * 
-			 * Row row = sheet.createRow(rowNo++); Cell cell = row.createCell(0);
-			 * cell.setCellValue(session.car.track); cell.setCellStyle(style);
-			 * 
-			 * cell = row.createCell(1); cell.setCellValue(session.car.carModel);
-			 * cell.setCellStyle(style);
-			 * 
-			 * cell = row.createCell(2); cell.setCellValue(session.car.playerName);
-			 * cell.setCellStyle(style);
-			 * 
-			 * cell = row.createCell(3); switch (session.getSession_TYPE()) { case
-			 * AC_SESSION_TYPE.AC_QUALIFY: cell.setCellValue("QUALIFY"); break; case
-			 * AC_SESSION_TYPE.AC_PRACTICE: cell.setCellValue("PRACTICE"); break; case
-			 * AC_SESSION_TYPE.AC_RACE: cell.setCellValue("RACE"); break; case
-			 * AC_SESSION_TYPE.AC_HOTLAP: cell.setCellValue("HOTLAP"); break; }
-			 * cell.setCellStyle(style);
-			 * 
-			 * row = sheet.createRow(rowNo++); header = sheet.createRow(rowNo++); header =
-			 * sheet.createRow(rowNo++);
-			 * 
-			 * headerCell = header.createCell(0); headerCell.setCellValue("Recorded Laps");
-			 * headerCell.setCellStyle(headerStyle);
-			 * 
-			 * row = sheet.createRow(rowNo++);
-			 */
+
 			CellStyle style = workbook.createCellStyle();
 			style.setWrapText(true);
-
-			// Cell headerCell = header.createCell(0);
-			// Row row = sheet.createRow(0);
-			// Cell cell = row.createCell(0);
 
 			int headerNo = 0;
 			Cell headerCell = header.createCell(headerNo++);
@@ -381,10 +344,47 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 			headerCell = header.createCell(headerNo++);
 			headerCell.setCellValue("driverStintTimeLeft");
 			headerCell.setCellStyle(headerStyle);
+
+			headerCell = header.createCell(headerNo++);
+			headerCell.setCellValue("mfdFuelToAdd");
+			headerCell.setCellStyle(headerStyle);
+
+			headerCell = header.createCell(headerNo++);
+			headerCell.setCellValue("mfdTyrePressureLF");
+			headerCell.setCellStyle(headerStyle);
+
+			headerCell = header.createCell(headerNo++);
+			headerCell.setCellValue("mfdTyrePressureRF");
+			headerCell.setCellStyle(headerStyle);
 			
+			headerCell = header.createCell(headerNo++);
+			headerCell.setCellValue("mfdTyrePressureLR");
+			headerCell.setCellStyle(headerStyle);
+			
+			headerCell = header.createCell(headerNo++);
+			headerCell.setCellValue("mfdTyrePressureRR");
+			headerCell.setCellStyle(headerStyle);
+			
+			headerCell = header.createCell(headerNo++);
+			headerCell.setCellValue("rainIntensityIn10min");
+			headerCell.setCellStyle(headerStyle);
+			
+			headerCell = header.createCell(headerNo++);
+			headerCell.setCellValue("rainIntensityIn30min");
+			headerCell.setCellStyle(headerStyle);
+						
 			Iterator<Map.Entry<Integer, StatLap>> iteratorLap = session.laps.entrySet().iterator();
 			int i = 0;
-
+			int bestLapIndex = -1;
+			int bestLapTime = 999999999;
+			for (Map.Entry<Integer, StatLap> bestLap :session.laps.entrySet()) {
+				if (bestLap.getValue().lapTime < bestLapTime && bestLap.getValue().isValidLap) {
+					bestLapIndex = bestLap.getKey();
+					bestLapTime = bestLap.getValue().lapTime;
+				}
+			}
+			
+			
 			while (iteratorLap.hasNext()) {
 
 				int cellNo = 0;
@@ -431,147 +431,209 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 
 					cell = row.createCell(cellNo++);
 					cell.setCellValue(mstoStr(lap.getValue().lapTime));
-					cell.setCellStyle(style);
+					
+					//cell.setCellFormula(msToCellFormula(lap.getValue().lapTime));
+					double d = Integer.valueOf(lap.getValue().lapTime).doubleValue()/Integer.valueOf(86400000).doubleValue();
+					cell.setCellValue(d);
+
+					CellStyle cellTimeStyleMMSS = workbook.createCellStyle();
+					CellStyle cellTimeStyleHHMMSS = workbook.createCellStyle();
+					CreationHelper createHelper = workbook.getCreationHelper();
+					cellTimeStyleMMSS.setDataFormat(createHelper.createDataFormat().getFormat("MM:SS.000"));
+					cellTimeStyleHHMMSS.setDataFormat(createHelper.createDataFormat().getFormat("HH:MM:SS"));
+					
+					if (!lap.getValue().isValidLap) 
+						cell.setCellStyle(lapTimeStyle(workbook, cellTimeStyleMMSS, true, false));
+					else
+						cell.setCellStyle(lapTimeStyle(workbook, cellTimeStyleMMSS, true, false));
+					
+					if (lap.getKey() == bestLapIndex)
+						cell.setCellStyle(lapTimeStyle(workbook, cellTimeStyleMMSS, true, true));
+
 
 					cell = row.createCell(cellNo++);
 					if (lap.getValue().splitTimes.get(1) != null) {
-						cell.setCellValue(mstoStr(lap.getValue().splitTimes.get(1)));
-						cell.setCellStyle(style);
+						d = Integer.valueOf(lap.getValue().splitTimes.get(1)).doubleValue()/Integer.valueOf(86400000).doubleValue();
+						cell.setCellValue(d);
+						cell.setCellStyle(lapTimeStyle(workbook, cellTimeStyleMMSS, true, false));
 					}
 
 					cell = row.createCell(cellNo++);
 					if (lap.getValue().splitTimes.get(2) != null) {
-						cell.setCellValue(mstoStr(lap.getValue().splitTimes.get(2) - lap.getValue().splitTimes.get(1)));
-						cell.setCellStyle(style);
+						d = Integer.valueOf(lap.getValue().splitTimes.get(2)-lap.getValue().splitTimes.get(1)).doubleValue()/(Integer.valueOf(86400000).doubleValue());
+						cell.setCellValue(d);
+						cell.setCellStyle(lapTimeStyle(workbook, cellTimeStyleMMSS, true, false));
 					}
 
 					cell = row.createCell(cellNo++);
 					if (lap.getValue().splitTimes.get(3) != null) {
-
-						cell.setCellValue(mstoStr(lap.getValue().splitTimes.get(3) - lap.getValue().splitTimes.get(2)));
-						cell.setCellStyle(style);
+						d = Integer.valueOf(lap.getValue().splitTimes.get(3)-lap.getValue().splitTimes.get(2)).doubleValue()/(Integer.valueOf(86400000).doubleValue());
+						cell.setCellValue(d);
+						cell.setCellStyle(lapTimeStyle(workbook, cellTimeStyleMMSS, true, false));
 					}
-					DecimalFormat df = new DecimalFormat("0.000");
+					//DecimalFormat df = new DecimalFormat("0.000");
+					CellStyle oneDigitStyle = workbook.createCellStyle();
+					DataFormat format = workbook.createDataFormat();
+					oneDigitStyle.setDataFormat(format.getFormat("0.0"));
+					CellStyle twoDigitsStyle = workbook.createCellStyle();
+					twoDigitsStyle.setDataFormat(format.getFormat("0.00"));
+					CellStyle threeDigitsStyle = workbook.createCellStyle();
+					threeDigitsStyle.setDataFormat(format.getFormat("0.000"));
+					CellStyle integerStyle = workbook.createCellStyle();
+					integerStyle.setDataFormat(format.getFormat("0"));
+					
 					cell = row.createCell(cellNo++);
-					cell.setCellValue(df.format(lap.getValue().fuelLeftOnStart));
-					cell.setCellStyle(style);
-					cell = row.createCell(cellNo++);
-					cell.setCellValue(df.format(lap.getValue().fuelLeftOnEnd));
-					cell.setCellStyle(style);
-					cell = row.createCell(cellNo++);
-					cell.setCellValue(df.format(lap.getValue().fuelAVGPerMinute));
-					cell.setCellStyle(style);
+					cell.setCellValue(lap.getValue().fuelLeftOnStart);
+					
+					cell.setCellStyle(twoDigitsStyle);
 
 					cell = row.createCell(cellNo++);
-					cell.setCellValue(df.format(lap.getValue().fuelXlap));
-					cell.setCellStyle(style);
+					cell.setCellValue(lap.getValue().fuelLeftOnEnd);
+					cell.setCellStyle(twoDigitsStyle);
 
 					cell = row.createCell(cellNo++);
-					cell.setCellValue(df.format(lap.getValue().fuelAVGPerLap));
-					cell.setCellStyle(style);
+					cell.setCellValue(lap.getValue().fuelAVGPerMinute);
+					cell.setCellStyle(threeDigitsStyle);
 
 					cell = row.createCell(cellNo++);
-					cell.setCellValue(df.format(lap.getValue().fuelAdded));
-					cell.setCellStyle(style);
-
-					boolean wet = lap.getValue().rainTyres == 1 ? true : false;
+					cell.setCellValue(lap.getValue().fuelXlap);
+					cell.setCellStyle(threeDigitsStyle);
 
 					cell = row.createCell(cellNo++);
-					cell.setCellValue(df.format(lap.getValue().avgpFL));
-					cell.setCellStyle(pressureXLSXStyle(workbook, lap.getValue().avgpFL, wet));
-					cell = row.createCell(cellNo++);
-					cell.setCellValue(df.format(lap.getValue().avgpFR));
-					cell.setCellStyle(pressureXLSXStyle(workbook, lap.getValue().avgpFR, wet));
-					cell = row.createCell(cellNo++);
-					cell.setCellValue(df.format(lap.getValue().avgpRL));
-					cell.setCellStyle(pressureXLSXStyle(workbook, lap.getValue().avgpRL, wet));
-					cell = row.createCell(cellNo++);
-					cell.setCellValue(df.format(lap.getValue().avgpRR));
-					cell.setCellStyle(pressureXLSXStyle(workbook, lap.getValue().avgpRR, wet));
+					cell.setCellValue(lap.getValue().fuelAVGPerLap);
+					cell.setCellStyle(threeDigitsStyle);
 
 					cell = row.createCell(cellNo++);
-					cell.setCellValue(df.format(lap.getValue().avgtFL));
-					cell.setCellStyle(style);
+					cell.setCellValue(lap.getValue().fuelAdded);
+					cell.setCellStyle(integerStyle);
+
+					//boolean wet = lap.getValue().rainTyres == 1 ? true : false;
+					boolean wet = lap.getValue().currentTyreSet == 0 ? true : false;
+
 					cell = row.createCell(cellNo++);
-					cell.setCellValue(df.format(lap.getValue().avgtFR));
-					cell.setCellStyle(style);
+					cell.setCellValue((lap.getValue().avgpFL));
+					cell.setCellStyle(pressureXLSXStyle(workbook, twoDigitsStyle, lap.getValue().avgpFL, wet));
+
 					cell = row.createCell(cellNo++);
-					cell.setCellValue(df.format(lap.getValue().avgtRL));
-					cell.setCellStyle(style);
+					cell.setCellValue((lap.getValue().avgpFR));
+					cell.setCellStyle(pressureXLSXStyle(workbook, twoDigitsStyle,lap.getValue().avgpFR, wet));
+					
 					cell = row.createCell(cellNo++);
-					cell.setCellValue(df.format(lap.getValue().avgtRR));
-					cell.setCellStyle(style);
+					cell.setCellValue((lap.getValue().avgpRL));
+					cell.setCellStyle(pressureXLSXStyle(workbook, twoDigitsStyle,lap.getValue().avgpRL, wet));
+					
 					cell = row.createCell(cellNo++);
-					cell.setCellValue(df.format(lap.getValue().avgRainIntensity));
-					cell.setCellStyle(style);
+					cell.setCellValue((lap.getValue().avgpRR));
+					cell.setCellStyle(pressureXLSXStyle(workbook, twoDigitsStyle,lap.getValue().avgpRR, wet));
+
+					cell = row.createCell(cellNo++);
+					cell.setCellValue((lap.getValue().avgtFL));
+					cell.setCellStyle(twoDigitsStyle);
+					cell = row.createCell(cellNo++);
+					cell.setCellValue((lap.getValue().avgtFR));
+					cell.setCellStyle(twoDigitsStyle);
+					cell = row.createCell(cellNo++);
+					cell.setCellValue((lap.getValue().avgtRL));
+					cell.setCellStyle(twoDigitsStyle);
+					cell = row.createCell(cellNo++);
+					cell.setCellValue((lap.getValue().avgtRR));
+					cell.setCellStyle(twoDigitsStyle);
+					cell = row.createCell(cellNo++);
+					cell.setCellValue((lap.getValue().avgRainIntensity));
+					cell.setCellStyle(integerStyle);
 					cell = row.createCell(cellNo++);
 					cell.setCellValue(lap.getValue().rainTyres);
-					cell.setCellStyle(style);
+					cell.setCellStyle(integerStyle);
+
 					cell = row.createCell(cellNo++);
 					cell.setCellValue(lap.getValue().avgTrackGripStatus);
-					cell.setCellStyle(style);
+					cell.setCellStyle(oneDigitStyle);
+
 					cell = row.createCell(cellNo++);
 					cell.setCellValue(lap.getValue().trackStatus);
-					cell.setCellStyle(style);
+					
 					cell = row.createCell(cellNo++);
 					cell.setCellValue(lap.getValue().isValidLap);
 					cell.setCellStyle(style);
 					cell = row.createCell(cellNo++);
-					cell.setCellValue(df.format(lap.getValue().avgAirTemp));
+					cell.setCellValue((lap.getValue().avgAirTemp));
+					cell.setCellStyle(oneDigitStyle);
+					cell = row.createCell(cellNo++);
+					cell.setCellValue((lap.getValue().avgRoadTemp));
 					cell.setCellStyle(style);
 					cell = row.createCell(cellNo++);
-					cell.setCellValue(df.format(lap.getValue().avgRoadTemp));
-					cell.setCellStyle(style);
-					cell = row.createCell(cellNo++);
-					cell.setCellValue(df.format(lap.getValue().fuelEFNLapsOnEnd));
-					cell.setCellStyle(style);
+					cell.setCellValue((lap.getValue().fuelEFNLapsOnEnd));
+					cell.setCellStyle(twoDigitsStyle);
 					cell = row.createCell(cellNo++);
 					cell.setCellValue(mstoStr(Math.round(lap.getValue().fuelEstForNextMiliseconds)));
 					cell.setCellStyle(style);
 					cell = row.createCell(cellNo++);
 					cell.setCellValue(mstoStr(Math.round(lap.getValue().sessionTimeLeft)));
 					cell.setCellStyle(style);
+					cell = row.createCell(cellNo++);
+					cell.setCellValue((lap.getValue().avgBPFL));
+					cell.setCellStyle(twoDigitsStyle);
+					cell = row.createCell(cellNo++);
+					cell.setCellValue((lap.getValue().avgBPFR));
+					cell.setCellStyle(twoDigitsStyle);
+					cell = row.createCell(cellNo++);
+					cell.setCellValue((lap.getValue().avgBPRL));
+					cell.setCellStyle(twoDigitsStyle);
+					cell = row.createCell(cellNo++);
+					cell.setCellValue((lap.getValue().avgBPRR));
+					cell.setCellStyle(twoDigitsStyle);
 
 					cell = row.createCell(cellNo++);
-					cell.setCellValue(df.format(lap.getValue().avgBPFL));
+					cell.setCellValue((lap.getValue().avgBDFL));
+					cell.setCellStyle(twoDigitsStyle);
+					cell = row.createCell(cellNo++);
+					cell.setCellValue((lap.getValue().avgBDFR));
+					cell.setCellStyle(twoDigitsStyle);
+					cell = row.createCell(cellNo++);
+					cell.setCellValue((lap.getValue().avgBDRL));
+					cell.setCellStyle(twoDigitsStyle);
+					cell = row.createCell(cellNo++);
+					cell.setCellValue((lap.getValue().avgBDRR));
+					cell.setCellStyle(twoDigitsStyle);
+					cell = row.createCell(cellNo++);
+					cell.setCellValue((lap.getValue().strategyTyreSet));
+					cell.setCellStyle(integerStyle);
+					cell = row.createCell(cellNo++);
+					cell.setCellValue((lap.getValue().currentTyreSet));
 					cell.setCellStyle(style);
 					cell = row.createCell(cellNo++);
-					cell.setCellValue(df.format(lap.getValue().avgBPFR));
+					cell.setCellValue((lap.getValue().position));
+					cell.setCellStyle(integerStyle);
+					cell = row.createCell(cellNo++);
+					d = Integer.valueOf(lap.getValue().driverStintTotalTimeLeft).doubleValue()/Integer.valueOf(86400000).doubleValue();
+					cell.setCellValue(d);
+					cell.setCellStyle(cellTimeStyleHHMMSS);
+					cell = row.createCell(cellNo++);
+					d = Integer.valueOf(lap.getValue().driverStintTimeLeft).doubleValue()/Integer.valueOf(86400000).doubleValue();
+					cell.setCellValue(d);
+					cell.setCellStyle(cellTimeStyleHHMMSS);
+					cell = row.createCell(cellNo++);
+					cell.setCellValue((lap.getValue().mfdFuelToAdd));
 					cell.setCellStyle(style);
 					cell = row.createCell(cellNo++);
-					cell.setCellValue(df.format(lap.getValue().avgBPRL));
+					cell.setCellValue((lap.getValue().mfdTyrePressureLF));
 					cell.setCellStyle(style);
 					cell = row.createCell(cellNo++);
-					cell.setCellValue(df.format(lap.getValue().avgBPRR));
-					cell.setCellStyle(style);
-
-					cell = row.createCell(cellNo++);
-					cell.setCellValue(df.format(lap.getValue().avgBDFL));
+					cell.setCellValue((lap.getValue().mfdTyrePressureRF));
 					cell.setCellStyle(style);
 					cell = row.createCell(cellNo++);
-					cell.setCellValue(df.format(lap.getValue().avgBDFR));
+					cell.setCellValue((lap.getValue().mfdTyrePressureLR));
 					cell.setCellStyle(style);
 					cell = row.createCell(cellNo++);
-					cell.setCellValue(df.format(lap.getValue().avgBDRL));
+					cell.setCellValue((lap.getValue().mfdTyrePressureRR));
 					cell.setCellStyle(style);
 					cell = row.createCell(cellNo++);
-					cell.setCellValue(df.format(lap.getValue().avgBDRR));
+					cell.setCellValue((lap.getValue().rainIntensityIn10min));
 					cell.setCellStyle(style);
 					cell = row.createCell(cellNo++);
-					cell.setCellValue(df.format(lap.getValue().strategyTyreSet));
+					cell.setCellValue((lap.getValue().rainIntensityIn30min));
 					cell.setCellStyle(style);
-					cell = row.createCell(cellNo++);
-					cell.setCellValue(df.format(lap.getValue().currentTyreSet));
-					cell.setCellStyle(style);
-					cell = row.createCell(cellNo++);
-					cell.setCellValue(df.format(lap.getValue().position));
-					cell.setCellStyle(style);
-					cell = row.createCell(cellNo++);
-					cell.setCellValue(df.format(lap.getValue().driverStintTotalTimeLeft));
-					cell.setCellStyle(style);
-					cell = row.createCell(cellNo++);
-					cell.setCellValue(df.format(lap.getValue().driverStintTimeLeft));
-					cell.setCellStyle(style);
+					
 				}
 			}
 		}
@@ -649,7 +711,7 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 										new BigDecimal(lap.getValue().fuelAVGPerMinute).setScale(3, RoundingMode.HALF_UP).doubleValue(), 
 										new BigDecimal(lap.getValue().fuelXlap).setScale(3, RoundingMode.HALF_UP).doubleValue(),
 										new BigDecimal(lap.getValue().fuelAdded).setScale(0, RoundingMode.HALF_UP).doubleValue(), 
-										lap.getValue().rainTyres == 1 ? true : false,
+										lap.getValue().currentTyreSet == 0 ? true : false,
 										new BigDecimal(lap.getValue().avgpFL).setScale(2, RoundingMode.HALF_UP).doubleValue(), 
 										new BigDecimal(lap.getValue().avgpFR).setScale(2, RoundingMode.HALF_UP).doubleValue(),
 										new BigDecimal(lap.getValue().avgpRL).setScale(2, RoundingMode.HALF_UP).doubleValue(), 
@@ -721,10 +783,82 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 		return true;
 	}
 
-	private CellStyle pressureXLSXStyle(Workbook workbook, float psi, boolean wet) {
+	private CellStyle lapTimeStyle(Workbook workbook, CellStyle basic,  boolean valid, boolean best) {
 
+		CellStyle notValidLap = workbook.createCellStyle();
+		notValidLap.cloneStyleFrom(basic);
+		Font fontNotValidLap = workbook.createFont();
+		fontNotValidLap.setColor(HSSFColor.HSSFColorPredefined.RED.getIndex());
+        notValidLap.setFont(fontNotValidLap);
+
+        CellStyle validLap = workbook.createCellStyle();
+        validLap.cloneStyleFrom(basic);
+		Font fontValidLap = workbook.createFont();
+		fontValidLap.setColor(HSSFColor.HSSFColorPredefined.BLACK.getIndex());
+        validLap.setFont(fontValidLap);
+        
+        CellStyle bestLap = workbook.createCellStyle();
+        bestLap.cloneStyleFrom(basic);
+		Font fontBestLap = workbook.createFont();
+		fontBestLap.setColor(HSSFColor.HSSFColorPredefined.PLUM.getIndex());
+		bestLap.setFont(fontBestLap);
+		
+		if (!valid) return notValidLap;
+		else if (valid && best) return bestLap;
+		else return validLap;
+	}
+	
+	private CellStyle pressureXLSXStyle(Workbook workbook, CellStyle basic, float psi, boolean wet) {
+
+		CellStyle veryColdStyle = workbook.createCellStyle();
+		veryColdStyle.cloneStyleFrom(basic);
+		veryColdStyle.setFillForegroundColor(IndexedColors.LIGHT_BLUE.getIndex());
+		veryColdStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+		
 		CellStyle coldStyle = workbook.createCellStyle();
-		coldStyle.setFillForegroundColor(IndexedColors.LIGHT_BLUE.getIndex());
+		coldStyle.cloneStyleFrom(basic);
+		coldStyle.setFillForegroundColor(IndexedColors.SKY_BLUE.getIndex());
+		coldStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+		CellStyle normalStyle = workbook.createCellStyle();
+		normalStyle.cloneStyleFrom(basic);
+		normalStyle.setFillForegroundColor(IndexedColors.LIGHT_GREEN.getIndex());
+		normalStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+		CellStyle warmStyle = workbook.createCellStyle();
+		warmStyle.cloneStyleFrom(basic);
+		warmStyle.setFillForegroundColor(IndexedColors.LIGHT_ORANGE.getIndex());
+		warmStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+		CellStyle veryWarmStyle = workbook.createCellStyle();
+		veryWarmStyle.cloneStyleFrom(basic);
+		veryWarmStyle.setFillForegroundColor(IndexedColors.RED.getIndex());
+		veryWarmStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+		
+		if (!wet) {
+			if (psi < 26.9)	return veryColdStyle;
+			else if (psi >= 26.9 && psi < 27.3) return coldStyle;
+			else if (psi >= 27.3 && psi <= 28.0) return normalStyle;
+			else if (psi > 28.0  && psi <= 28.5) return warmStyle;
+			else return veryWarmStyle;
+		} else {
+			if (psi < 29.0)	return veryColdStyle;
+			else if (psi >= 29.0 && psi < 29.5) return coldStyle;
+			else if (psi >= 29.5 && psi <= 31.0) return normalStyle;
+			else if (psi > 31.0  && psi <= 31.6) return warmStyle;
+			else return veryWarmStyle;
+		}
+	}
+	
+	private CellStyle temperaturStyle(Workbook workbook, float temp, boolean wet) {
+
+		CellStyle veryColdStyle = workbook.createCellStyle();
+		veryColdStyle.setFillForegroundColor(IndexedColors.LIGHT_BLUE.getIndex());
+		veryColdStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+		
+		CellStyle coldStyle = workbook.createCellStyle();
+		coldStyle.setFillForegroundColor(IndexedColors.SKY_BLUE.getIndex());
 		coldStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
 		CellStyle normalStyle = workbook.createCellStyle();
@@ -735,31 +869,28 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 		warmStyle.setFillForegroundColor(IndexedColors.LIGHT_ORANGE.getIndex());
 		warmStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
-		CellStyle hotStyle = workbook.createCellStyle();
-		hotStyle.setFillForegroundColor(IndexedColors.RED.getIndex());
-		hotStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+		CellStyle veryWarmStyle = workbook.createCellStyle();
+		veryWarmStyle.setFillForegroundColor(IndexedColors.RED.getIndex());
+		veryWarmStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
-		if (!wet) {
-			if (psi < 27.5)
-				return coldStyle;
-			else if (psi >= 27.5 && psi <= 28.0)
-				return normalStyle;
-			else if (psi > 28.0 && psi < 28.5)
-				return warmStyle;
-			else
-				return hotStyle;
-		} else {
-			return normalStyle;
-		}
+		return normalStyle;
+	}
+	
+	public static String msToCellFormula(long durationInMillis) {
+		long millis = durationInMillis % 1000;
+		long second = (durationInMillis / 1000) % 60;
+		long minute = (durationInMillis / (1000 * 60)) % 60;
+		long hour = (durationInMillis / (1000 * 60 * 60)) % 24;
+		float secondsmilis = second + millis/1000;
+		return String.format("TIME(%d,%d,%d.%d)",hour, minute, second, millis);
 	}
 
 	public static String mstoStr(long durationInMillis) {
 		long millis = durationInMillis % 1000;
 		long second = (durationInMillis / 1000) % 60;
-		long minute = (durationInMillis / (1000 * 60)) % 60;
-		long hour = (durationInMillis / (1000 * 60 * 60)) % 24;
+		long minute = (durationInMillis / (1000 * 60)) % 60 + ((durationInMillis / (1000 * 60 * 60)) % 24)*60;
 
-		return String.format("%02d:%02d:%02d:%03d", hour, minute, second, millis);
+		return String.format("%d:%02d,%03d", minute, second, millis);
 	}
 
 	@Override
@@ -907,4 +1038,5 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 		String tabName;
 	}
 }
+
 
