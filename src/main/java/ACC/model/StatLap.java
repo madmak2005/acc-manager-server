@@ -136,7 +136,8 @@ public class StatLap implements Serializable{
 			statPoints.add(currentStatPoint);
 			lapTime = currentStatPoint.iCurrentTime;
 			if (isValidLap) //change only from true to false
-				isValidLap = !(currentStatPoint.isValidLap == 0); // zero == false
+				if (currentStatPoint.isValidLap == 0) // zero == false
+					isValidLap = false; 
 			lapNo = currentStatPoint.lapNo;
 			distanceTraveled = currentStatPoint.distanceTraveled;
 			fuelLeftOnEnd = currentStatPoint.fuel;
@@ -256,8 +257,10 @@ public class StatLap implements Serializable{
 			clockAtStart = firstStatPoint.clock;
 			
 			float minutes = (float) lapTime / (1000 * 60);
-			if (lapTime > 0)
+			if (lapTime > 0 && fuelAdded == 0)
 				fuelAVGPerMinute = minutes == 0 ? 0 : fuelUsed / minutes;
+			else 
+				fuelAVGPerMinute = 0;
 			
 			// we enter the pit
 			if (prevStatPoint.isInPitLane == 0 && currentStatPoint.isInPitLane == 1) {

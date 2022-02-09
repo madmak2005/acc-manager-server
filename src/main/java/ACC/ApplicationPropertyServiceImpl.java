@@ -97,6 +97,14 @@ public class ApplicationPropertyServiceImpl implements ApplicationPropertyServic
 		enduSession.teamCode = lap.teamCode;
 		enduSession.pin = lap.pin;
 		
+		int sum = 0;
+		if (!lap.splitTimes.isEmpty()) {
+			for ( Entry<Integer, Integer> split : lap.splitTimes.entrySet()) {
+				sum += split.getValue();
+				split.setValue(sum);
+			}
+		}
+		
 		/*
 		if (enduSession.laps.size() > 0) {
 			for (Entry<Integer,StatLap> lapEntry : enduSession.laps.entrySet()) {

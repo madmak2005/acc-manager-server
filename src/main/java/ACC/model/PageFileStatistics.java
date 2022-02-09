@@ -173,6 +173,10 @@ public class PageFileStatistics implements Page {
 								LOGGER.info("Car position: [" + statPoint.normalizedCarPosition + "]");
 								StatLap prevLap = currentSession.laps.get(statPoint.lapNo - 1);
 								if (prevLap != null) {
+									if (!prevLap.isValidLap) {
+										currentSession.last3Laps.remove(prevLap);
+										currentSession.last5Laps.remove(prevLap);
+									}
 									prevLap.lapTime = statPoint.iLastTime;
 									prevLap.splitTimes.put(prevLap.splitTimes.size(), statPoint.iLastTime);
 									prevLap.splitTimes.remove(0);

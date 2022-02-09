@@ -383,6 +383,31 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 					bestLapTime = bestLap.getValue().lapTime;
 				}
 			}
+			int[] bestSplitLaps = new int[3];
+			bestSplitLaps[0]=Integer.MAX_VALUE;
+			bestSplitLaps[1]=Integer.MAX_VALUE;
+			bestSplitLaps[2]=Integer.MAX_VALUE;
+			int split1Index = -1;
+			int split2Index = -1;
+			int split3Index = -1;
+			for (Map.Entry<Integer, StatLap> lap :session.laps.entrySet()) {
+				if (lap.getValue().isValidLap) {
+					if (lap.getValue().splitTimes.size() == 3) {
+						if (lap.getValue().splitTimes.size()>=1 && lap.getValue().splitTimes.get(1) != null && bestSplitLaps[0] > lap.getValue().splitTimes.get(1)) {
+							bestSplitLaps[0] = lap.getValue().splitTimes.get(1);
+							split1Index = lap.getKey();
+						}
+						if (lap.getValue().splitTimes.size()>=2 && lap.getValue().splitTimes.get(2) != null && bestSplitLaps[1] > lap.getValue().splitTimes.get(2)){
+							bestSplitLaps[1] = lap.getValue().splitTimes.get(2);
+							split2Index = lap.getKey();
+						}
+						if (lap.getValue().splitTimes.size()>=3 && lap.getValue().splitTimes.get(3) != null && bestSplitLaps[2] > lap.getValue().splitTimes.get(3)) {
+							bestSplitLaps[2] = lap.getValue().splitTimes.get(3);
+							split3Index = lap.getKey();
+						}
+					}
+				}
+			}
 			
 			
 			while (iteratorLap.hasNext()) {
@@ -442,10 +467,10 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 					cellTimeStyleMMSS.setDataFormat(createHelper.createDataFormat().getFormat("MM:SS.000"));
 					cellTimeStyleHHMMSS.setDataFormat(createHelper.createDataFormat().getFormat("HH:MM:SS"));
 					
-					if (!lap.getValue().isValidLap) 
+					if (lap.getValue().isValidLap) 
 						cell.setCellStyle(lapTimeStyle(workbook, cellTimeStyleMMSS, true, false));
 					else
-						cell.setCellStyle(lapTimeStyle(workbook, cellTimeStyleMMSS, true, false));
+						cell.setCellStyle(lapTimeStyle(workbook, cellTimeStyleMMSS, false, false));
 					
 					if (lap.getKey() == bestLapIndex)
 						cell.setCellStyle(lapTimeStyle(workbook, cellTimeStyleMMSS, true, true));
@@ -455,21 +480,30 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 					if (lap.getValue().splitTimes.get(1) != null) {
 						d = Integer.valueOf(lap.getValue().splitTimes.get(1)).doubleValue()/Integer.valueOf(86400000).doubleValue();
 						cell.setCellValue(d);
-						cell.setCellStyle(lapTimeStyle(workbook, cellTimeStyleMMSS, true, false));
+						if (lap.getKey()==split1Index)
+							cell.setCellStyle(lapTimeStyle(workbook, cellTimeStyleMMSS, true, true));
+						else
+							cell.setCellStyle(lapTimeStyle(workbook, cellTimeStyleMMSS, true, false));
 					}
 
 					cell = row.createCell(cellNo++);
 					if (lap.getValue().splitTimes.get(2) != null) {
 						d = Integer.valueOf(lap.getValue().splitTimes.get(2)-lap.getValue().splitTimes.get(1)).doubleValue()/(Integer.valueOf(86400000).doubleValue());
 						cell.setCellValue(d);
-						cell.setCellStyle(lapTimeStyle(workbook, cellTimeStyleMMSS, true, false));
+						if (lap.getKey()==split2Index)
+							cell.setCellStyle(lapTimeStyle(workbook, cellTimeStyleMMSS, true, true));
+						else
+							cell.setCellStyle(lapTimeStyle(workbook, cellTimeStyleMMSS, true, false));
 					}
 
 					cell = row.createCell(cellNo++);
 					if (lap.getValue().splitTimes.get(3) != null) {
 						d = Integer.valueOf(lap.getValue().splitTimes.get(3)-lap.getValue().splitTimes.get(2)).doubleValue()/(Integer.valueOf(86400000).doubleValue());
 						cell.setCellValue(d);
-						cell.setCellStyle(lapTimeStyle(workbook, cellTimeStyleMMSS, true, false));
+						if (lap.getKey()==split3Index)
+							cell.setCellStyle(lapTimeStyle(workbook, cellTimeStyleMMSS, true, true));
+						else
+							cell.setCellStyle(lapTimeStyle(workbook, cellTimeStyleMMSS, true, false));
 					}
 					//DecimalFormat df = new DecimalFormat("0.000");
 					CellStyle oneDigitStyle = workbook.createCellStyle();
@@ -492,16 +526,21 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
 					cell.setCellStyle(twoDigitsStyle);
 
 					cell = row.createCell(cellNo++);
-					cell.setCellValue(lap.getValue().fuelAVGPerMinute);
-					cell.setCellStyle(threeDigitsStyle);
+					if (lap.getValue().fuelAVGPerMinute > 0 && lap.getValue().isValidLap) {
+						cell.setCellValue(lap.getValue().fuelAVGPerMinute);
+						cell.setCellStyle(threeDigitsStyle);
+					}
 
 					cell = row.createCell(cellNo++);
 					cell.setCellValue(lap.getValue().fuelXlap);
 					cell.setCellStyle(threeDigitsStyle);
 
+					
 					cell = row.createCell(cellNo++);
-					cell.setCellValue(lap.getValue().fuelAVGPerLap);
-					cell.setCellStyle(threeDigitsStyle);
+					if (lap.getValue().isValidLap) {
+						cell.setCellValue(lap.getValue().fuelAVGPerLap);
+						cell.setCellStyle(threeDigitsStyle);
+					}
 
 					cell = row.createCell(cellNo++);
 					cell.setCellValue(lap.getValue().fuelAdded);
@@ -799,8 +838,10 @@ public class ACCDataSaveServiceImpl implements ACCDataSaveService {
         
         CellStyle bestLap = workbook.createCellStyle();
         bestLap.cloneStyleFrom(basic);
+        bestLap.setFillForegroundColor(HSSFColor.HSSFColorPredefined.PLUM.getIndex());
+        bestLap.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 		Font fontBestLap = workbook.createFont();
-		fontBestLap.setColor(HSSFColor.HSSFColorPredefined.PLUM.getIndex());
+		fontBestLap.setColor(HSSFColor.HSSFColorPredefined.WHITE.getIndex());
 		bestLap.setFont(fontBestLap);
 		
 		if (!valid) return notValidLap;
