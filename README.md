@@ -1,3 +1,6 @@
+# Download executable files:
+https://github.com/madmak2005/acc-manager-server/releases
+
 # acc-manager
 This REST/ WebSocket server is used to download the data described in the "ACC Shared Memory" documentation. You need to have Assetto Corsa Competizione game to see the real data. 
 
