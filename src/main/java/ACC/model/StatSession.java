@@ -64,8 +64,8 @@ public class StatSession implements Serializable {
 	public String session_TYPENAME = "UNKNOWN";
 	public Map<Integer,StatLap> laps = new HashMap<>();
 
-	public CircularFifoQueue<StatLap> last3Laps = new CircularFifoQueue<>(4);
-	public CircularFifoQueue<StatLap> last5Laps = new CircularFifoQueue<>(6);
+	public CircularFifoQueue<StatLap> last3Laps = new CircularFifoQueue<>(3);
+	public CircularFifoQueue<StatLap> last5Laps = new CircularFifoQueue<>(5);
 	
 	public StatLap bestLap = new StatLap();
 	public StatLap lastLap = new StatLap();

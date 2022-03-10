@@ -8,12 +8,12 @@ import java.net.UnknownHostException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
-
-
 
 @SpringBootApplication
 @EnableWebSocket
@@ -23,6 +23,9 @@ public class Application {
 	public static Logger LOGGER=LoggerFactory.getLogger(Application.class);
 	public static boolean debug = false;
 	public static boolean useDebug = false;
+	
+	 @Value("${build.version}")
+	 private static String buildVersion;
 
 	public static void main(String[] args) {
 		for (String s: args) {
@@ -46,6 +49,7 @@ public class Application {
 			  socket.connect(InetAddress.getByName("8.8.8.8"), 10002);
 			  String ip = socket.getLocalAddress().getHostAddress();
 			  String port = "8080";
+			  
 			  LOGGER.info("=========================================");
 			  LOGGER.info("In mobile application enter:");
 			  LOGGER.info("IP: " + ip);
@@ -53,7 +57,7 @@ public class Application {
 			  LOGGER.info("=========================================");
 			  LOGGER.info("In webbrowser: http://localhost:" + port);
 			  LOGGER.info("=========================================");
-			  
+
 			  LOGGER.info("Now waiting for data from ACC. You need to start the race in the game.");
 
 			} catch (SocketException | UnknownHostException e) {
