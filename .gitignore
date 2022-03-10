@@ -34,3 +34,4 @@ build/
 /debug/
 
 /src/main/resources/application.properties
+/credentialsFolder/StoredCredential
