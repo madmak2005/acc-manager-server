@@ -7,12 +7,16 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.google.gson.Gson;
@@ -20,6 +24,7 @@ import com.google.gson.GsonBuilder;
 
 import ACC.ApplicationContextAwareImpl;
 import ACC.ApplicationPropertyService;
+import ACC.model.ApplicationInfo;
 import ACC.model.OutputMessage;
 import ACC.model.PageFileStatistics;
 import ACC.model.StatLap;
@@ -83,6 +88,22 @@ public class RestControler {
 		}
 		return "ok";
 	}
+	
+    @Value("${application.name}")
+    private String applicationName;
+
+    @Value("${build.version}")
+    private String buildVersion;
+
+    @Value("${build.timestamp}")
+    private String buildTimestamp;
+	
+    @GetMapping(value = {"/info"}, produces = MediaType.APPLICATION_JSON_VALUE)
+    public String getInfo() {
+    	ApplicationInfo ai = new ApplicationInfo(applicationName,buildVersion,buildTimestamp);
+    	Gson gson = new Gson();
+        return gson.toJson(ai);
+    }
 	
     @PostMapping(value = { "/setGoogleSheetID" })
 	public String setGoogleSheetID(@RequestBody SheetForm sheet) throws Exception {

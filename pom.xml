@@ -21,6 +21,8 @@
 		<java.version>8</java.version>
 		<maven.compiler.source>8</maven.compiler.source>
 		<maven.compiler.target>8</maven.compiler.target>
+		<timestamp>${maven.build.timestamp}</timestamp>
+        <maven.build.timestamp.format>yyyy-MM-dd HH:mm</maven.build.timestamp.format>
 	</properties>
 
 	<dependencies>
@@ -116,9 +118,9 @@
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.webjars/sockjs-client -->
 		<dependency>
-    		<groupId>org.webjars</groupId>
-    		<artifactId>sockjs-client</artifactId>
-    		<version>1.5.1</version>
+			<groupId>org.webjars</groupId>
+			<artifactId>sockjs-client</artifactId>
+			<version>1.5.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.webjars</groupId>
@@ -153,11 +155,11 @@
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
 		<dependency>
-    	<groupId>org.apache.commons</groupId>
-    		<artifactId>commons-lang3</artifactId>
-	    	<version>3.12.0</version>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>3.12.0</version>
 		</dependency>
-		
+
 		<!-- https://mvnrepository.com/artifact/org.tukaani/xz -->
 		<dependency>
 			<groupId>org.tukaani</groupId>
@@ -237,8 +239,8 @@
 			<artifactId>spring-boot-starter-oauth2-client</artifactId>
 		</dependency>
 		<dependency>
-		    <groupId>org.springframework.boot</groupId>
-    		<artifactId>spring-boot-starter-thymeleaf</artifactId>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-thymeleaf</artifactId>
 		</dependency>
 	</dependencies>
 	<build>
@@ -275,6 +277,27 @@
 					</archive>
 				</configuration>
 			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+				<configuration>
+					<resource.delimiter>@</resource.delimiter>
+					<!-- delimiter that doesn't clash with Spring ${} placeholders -->
+					<delimiters>
+						<delimiter>${resource.delimiter}</delimiter>
+					</delimiters>
+					<useDefaultDelimiters>false</useDefaultDelimiters>
+				</configuration>
+			</plugin>
 		</plugins>
+		<resources>
+			<resource>
+				<filtering>true</filtering>
+				<directory>src/main/resources</directory>
+				<includes>
+					<include>application.properties</include>
+				</includes>
+			</resource>
+		</resources>
 	</build>
 </project>
