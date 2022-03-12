@@ -112,6 +112,13 @@ public class RestControler {
     	}
     	return "ok";
 	}
+    
+	@GetMapping("/autoSaveKey")
+	public void setAutoSaveKey(@RequestParam Map<String, String> allParams) {
+		if (allParams.containsKey("key")) {
+			applicationPropertyService.setAutoSaveReplayKey(allParams.get("key"));
+		}
+	}
 
 	@GetMapping("/getSession")
 	public String getSessions(@RequestParam Map<String, String> allParams) {

@@ -10,11 +10,18 @@ import java.util.OptionalDouble;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import ACC.ApplicationPropertyService;
+import virtualKeyboard.VirtualKeyboardAPI;
 
 public class StatLap implements Serializable{
 	/**
 	 * 
 	 */
+	@Autowired
+	ApplicationPropertyService applicationPropertyService;
+	
 	private static final long serialVersionUID = 1L;
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(StatLap.class);
@@ -131,6 +138,19 @@ public class StatLap implements Serializable{
 	}
 
 	protected synchronized void addStatPoint(StatPoint currentStatPoint) {
+		if (statPoints.size() > 1) {
+			StatPoint prevStatPoint = statPoints.get(statPoints.size() - 2);
+			if (prevStatPoint.pitLimiterOn == 0 && currentStatPoint.pitLimiterOn == 1) {
+				VirtualKeyboardAPI api = new VirtualKeyboardAPI();
+				Map<String,String> keyMap = new HashMap<String, String>();
+				String key = applicationPropertyService.getAutoSaveReplayKey();
+				if (key != null && !key.isEmpty()) {
+					keyMap.put("key", key);
+					api.execute(keyMap);
+				}
+			}
+		}
+		
 		if (currentStatPoint.wheelsPressure[0] > 0 && currentStatPoint.tyreCoreTemperature[0] > 0
 				&& currentStatPoint.padLife[0] > 0 && currentStatPoint.discLife[0] > 0) {
 			statPoints.add(currentStatPoint);

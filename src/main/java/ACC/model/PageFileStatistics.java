@@ -261,7 +261,7 @@ public class PageFileStatistics implements Page {
 
 								// init new lap, we don't have it in current session
 								lap = new StatLap();
-								if (statPoint.normalizedCarPosition > 0.1) lap.isValidLap = false;
+								//if (statPoint.normalizedCarPosition > 0.1) lap.isValidLap = false;
 								lap.addStatPoint(statPoint);
 								lap.clockAtStart = statPoint.clock;
 								currentSession.addStatLap(lap);

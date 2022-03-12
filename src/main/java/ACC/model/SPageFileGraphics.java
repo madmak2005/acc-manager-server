@@ -167,7 +167,7 @@ public class SPageFileGraphics extends Structure {
     public int iEstimatedLapTime = 0;
     public int isDeltaPositive = 0;
     public int iSplit = 0;
-    public int isValidLap = 0;
+    public int isValidLap = 1;
     public float fuelEstimatedLaps = 0;
     public byte[] trackStatus = new byte[66];
     public int missingMandatoryPits = 0;

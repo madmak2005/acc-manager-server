@@ -21,6 +21,7 @@ public class StatPoint implements Serializable{
 	
 	public int 		isInPit = 0;		//Car is pitting
 	public int 		isInPitLane = 0;	//Car is in pit lane
+	public int		pitLimiterOn = 0;
 	
 	public float 	fuel = 0;			//Amount of fuel remaining in kg
 	public float 	usedFuel = 0;		//Used fuel since last time refueling
@@ -43,7 +44,7 @@ public class StatPoint implements Serializable{
 	
 	public float 	speedKmh = 0;
 	
-	public int 		isValidLap = 0;
+	public int 		isValidLap = 1;
 	public float 	distanceTraveled = 0;
 	
 	public int		trackGripStatus = 0;

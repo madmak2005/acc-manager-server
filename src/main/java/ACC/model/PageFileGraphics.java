@@ -98,7 +98,7 @@ public class PageFileGraphics implements Page {
     public int iEstimatedLapTime = 0;
     public int isDeltaPositive = 0;
     public int iSplit = 0;
-    public int isValidLap = 0;
+    public int isValidLap = 1;
     public float fuelEstimatedLaps = 0.0f;
     public String trackStatus = "";
     public int missingMandatoryPits = 0;

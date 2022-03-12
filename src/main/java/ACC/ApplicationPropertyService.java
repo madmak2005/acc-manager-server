@@ -19,4 +19,6 @@ public interface ApplicationPropertyService {
     public void addMobileSession(StatSession session);
     public StatSession getEnduSession();
     public void importLap(StatLap lap);
+    public void setAutoSaveReplayKey(String key);
+    public String getAutoSaveReplayKey();
 }

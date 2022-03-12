@@ -27,6 +27,7 @@ public class ApplicationPropertyServiceImpl implements ApplicationPropertyServic
 	List<StatSession> sessions = new ArrayList<StatSession>();
 	List<StatSession> enduSessions = new ArrayList<StatSession>(); 
 	StatSession enduSession = new StatSession(); 
+	String autoSaveReplay = ""; 
 	
 	@Autowired
 	private ServerProperties serverProperties;
@@ -123,6 +124,16 @@ public class ApplicationPropertyServiceImpl implements ApplicationPropertyServic
 	@Override
 	public StatSession getEnduSession() {
 		return enduSession;
+	}
+
+	@Override
+	public void setAutoSaveReplayKey(String key) {
+		autoSaveReplay = key;
+	}
+
+	@Override
+	public String getAutoSaveReplayKey() {
+		return autoSaveReplay;
 	}
     
     

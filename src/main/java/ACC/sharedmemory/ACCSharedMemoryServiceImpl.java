@@ -266,6 +266,7 @@ public class ACCSharedMemoryServiceImpl implements ACCSharedMemoryService {
 		statPoint.tyreCoreTemperature = p.tyreCoreTemperature;
 		statPoint.wheelsPressure = p.wheelsPressure;
 		statPoint.packetIDP = p.packetId;
+		statPoint.pitLimiterOn = p.pitLimiterOn;
 		}
 		return statPoint;
 	}

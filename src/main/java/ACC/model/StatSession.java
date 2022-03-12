@@ -141,7 +141,7 @@ public class StatSession implements Serializable {
 						bestLap = bestLap.lapTime > l.lapTime ? l : bestLap;
 					});
 				}
-				if (lastLap.statPoints != null) {
+				if (lastLap.statPoints != null && lastLap.statPoints.size() >= 1) {
 					fuelXLap = lastLap.statPoints.get(lastLap.statPoints.size() - 1).fuelXlap;
 					if (lastLap.statPoints.size() > 1) {
 						StatPoint lastLapLastStatPoint = lastLap.statPoints.get(lastLap.statPoints.size() - 1);
