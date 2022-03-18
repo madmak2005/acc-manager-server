@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
@@ -48,6 +50,8 @@ public class RestControler {
 	
 	@Autowired
 	ApplicationContext context;
+	
+	private static final Logger LOGGER = LoggerFactory.getLogger(RestControler.class);
 	
 	/*
 	private ApplicationPropertyService applicationPropertyService = (ApplicationPropertyService) ApplicationContextAwareImpl
@@ -113,12 +117,23 @@ public class RestControler {
     	return "ok";
 	}
     
-	@GetMapping("/autoSaveKey")
+	@PostMapping("/setAutoSaveKey")
 	public void setAutoSaveKey(@RequestParam Map<String, String> allParams) {
 		if (allParams.containsKey("key")) {
 			applicationPropertyService.setAutoSaveReplayKey(allParams.get("key"));
 		}
 	}
+	
+	@PostMapping("/setAutoSaveActivity")
+	public void ssetAutoSaveActivity(@RequestParam Map<String, String> allParams) {
+		LOGGER.info("key");
+		LOGGER.info(allParams.get("key"));
+		if (allParams.containsKey("key")) {
+			applicationPropertyService.setAutoSaveReplayActivity(allParams.get("key"));
+		}
+	}
+	
+	
 
 	@GetMapping("/getSession")
 	public String getSessions(@RequestParam Map<String, String> allParams) {

@@ -11,8 +11,11 @@ import java.util.OptionalDouble;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 
+import ACC.ApplicationContextAwareImpl;
 import ACC.ApplicationPropertyService;
+import ACC.saving.ACCDataSaveService;
 import virtualKeyboard.VirtualKeyboardAPI;
 
 public class StatLap implements Serializable{
@@ -143,10 +146,19 @@ public class StatLap implements Serializable{
 			if (prevStatPoint.pitLimiterOn == 0 && currentStatPoint.pitLimiterOn == 1) {
 				VirtualKeyboardAPI api = new VirtualKeyboardAPI();
 				Map<String,String> keyMap = new HashMap<String, String>();
-				String key = applicationPropertyService.getAutoSaveReplayKey();
-				if (key != null && !key.isEmpty()) {
-					keyMap.put("key", key);
-					api.execute(keyMap);
+				ApplicationContext context = ApplicationContextAwareImpl.getApplicationContext();
+				LOGGER.info("AUTOSAVING REPLAY");
+				if (context != null) {
+					ApplicationPropertyService applicationPropertyService = (ApplicationPropertyService) context
+							.getBean("applicationPropertyService");
+					String key = applicationPropertyService.getAutoSaveReplayKey();
+					String activity = applicationPropertyService.getAutoSaveReplayActivity();
+					LOGGER.info("USING KEY: " + (key != null ? key : "null"));
+					LOGGER.info("AutoSaveReplayActivity: " + (activity != null ? activity : "null"));
+					if (key != null && !key.isEmpty() && activity != null && activity.equals("Y")) {
+						keyMap.put("key", key);
+						api.execute(keyMap);
+					}
 				}
 			}
 		}

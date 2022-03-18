@@ -21,4 +21,6 @@ public interface ApplicationPropertyService {
     public void importLap(StatLap lap);
     public void setAutoSaveReplayKey(String key);
     public String getAutoSaveReplayKey();
+	public void setAutoSaveReplayActivity(String key);
+	public String getAutoSaveReplayActivity();
 }

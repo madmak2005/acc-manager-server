@@ -17,6 +17,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         		.antMatchers("/info").permitAll()        
         		.antMatchers("/save").permitAll()
                 .antMatchers("/send").permitAll()
+                .antMatchers("/setAutoSaveKey").permitAll()
+                .antMatchers("/setAutoSaveActivity").permitAll()
                 .antMatchers("/getMobileSession").permitAll()
                 .antMatchers("/getMobileSessionList").permitAll()
                 .antMatchers("/importTeamLap").permitAll()
