@@ -113,6 +113,7 @@ public class StatLap implements Serializable{
 	public int position = 0;
 	public int driverStintTotalTimeLeft = 0;
 	public int driverStintTimeLeft = 0;
+	public long docId = 0;
 	
 	StatPoint firstStatPoint = new StatPoint();
 	

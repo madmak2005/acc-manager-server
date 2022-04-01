@@ -37,7 +37,7 @@ public class StatSession implements Serializable {
 		return session_TYPE;
 	}
 
-	protected void setSession_TYPE(int session_TYPE) {
+	public void setSession_TYPE(int session_TYPE) {
 		this.session_TYPE = session_TYPE;
 		switch (session_TYPE) {
 			case AC_SESSION_TYPE.AC_QUALIFY:

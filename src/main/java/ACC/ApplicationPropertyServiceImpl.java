@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import ACC.model.AC_SESSION_TYPE;
 import ACC.model.StatLap;
 import ACC.model.StatSession;
 import app.Application;
@@ -35,12 +36,12 @@ public class ApplicationPropertyServiceImpl implements ApplicationPropertyServic
 	
 	@Override
     public int getApplicationProperty(){
-        return (Application.useDebug ? 10 : 100);
+        return (Application.useDebug ? 50 : 100);
     }
     
 	@Override
     public int getStatisticsInterval(){
-        return (Application.useDebug ? 33: 333);
+        return (Application.useDebug ? 67: 333);
     }
     
 	@Override
@@ -98,6 +99,30 @@ public class ApplicationPropertyServiceImpl implements ApplicationPropertyServic
 		
 		enduSession.teamCode = lap.teamCode;
 		enduSession.pin = lap.pin;
+		enduSession.session_TYPENAME = lap.session_TYPE;
+		switch (enduSession.session_TYPENAME) {
+		case "QUALIFY":
+			enduSession.setSession_TYPE(1);
+	          break;
+	        case "PRACTICE":
+	        	enduSession.setSession_TYPE(AC_SESSION_TYPE.AC_PRACTICE);
+	          break;
+	        case "RACE":
+	        	enduSession.setSession_TYPE(AC_SESSION_TYPE.AC_RACE);
+	          break;
+	        case "HOTLAP":
+	        	enduSession.setSession_TYPE(AC_SESSION_TYPE.AC_HOTLAP);
+	          break;
+	        case "TIME_ATTACK":
+	        	enduSession.setSession_TYPE(AC_SESSION_TYPE.AC_TIME_ATTACK);
+	          break;
+	        case "HOTSTINT":
+	        	enduSession.setSession_TYPE(AC_SESSION_TYPE.AC_HOTSTINT);
+	          break;
+	        case "HOTLAPSUPERPOLE":
+	        	enduSession.setSession_TYPE(AC_SESSION_TYPE.AC_HOTLAPSUPERPOLE);
+	          break;
+	      }
 		
 		int sum = 0;
 		if (!lap.splitTimes.isEmpty()) {

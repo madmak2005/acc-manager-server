@@ -67,7 +67,11 @@ public class ACCSharedMemoryServiceImpl implements ACCSharedMemoryService {
 		,ferrari_488_gt3_evo
 		,mercedes_amg_gt3_evo
 		,bmw_m4_gt3
-		
+		,audi_r8_lms_evo_ii         
+		,bmw_m2_cs_racing           
+		,ferrari_488_challenge_evo  
+		,lamborghini_huracan_st_evo2
+		,porsche_992_gt3_cup        
 	}
 	
 	EnumMap<CarModel, Integer> brakeBiasMap = new EnumMap<>(CarModel.class);
@@ -113,6 +117,11 @@ public class ACCSharedMemoryServiceImpl implements ACCSharedMemoryService {
 		brakeBiasMap.put(CarModel.ferrari_488_gt3_evo, -17);
 		brakeBiasMap.put(CarModel.mercedes_amg_gt3_evo, -14);
 		brakeBiasMap.put(CarModel.bmw_m4_gt3 , -14);
+		brakeBiasMap.put(CarModel.audi_r8_lms_evo_ii, -14);
+		brakeBiasMap.put(CarModel.bmw_m2_cs_racing,-17);
+		brakeBiasMap.put(CarModel.ferrari_488_challenge_evo,-13);
+		brakeBiasMap.put(CarModel.lamborghini_huracan_st_evo2,-14);
+		brakeBiasMap.put(CarModel.porsche_992_gt3_cup,-5);
 		
 		Page page = getPageFile(pageTyp);
 		return new OutputMessage(page, fieldsFilter);
@@ -193,7 +202,12 @@ public class ACCSharedMemoryServiceImpl implements ACCSharedMemoryService {
 			if (lastps.carModel.equals("porsche_718_cayman_gt4_mr"   )) return brakeBiasMap.get(CarModel.porsche_718_cayman_gt4_mr);
 			if (lastps.carModel.equals("ferrari_488_gt3_evo"         )) return brakeBiasMap.get(CarModel.ferrari_488_gt3_evo);
 			if (lastps.carModel.equals("mercedes_amg_gt3_evo"        )) return brakeBiasMap.get(CarModel.mercedes_amg_gt3_evo);
-			if (lastps.carModel.equals("bmw_m4_gt3 "                 )) return brakeBiasMap.get(CarModel.bmw_m4_gt3 );
+			if (lastps.carModel.equals("bmw_m4_gt3"                  )) return brakeBiasMap.get(CarModel.bmw_m4_gt3 );
+			if (lastps.carModel.equals("audi_r8_lms_evo_ii"          )) return brakeBiasMap.get(CarModel.audi_r8_lms_evo_ii );
+			if (lastps.carModel.equals("bmw_m2_cs_racing"            )) return brakeBiasMap.get(CarModel.bmw_m2_cs_racing);
+			if (lastps.carModel.equals("ferrari_488_challenge_evo"   )) return brakeBiasMap.get(CarModel.ferrari_488_challenge_evo);
+			if (lastps.carModel.equals("lamborghini_huracan_st_evo2" )) return brakeBiasMap.get(CarModel.lamborghini_huracan_st_evo2 );
+			if (lastps.carModel.equals("porsche_992_gt3_cup"         )) return brakeBiasMap.get(CarModel.porsche_992_gt3_cup );
 		}
 		return offset;
 		
