@@ -70,6 +70,7 @@ public class VirtualKeyboardAPI {
 				KeyboardKey keyboardKey = KeyboardKey.getByCodename(key);
 				if (Character.isUpperCase(key.charAt(0))) {
 					Runnable runnableTask = () -> {
+						System.out.println("isUpperCase");
 						try {
 							sendText(KeyboardKey.RSHIFT, DOWN, 0);
 							TimeUnit.MILLISECONDS.sleep(5);
@@ -106,8 +107,29 @@ public class VirtualKeyboardAPI {
 		} else {
 			String string = allParams.get("string");
 			if (string != null && KeyboardKey.getByCodename(string) != null) {
-				sendText(KeyboardKey.getByCodename(string), DOWN, 0);
-				sendText(KeyboardKey.getByCodename(string), UP, 0);
+				if (string.contains("SHIFT_")) {
+					System.out.println(string);
+					sendText(KeyboardKey.RSHIFT, DOWN, 0);
+					sendText(KeyboardKey.getByCodename(string), DOWN, 0);
+					sendText(KeyboardKey.getByCodename(string), UP, 0);
+					sendText(KeyboardKey.RSHIFT, UP, 0);
+				} else if (string.contains("RALT_")) {
+					System.out.println(string);
+					sendText(KeyboardKey.RMENU, DOWN, 0);
+					sendText(KeyboardKey.getByCodename(string), DOWN, 0);
+					sendText(KeyboardKey.getByCodename(string), UP, 0);
+					sendText(KeyboardKey.RMENU, UP, 0);
+				} else if (string.contains("LALT_")) {
+					System.out.println(string);
+					sendText(KeyboardKey.LMENU, DOWN, 0);
+					sendText(KeyboardKey.getByCodename(string), DOWN, 0);
+					sendText(KeyboardKey.getByCodename(string), UP, 0);
+					sendText(KeyboardKey.LMENU, UP, 0);
+				} else {
+					System.out.println(string);
+					sendText(KeyboardKey.getByCodename(string), DOWN, 0);
+					sendText(KeyboardKey.getByCodename(string), UP, 0);
+				}
 			}
 		}
 		/*
